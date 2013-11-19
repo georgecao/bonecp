@@ -1,17 +1,14 @@
 /**
  * Copyright 2010 Wallace Wadge
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.jolbox.boneop;
 
@@ -96,9 +93,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     private String initSQL;
     /**
-     * If set to true, create a new thread that monitors a connection and
-     * displays warnings if application failed to close the connection. FOR
-     * DEBUG PURPOSES ONLY!
+     * If set to true, create a new thread that monitors a connection and displays warnings if application failed to
+     * close the connection. FOR DEBUG PURPOSES ONLY!
      */
     private boolean closeConnectionWatch;
     /**
@@ -106,23 +102,20 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     private boolean logStatementsEnabled;
     /**
-     * After attempting to acquire a connection and failing, wait for this value
-     * before attempting to acquire a new connection again.
+     * After attempting to acquire a connection and failing, wait for this value before attempting to acquire a new
+     * connection again.
      */
     private long acquireRetryDelayInMs = 7000;
     /**
-     * After attempting to acquire a connection and failing, try to connect
-     * these many times before giving up.
+     * After attempting to acquire a connection and failing, try to connect these many times before giving up.
      */
     private int acquireRetryAttempts = 5;
     /**
-     * If set to true, the connection pool will remain empty until the first
-     * connection is obtained.
+     * If set to true, the connection pool will remain empty until the first connection is obtained.
      */
     private boolean lazyInit;
     /**
-     * If set to true, stores all activity on this connection to allow for
-     * replaying it again.
+     * If set to true, stores all activity on this connection to allow for replaying it again.
      */
     private boolean transactionRecoveryEnabled;
     /**
@@ -150,8 +143,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     private long queryExecuteTimeLimitInMs = 0;
     /**
-     * Create more connections when we hit x% of our possible number of
-     * connections.
+     * Create more connections when we hit x% of our possible number of connections.
      */
     private int poolAvailabilityThreshold = 20;
     /**
@@ -163,8 +155,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     private Properties driverProperties;
     /**
-     * Time to wait before a call to getConnection() times out and returns an
-     * error.
+     * Time to wait before a call to getConnection() times out and returns an error.
      */
     private long waitTimeInMs = 0;
     /**
@@ -172,8 +163,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     private long closeObjectWatchTimeoutInMs = 0;
     /**
-     * A connection older than maxConnectionAge will be destroyed and purged
-     * from the pool.
+     * A connection older than maxConnectionAge will be destroyed and purged from the pool.
      */
     private long maxObjectAgeInSeconds = 0;
     /**
@@ -209,8 +199,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     private int defaultTransactionIsolationValue = -1;
     /**
-     * If true, stop caring about username/password when obtaining raw
-     * connections.
+     * If true, stop caring about username/password when obtaining raw connections.
      */
     private boolean externalAuth;
     /**
@@ -218,21 +207,17 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     private boolean deregisterDriverOnClose;
     /**
-     * If true, return null on connection timeout rather than throw an
-     * exception.
+     * If true, return null on connection timeout rather than throw an exception.
      */
     private boolean nullOnObjectTimeout;
     /**
-     * If true, issue a reset (rollback) on connection close in case client
-     * forgot it.
+     * If true, issue a reset (rollback) on connection close in case client forgot it.
      */
     private boolean resetObjectOnClose;
     /**
-     * Detect uncommitted transactions. If true, and resetConnectionOnClose is
-     * also true, the pool will print out a stack trace of the location where
-     * you had a connection that specified setAutoCommit(false) but then forgot
-     * to call commit/rollback before closing it off. This feature is intended
-     * for debugging only.
+     * Detect uncommitted transactions. If true, and resetConnectionOnClose is also true, the pool will print out a
+     * stack trace of the location where you had a connection that specified setAutoCommit(false) but then forgot to
+     * call commit/rollback before closing it off. This feature is intended for debugging only.
      */
     private boolean detectUnresolvedTransactions;
     /**
@@ -240,13 +225,12 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     private String poolStrategy = "DEFAULT";
     /**
-     * If true, track statements and close them if application forgot to do so.
-     * See also: detectUnclosedStatements.
+     * If true, track statements and close them if application forgot to do so. See also: detectUnclosedStatements.
      */
     private boolean closeOpenStatements;
     /**
-     * If true, print out a stack trace of where a statement was opened but not
-     * closed before the connection was closed. See also: closeOpenStatements.
+     * If true, print out a stack trace of where a statement was opened but not closed before the connection was closed.
+     * See also: closeOpenStatements.
      */
     private boolean detectUnclosedStatements;
 
@@ -285,8 +269,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the minimum number of connections that will be contained in every
-     * partition. Also refer to {@link #setPoolAvailabilityThreshold(int)}.
+     * Sets the minimum number of connections that will be contained in every partition. Also refer to
+     * {@link #setPoolAvailabilityThreshold(int)}.
      *
      * @param minObjectsPerPartition number of connections
      */
@@ -305,12 +289,10 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the maximum number of connections that will be contained in every
-     * partition. Setting this to 5 with 3 partitions means you will have 15
-     * unique connections to the database. Note that the connection pool will
-     * not create all these connections in one go but rather start off with
-     * minConnectionsPerPartition and gradually increase connections as
-     * required.
+     * Sets the maximum number of connections that will be contained in every partition. Setting this to 5 with 3
+     * partitions means you will have 15 unique connections to the database. Note that the connection pool will not
+     * create all these connections in one go but rather start off with minConnectionsPerPartition and gradually
+     * increase connections as required.
      *
      * @param maxObjectsPerPartition number of connections.
      */
@@ -331,10 +313,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the acquireIncrement property.
      *
-     * When the available connections are about to run out, BoneCP will
-     * dynamically create new ones in batches. This property controls how many
-     * new connections to create in one go (up to a maximum of
-     * maxConnectionsPerPartition).
+     * When the available connections are about to run out, BoneCP will dynamically create new ones in batches. This
+     * property controls how many new connections to create in one go (up to a maximum of maxConnectionsPerPartition).
      * <p>
      * Note: This is a per partition setting.
      *
@@ -357,14 +337,11 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets number of partitions to use.
      *
-     * In order to reduce lock contention and thus improve performance, each
-     * incoming connection request picks off a connection from a pool that has
-     * thread-affinity, i.e. pool[threadId % partition_count]. The higher this
-     * number, the better your performance will be for the case when you have
-     * plenty of short-lived threads. Beyond a certain threshold, maintenance of
-     * these pools will start to have a negative effect on performance (and only
-     * for the case when connections on a partition start running out). Has no
-     * effect in a CACHED strategy.
+     * In order to reduce lock contention and thus improve performance, each incoming connection request picks off a
+     * connection from a pool that has thread-affinity, i.e. pool[threadId % partition_count]. The higher this number,
+     * the better your performance will be for the case when you have plenty of short-lived threads. Beyond a certain
+     * threshold, maintenance of these pools will start to have a negative effect on performance (and only for the case
+     * when connections on a partition start running out). Has no effect in a CACHED strategy.
      *
      * <p>
      * Default: 1, minimum: 1, recommended: 2-4 (but very app specific)
@@ -378,8 +355,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Deprecated.
      *
-     * @deprecated Please use {@link #getIdleConnectionTestPeriodInMinutes()}
-     * instead.
+     * @deprecated Please use {@link #getIdleConnectionTestPeriodInMinutes()} instead.
      * @return idleConnectionTest
      */
     @Deprecated
@@ -391,8 +367,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the idleConnectionTestPeriod in minutes
      *
-     * @deprecated Please use
-     * {@link #setIdleConnectionTestPeriodInMinutes(long)} or
+     * @deprecated Please use {@link #setIdleConnectionTestPeriodInMinutes(long)} or
      * {@link #setIdleConnectionTestPeriod(long, TimeUnit)} instead
      * @param idleConnectionTestPeriod to set in minutes
      */
@@ -405,8 +380,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * {@inheritDoc}
      *
-     * @see
-     * com.jolbox.bonecp.BoneCPConfigMBean#getIdleConnectionTestPeriodInMinutes()
+     * @see com.jolbox.bonecp.BoneCPConfigMBean#getIdleConnectionTestPeriodInMinutes()
      */
     @Override
     public long getIdleConnectionTestPeriodInMinutes() {
@@ -426,9 +400,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the idleConnectionTestPeriod.
      *
-     * This sets the time (in minutes), for a connection to remain idle before
-     * sending a test query to the DB. This is useful to prevent a DB from
-     * timing out connections on its end. Do not use aggressive values here!
+     * This sets the time (in minutes), for a connection to remain idle before sending a test query to the DB. This is
+     * useful to prevent a DB from timing out connections on its end. Do not use aggressive values here!
      *
      *
      * <p>
@@ -445,9 +418,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the idleConnectionTestPeriod.
      *
-     * This sets the time (in seconds), for a connection to remain idle before
-     * sending a test query to the DB. This is useful to prevent a DB from
-     * timing out connections on its end. Do not use aggressive values here!
+     * This sets the time (in seconds), for a connection to remain idle before sending a test query to the DB. This is
+     * useful to prevent a DB from timing out connections on its end. Do not use aggressive values here!
      *
      *
      * <p>
@@ -460,11 +432,9 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Wrapper method for idleConnectionTestPeriod for easier programmatic
-     * access.
+     * Wrapper method for idleConnectionTestPeriod for easier programmatic access.
      *
-     * @param idleConnectionTestPeriod time for a connection to remain idle
-     * before sending a test query to the DB.
+     * @param idleConnectionTestPeriod time for a connection to remain idle before sending a test query to the DB.
      * @param timeUnit Time granularity of given parameter.
      */
     public void setIdleConnectionTestPeriod(long idleConnectionTestPeriod, TimeUnit timeUnit) {
@@ -507,8 +477,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      * Deprecated.
      *
      * @param idleMaxAge to set
-     * @deprecated Use {@link #setIdleMaxAgeInMinutes(long)} or
-     * {@link #setIdleMaxAge(long, TimeUnit)} instead.
+     * @deprecated Use {@link #setIdleMaxAgeInMinutes(long)} or {@link #setIdleMaxAge(long, TimeUnit)} instead.
      */
     @Deprecated
     public void setIdleMaxAge(long idleMaxAge) {
@@ -519,8 +488,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets Idle max age (in min).
      *
-     * The time (in minutes), for a connection to remain unused before it is
-     * closed off. Do not use aggressive values here!
+     * The time (in minutes), for a connection to remain unused before it is closed off. Do not use aggressive values
+     * here!
      *
      * <p>
      * Default: 60 minutes, set to 0 to disable.
@@ -534,8 +503,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets Idle max age (in seconds).
      *
-     * The time (in seconds), for a connection to remain unused before it is
-     * closed off. Do not use aggressive values here!
+     * The time (in seconds), for a connection to remain unused before it is closed off. Do not use aggressive values
+     * here!
      *
      * <p>
      * Default: 60 minutes, set to 0 to disable.
@@ -549,8 +518,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets Idle max age.
      *
-     * The time, for a connection to remain unused before it is closed off. Do
-     * not use aggressive values here!
+     * The time, for a connection to remain unused before it is closed off. Do not use aggressive values here!
      *
      * @param idleMaxAge time after which a connection is closed off
      * @param timeUnit idleMaxAge time granularity.
@@ -572,15 +540,12 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the connection test statement.
      *
-     * The query to send to the DB to maintain keep-alives and test for dead
-     * connections. This is database specific and should be set to a query that
-     * consumes the minimal amount of load on the server. Examples: MySQL: "/*
-     * ping *\/ SELECT 1", PostgreSQL: "SELECT NOW()". If you do not set this,
-     * then BoneCP will issue a metadata request instead that should work on all
-     * databases but is probably slower.
+     * The query to send to the DB to maintain keep-alives and test for dead connections. This is database specific and
+     * should be set to a query that consumes the minimal amount of load on the server. Examples: MySQL: "/* ping *\/
+     * SELECT 1", PostgreSQL: "SELECT NOW()". If you do not set this, then BoneCP will issue a metadata request instead
+     * that should work on all databases but is probably slower.
      *
-     * (Note: In MySQL, prefixing the statement by /* ping *\/ makes the driver
-     * issue 1 fast packet instead. See
+     * (Note: In MySQL, prefixing the statement by /* ping *\/ makes the driver issue 1 fast packet instead. See
      * http://blogs.sun.com/SDNChannel/entry/mysql_tips_for_java_developers )
      * <p>
      * Default: Use metadata request
@@ -602,21 +567,17 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets number of helper threads to create that will handle releasing a
-     * connection.
+     * Sets number of helper threads to create that will handle releasing a connection.
      *
-     * When this value is set to zero, the application thread is blocked until
-     * the pool is able to perform all the necessary cleanup to recycle the
-     * connection and make it available for another thread.
+     * When this value is set to zero, the application thread is blocked until the pool is able to perform all the
+     * necessary cleanup to recycle the connection and make it available for another thread.
      *
-     * When a non-zero value is set, the pool will create threads that will take
-     * care of recycling a connection when it is closed (the application dumps
-     * the connection into a temporary queue to be processed asychronously to
-     * the application via the release helper threads).
+     * When a non-zero value is set, the pool will create threads that will take care of recycling a connection when it
+     * is closed (the application dumps the connection into a temporary queue to be processed asychronously to the
+     * application via the release helper threads).
      *
-     * Useful when your application is doing lots of work on each connection
-     * (i.e. perform an SQL query, do lots of non-DB stuff and perform another
-     * query), otherwise will probably slow things down.
+     * Useful when your application is doing lots of work on each connection (i.e. perform an SQL query, do lots of
+     * non-DB stuff and perform another query), otherwise will probably slow things down.
      *
      * @param releaseHelperThreads no to release
      */
@@ -637,10 +598,9 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the connection hook.
      *
-     * Fully qualified class name that implements the ConnectionHook interface
-     * (or extends AbstractConnectionHook). BoneCP will callback the specified
-     * class according to the connection state (onAcquire, onCheckIn,
-     * onCheckout, onDestroy).
+     * Fully qualified class name that implements the ConnectionHook interface (or extends AbstractConnectionHook).
+     * BoneCP will callback the specified class according to the connection state (onAcquire, onCheckIn, onCheckout,
+     * onDestroy).
      *
      * @param objectListener the connectionHook to set
      */
@@ -658,8 +618,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Specifies an initial SQL statement that is run only when a connection is
-     * first created.
+     * Specifies an initial SQL statement that is run only when a connection is first created.
      *
      * @param initSQL the initSQL to set
      */
@@ -668,9 +627,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Returns if BoneCP is configured to create a helper thread to watch over
-     * connection acquires that are never released (or released twice). FOR
-     * DEBUG PURPOSES ONLY.
+     * Returns if BoneCP is configured to create a helper thread to watch over connection acquires that are never
+     * released (or released twice). FOR DEBUG PURPOSES ONLY.
      *
      * @return the current closeConnectionWatch setting.
      */
@@ -679,11 +637,9 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Instruct the pool to create a helper thread to watch over connection
-     * acquires that are never released (or released twice). This is for
-     * debugging purposes only and will create a new thread for each call to
-     * getConnection(). Enabling this option will have a big negative impact on
-     * pool performance.
+     * Instruct the pool to create a helper thread to watch over connection acquires that are never released (or
+     * released twice). This is for debugging purposes only and will create a new thread for each call to
+     * getConnection(). Enabling this option will have a big negative impact on pool performance.
      *
      * @param closeConnectionWatch set to true to enable thread monitoring.
      */
@@ -734,8 +690,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Returns the number of ms to wait before attempting to obtain a connection
-     * again after a failure. Default: 7000.
+     * Returns the number of ms to wait before attempting to obtain a connection again after a failure. Default: 7000.
      *
      * @return the acquireRetryDelay
      */
@@ -754,8 +709,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the number of ms to wait before attempting to obtain a connection
-     * again after a failure.
+     * Sets the number of ms to wait before attempting to obtain a connection again after a failure.
      *
      * @param acquireRetryDelay the acquireRetryDelay to set
      */
@@ -764,8 +718,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the number of ms to wait before attempting to obtain a connection
-     * again after a failure.
+     * Sets the number of ms to wait before attempting to obtain a connection again after a failure.
      *
      * @param acquireRetryDelay the acquireRetryDelay to set
      * @param timeUnit time granularity
@@ -784,8 +737,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Set to true to force the connection pool to obtain the initial
-     * connections lazily.
+     * Set to true to force the connection pool to obtain the initial connections lazily.
      *
      * @param lazyInit the lazyInit setting to set
      */
@@ -794,8 +746,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Returns true if the pool is configured to record all transaction activity
-     * and replay the transaction automatically in case of connection failures.
+     * Returns true if the pool is configured to record all transaction activity and replay the transaction
+     * automatically in case of connection failures.
      *
      * @return the transactionRecoveryEnabled status
      */
@@ -804,19 +756,18 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Set to true to enable recording of all transaction activity and replay
-     * the transaction automatically in case of a connection failure.
+     * Set to true to enable recording of all transaction activity and replay the transaction automatically in case of a
+     * connection failure.
      *
-     * @param transactionRecoveryEnabled the transactionRecoveryEnabled status
-     * to set
+     * @param transactionRecoveryEnabled the transactionRecoveryEnabled status to set
      */
     public void setTransactionRecoveryEnabled(boolean transactionRecoveryEnabled) {
         this.transactionRecoveryEnabled = transactionRecoveryEnabled;
     }
 
     /**
-     * After attempting to acquire a connection and failing, try to connect
-     * these many times before giving up. Default 5.
+     * After attempting to acquire a connection and failing, try to connect these many times before giving up. Default
+     * 5.
      *
      * @return the acquireRetryAttempts value
      */
@@ -825,8 +776,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * After attempting to acquire a connection and failing, try to connect
-     * these many times before giving up. Default 5.
+     * After attempting to acquire a connection and failing, try to connect these many times before giving up. Default
+     * 5.
      *
      * @param acquireRetryAttempts the acquireRetryAttempts to set
      */
@@ -835,8 +786,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the connection hook class name. Consider using setConnectionHook()
-     * instead.
+     * Sets the connection hook class name. Consider using setConnectionHook() instead.
      *
      * @param connectionHookClassName the connectionHook class name to set
      */
@@ -891,8 +841,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * If set, use datasourceBean.getConnection() to obtain a new connection
-     * instead of Driver.getConnection().
+     * If set, use datasourceBean.getConnection() to obtain a new connection instead of Driver.getConnection().
      *
      * @param datasourceBean the datasourceBean to set
      */
@@ -974,17 +923,13 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the Pool Watch thread threshold.
      *
-     * The pool watch thread attempts to maintain a number of connections always
-     * available (between minConnections and maxConnections). This value sets
-     * the percentage value to maintain. For example, setting it to 20 means
-     * that if the following condition holds: Free Connections / MaxConnections
-     * < poolAvailabilityThreshold
+     * The pool watch thread attempts to maintain a number of connections always available (between minConnections and
+     * maxConnections). This value sets the percentage value to maintain. For example, setting it to 20 means that if
+     * the following condition holds: Free Connections / MaxConnections < poolAvailabilityThreshold
      *
-     * new connections will be created. In other words, it tries to keep at
-     * least 20% of the pool full of connections. Setting the value to zero will
-     * make the pool create new connections when it needs them but it also means
-     * your application may have to wait for new connections to be obtained at
-     * times.
+     * new connections will be created. In other words, it tries to keep at least 20% of the pool full of connections.
+     * Setting the value to zero will make the pool create new connections when it needs them but it also means your
+     * application may have to wait for new connections to be obtained at times.
      *
      * Default: 20.
      *
@@ -1004,10 +949,9 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * If set to true, the pool will not monitor connections for proper closure.
-     * Enable this option if you only ever obtain your connections via a
-     * mechanism that is guaranteed to release the connection back to the pool
-     * (eg Spring's jdbcTemplate, some kind of transaction manager, etc).
+     * If set to true, the pool will not monitor connections for proper closure. Enable this option if you only ever
+     * obtain your connections via a mechanism that is guaranteed to release the connection back to the pool (eg
+     * Spring's jdbcTemplate, some kind of transaction manager, etc).
      *
      * @param disableObjectTracking set to true to disable. Default: false.
      */
@@ -1040,8 +984,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Returns the maximum time (in milliseconds) to wait before a call to
-     * getConnection is timed out.
+     * Returns the maximum time (in milliseconds) to wait before a call to getConnection is timed out.
      *
      * @return the connectionTimeout
      */
@@ -1060,8 +1003,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the maximum time (in milliseconds) to wait before a call to
-     * getConnection is timed out.
+     * Sets the maximum time (in milliseconds) to wait before a call to getConnection is timed out.
      *
      * Setting this to zero is similar to setting it to Long.MAX_VALUE
      *
@@ -1074,8 +1016,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the maximum time to wait before a call to getConnection is timed
-     * out.
+     * Sets the maximum time to wait before a call to getConnection is timed out.
      *
      * Setting this to zero is similar to setting it to Long.MAX_VALUE
      *
@@ -1098,14 +1039,12 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets properties that will be passed on to the driver.
      *
-     * The properties handle should contain a list of arbitrary string tag/value
-     * pairs as connection arguments; normally at least a "user" and "password"
-     * property should be included. Failure to include the user or password
-     * properties will make the pool copy the values given in
-     * config.setUsername(..) and config.setPassword(..).
+     * The properties handle should contain a list of arbitrary string tag/value pairs as connection arguments; normally
+     * at least a "user" and "password" property should be included. Failure to include the user or password properties
+     * will make the pool copy the values given in config.setUsername(..) and config.setPassword(..).
      *
-     * Note that the pool will make a copy of these properties so as not to risk
-     * attempting to create a connection later on with different settings.
+     * Note that the pool will make a copy of these properties so as not to risk attempting to create a connection later
+     * on with different settings.
      *
      * @param driverProperties the driverProperties to set
      */
@@ -1143,8 +1082,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Returns the no of ms to wait when close connection watch threads are
-     * enabled. 0 = wait forever.
+     * Returns the no of ms to wait when close connection watch threads are enabled. 0 = wait forever.
      *
      * @return the watchTimeout currently set.
      */
@@ -1164,8 +1102,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the no of ms to wait when close connection watch threads are
-     * enabled. 0 = wait forever.
+     * Sets the no of ms to wait when close connection watch threads are enabled. 0 = wait forever.
      *
      * @param closeConnectionWatchTimeout the watchTimeout to set
      */
@@ -1174,8 +1111,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the time to wait when close connection watch threads are enabled. 0
-     * = wait forever.
+     * Sets the time to wait when close connection watch threads are enabled. 0 = wait forever.
      *
      * @param closeConnectionWatchTimeout the watchTimeout to set
      * @param timeUnit Time granularity
@@ -1219,8 +1155,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      * Deprecated. Use {{@link #setMaxObjectAgeInSeconds(long)} instead.
      *
      * @param maxConnectionAgeInSeconds the maxConnectionAge to set
-     * @deprecated Please use {{@link #setMaxConnectionAgeInSeconds(long)}
-     * instead.
+     * @deprecated Please use {{@link #setMaxConnectionAgeInSeconds(long)} instead.
      */
     @Deprecated
     public void setMaxConnectionAge(long maxConnectionAgeInSeconds) {
@@ -1229,10 +1164,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the maxConnectionAge in seconds. Any connections older than this
-     * setting will be closed off whether it is idle or not. Connections
-     * currently in use will not be affected until they are returned to the
-     * pool.
+     * Sets the maxConnectionAge in seconds. Any connections older than this setting will be closed off whether it is
+     * idle or not. Connections currently in use will not be affected until they are returned to the pool.
      *
      * @param maxObjectAgeInSeconds the maxConnectionAge to set
      */
@@ -1241,9 +1174,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the maxConnectionAge. Any connections older than this setting will
-     * be closed off whether it is idle or not. Connections currently in use
-     * will not be affected until they are returned to the pool.
+     * Sets the maxConnectionAge. Any connections older than this setting will be closed off whether it is idle or not.
+     * Connections currently in use will not be affected until they are returned to the pool.
      *
      * @param maxConnectionAge the maxConnectionAge to set.
      * @param timeUnit the unit of the maxConnectionAge argument.
@@ -1262,9 +1194,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the configFile. If configured, this will cause the pool to
-     * initialise using the config file in the same way as if calling new
-     * BoneCPConfig(filename).
+     * Sets the configFile. If configured, this will cause the pool to initialise using the config file in the same way
+     * as if calling new BoneCPConfig(filename).
      *
      * @param configFile the configFile to set
      */
@@ -1282,8 +1213,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the queue serviceOrder. Values currently understood are FIFO and
-     * LIFO.
+     * Sets the queue serviceOrder. Values currently understood are FIFO and LIFO.
      *
      * @param serviceOrder the serviceOrder to set
      */
@@ -1301,8 +1231,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * If set to true, keep track of some more statistics for exposure via JMX.
-     * Will slow down the pool operation.
+     * If set to true, keep track of some more statistics for exposure via JMX. Will slow down the pool operation.
      *
      * @param statisticsEnabled set to true to enable
      */
@@ -1320,8 +1249,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the defaultAutoCommit setting for newly created connections. If not
-     * set, use driver default.
+     * Sets the defaultAutoCommit setting for newly created connections. If not set, use driver default.
      *
      * @param defaultAutoCommit the defaultAutoCommit to set
      */
@@ -1339,8 +1267,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the defaultReadOnly setting for newly created connections. If not
-     * set, use driver default.
+     * Sets the defaultReadOnly setting for newly created connections. If not set, use driver default.
      *
      * @param defaultReadOnly the defaultReadOnly to set
      */
@@ -1358,8 +1285,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the defaultCatalog setting for newly created connections. If not
-     * set, use driver default.
+     * Sets the defaultCatalog setting for newly created connections. If not set, use driver default.
      *
      * @param defaultCatalog the defaultCatalog to set
      */
@@ -1377,9 +1303,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the defaultTransactionIsolation. Should be set to one of: NONE,
-     * READ_COMMITTED, READ_UNCOMMITTED, REPEATABLE_READ or SERIALIZABLE. If not
-     * set, will use driver default.
+     * Sets the defaultTransactionIsolation. Should be set to one of: NONE, READ_COMMITTED, READ_UNCOMMITTED,
+     * REPEATABLE_READ or SERIALIZABLE. If not set, will use driver default.
      *
      * @param defaultTransactionIsolation the defaultTransactionIsolation to set
      */
@@ -1399,18 +1324,16 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the defaultTransactionIsolationValue.
      *
-     * @param defaultTransactionIsolationValue the
-     * defaultTransactionIsolationValue to set
+     * @param defaultTransactionIsolationValue the defaultTransactionIsolationValue to set
      */
     protected void setDefaultTransactionIsolationValue(int defaultTransactionIsolationValue) {
         this.defaultTransactionIsolationValue = defaultTransactionIsolationValue;
     }
 
     /**
-     * Default constructor. Attempts to fill settings in this order: 1.
-     * bonecp-default-config.xml file, usually found in the pool jar 2.
-     * bonecp-config.xml file, usually found in your application's classpath 3.
-     * Other hardcoded defaults in BoneCPConfig class.
+     * Default constructor. Attempts to fill settings in this order: 1. bonecp-default-config.xml file, usually found in
+     * the pool jar 2. bonecp-config.xml file, usually found in your application's classpath 3. Other hardcoded defaults
+     * in BoneCPConfig class.
      */
     public BoneOPConfig() {
         // try to load the default config file, if available from somewhere in the classpath
@@ -1431,8 +1354,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Initialize the configuration by loading bonecp-config.xml containing the
-     * settings.
+     * Initialize the configuration by loading bonecp-config.xml containing the settings.
      *
      * @param sectionName section to load
      * @throws Exception on parse errors
@@ -1442,8 +1364,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Initialise the configuration by loading an XML file containing the
-     * settings.
+     * Initialise the configuration by loading an XML file containing the settings.
      *
      * @param xmlConfigFile file to load
      * @param sectionName section to load
@@ -1494,8 +1415,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the properties by reading off entries in the given parameter (where
-     * each key is equivalent to the field name)
+     * Sets the properties by reading off entries in the given parameter (where each key is equivalent to the field
+     * name)
      *
      * @param props Parameter list to set
      * @throws Exception on error
@@ -1558,8 +1479,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Parses the given XML doc to extract the properties and return them into a
-     * java.util.Properties.
+     * Parses the given XML doc to extract the properties and return them into a java.util.Properties.
      *
      * @param doc to parse
      * @param sectionName which section to extract
@@ -1615,26 +1535,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
         }
 
         return results;
-    }
-
-    /**
-     * Returns the current externalAuth setting.
-     *
-     * @return externalAuth setting
-     */
-    public boolean isExternalAuth() {
-        return this.externalAuth;
-    }
-
-    /**
-     * If set to true, no attempts at passing in a username/password will be
-     * attempted when trying to obtain a raw (driver) connection. Useful for
-     * cases when you already have another mechanism on authentication eg NTLM.
-     *
-     * @param externalAuth True to enable external auth.
-     */
-    public void setExternalAuth(boolean externalAuth) {
-        this.externalAuth = externalAuth;
     }
 
     /**
@@ -1758,8 +1658,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the classloader to use to load JDBC driver and hooks (set to null to
-     * use default).
+     * Sets the classloader to use to load JDBC driver and hooks (set to null to use default).
      *
      * @param classLoader the classLoader to set
      */
@@ -1848,10 +1747,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the nullOnConnectionTimeout.
      *
-     * If true, return null on connection timeout rather than throw an
-     * exception. This performs better but must be handled differently in your
-     * application. This only makes sense when using the connectionTimeout
-     * config option.
+     * If true, return null on connection timeout rather than throw an exception. This performs better but must be
+     * handled differently in your application. This only makes sense when using the connectionTimeout config option.
      *
      * @param nullOnObjectTimeout the nullOnConnectionTimeout to set
      */
@@ -1869,8 +1766,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * If true, issue a reset (rollback) on connection close in case client
-     * forgot it.
+     * If true, issue a reset (rollback) on connection close in case client forgot it.
      *
      * @param resetObjectOnClose the resetConnectionOnClose to set
      */
@@ -1888,43 +1784,31 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the poolStrategy. Currently supported strategies are DEFAULT and
-     * CACHED.
+     * Sets the poolStrategy. Currently supported strategies are DEFAULT and CACHED.
      *
-     * DEFAULT strategy operates in a manner that has been used in the pool
-     * since the very first version: it tries to obtain a connection from a
-     * queue.
+     * DEFAULT strategy operates in a manner that has been used in the pool since the very first version: it tries to
+     * obtain a connection from a queue.
      *
-     * CACHED stores each connection in a thread-local variable so that next
-     * time the same thread asks for a connection, it gets the same one assigned
-     * to it (if it asks for more than one, it will be allocated a new one).
-     * This is very fast but you must ensure that the number of threads asking
-     * for a connection is less than or equal to the number of connections you
-     * have made available. Should you exceed this limit, the pool will switch
-     * back (permanently) to the DEFAULT strategy which will cause a one-time
-     * performance hit. Use this strategy if your threads are managed eg in a
-     * Tomcat environment where you can limit the number of threads that it can
-     * handle. A typical use case would be a web service that always requires
-     * some form of database access, therefore a service would have little point
-     * in accepting a new incoming socket connection if it still has to wait in
-     * order to obtain a connection.
+     * CACHED stores each connection in a thread-local variable so that next time the same thread asks for a connection,
+     * it gets the same one assigned to it (if it asks for more than one, it will be allocated a new one). This is very
+     * fast but you must ensure that the number of threads asking for a connection is less than or equal to the number
+     * of connections you have made available. Should you exceed this limit, the pool will switch back (permanently) to
+     * the DEFAULT strategy which will cause a one-time performance hit. Use this strategy if your threads are managed
+     * eg in a Tomcat environment where you can limit the number of threads that it can handle. A typical use case would
+     * be a web service that always requires some form of database access, therefore a service would have little point
+     * in accepting a new incoming socket connection if it still has to wait in order to obtain a connection.
      *
-     * Essentially this means that you are pushing back the lock down to the
-     * socket or thread layer. While the first few thread hits will be slower
-     * than in the DEFAULT strategy, significant performance gains are to be
-     * expected as the thread gets increasingly re-used (i.e. initially you
-     * should expect the first few rounds to be measurably slower than the
-     * DEFAULT strategy but once the caches get more hits you should get >2x
-     * better performance).
+     * Essentially this means that you are pushing back the lock down to the socket or thread layer. While the first few
+     * thread hits will be slower than in the DEFAULT strategy, significant performance gains are to be expected as the
+     * thread gets increasingly re-used (i.e. initially you should expect the first few rounds to be measurably slower
+     * than the DEFAULT strategy but once the caches get more hits you should get >2x better performance).
      *
-     * Threads that are killed off are detected during the next garbage
-     * collection and result in their allocated connections from being taken
-     * back though since GC timing is not guaranteed you should ideally set your
-     * minimum pool size to be equal to the maximum pool size.
+     * Threads that are killed off are detected during the next garbage collection and result in their allocated
+     * connections from being taken back though since GC timing is not guaranteed you should ideally set your minimum
+     * pool size to be equal to the maximum pool size.
      *
-     * Therefore for best results, make sure that the configured
-     * minConnectionPerPartition = maxConnectionPerPartition = min Threads = max
-     * Threads.
+     * Therefore for best results, make sure that the configured minConnectionPerPartition = maxConnectionPerPartition =
+     * min Threads = max Threads.
      *
      *
      * @param poolStrategy the poolStrategy to set
@@ -1943,9 +1827,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Sets the detectUnclosedStatements. If true, print out a stack trace of
-     * where a statement was opened but not closed before the connection was
-     * closed. {@link BoneCPConfig#closeOpenStatements}.
+     * Sets the detectUnclosedStatements. If true, print out a stack trace of where a statement was opened but not
+     * closed before the connection was closed. {@link BoneCPConfig#closeOpenStatements}.
      *
      * @param detectUnclosedStatements the detectUnclosedStatements to set
      */

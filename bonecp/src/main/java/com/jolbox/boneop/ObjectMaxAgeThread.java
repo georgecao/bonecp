@@ -141,7 +141,7 @@ public class ObjectMaxAgeThread<T> implements Runnable {
             } catch (Throwable t) {
                 logger.error("Destroy connection exception", t);
             } finally {
-                this.pool.postDestroyConnection(connection);
+                this.pool.postDestroyObject(connection);
             }
         }
     }

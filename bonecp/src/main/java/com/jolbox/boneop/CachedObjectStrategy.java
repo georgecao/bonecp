@@ -1,17 +1,14 @@
 /**
  * Copyright 2010 Wallace Wadge
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.jolbox.boneop;
 
@@ -28,15 +25,14 @@ import com.google.common.base.FinalizableReferenceQueue;
 import com.google.common.base.FinalizableWeakReference;
 
 /**
- * A connection strategy that is optimized to store/retrieve the connection
- * inside a thread local variable. This makes getting a connection in a managed
- * thread environment such as Tomcat very fast but has the limitation that it
- * only works if # of threads <= # of connections. Should it detect that this
- * isn't the case anymore, this class will flip back permanently to the
- * configured fallback strategy (i.e. default strategy) and makes sure that
- * currently assigned and unused connections are taken back.
+ * A connection strategy that is optimized to store/retrieve the connection inside a thread local variable. This makes
+ * getting a connection in a managed thread environment such as Tomcat very fast but has the limitation that it only
+ * works if # of threads <= # of connections. Should it detect that this isn't the case anymore, this class will flip
+ * back permanently to the configured fallback strategy (i.e. default strategy) and makes sure that currently assigned
+ * and unused connections are taken back.
  *
  * @author wallacew
+ * @param <T> object type.
  *
  */
 public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
@@ -44,7 +40,7 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
     /**
      * Logger class.
      */
-    private static final Logger logger = LoggerFactory.getLogger(CachedObjectStrategy.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CachedObjectStrategy.class);
 
     /**
      * Just to give out a warning once.
@@ -53,16 +49,15 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
     /**
      * Keep track of connections tied to thread.
      */
-    final Map<ObjectHandle, Reference<Thread>> finalizableRefs = new ConcurrentHashMap<ObjectHandle, Reference<Thread>>();
+    final Map<ObjectHandle<T>, Reference<Thread>> finalizableRefs = new ConcurrentHashMap<>();
     /**
      * Keep track of connections tied to thread.
      */
     private FinalizableReferenceQueue finalizableRefQueue = new FinalizableReferenceQueue();
     /**
-     * Obtain connections using this fallback strategy at first (or if this
-     * strategy cannot succeed.
+     * Obtain connections using this fallback strategy at first (or if this strategy cannot succeed.
      */
-    private ObjectStrategy fallbackStrategy;
+    private ObjectStrategy<T> fallbackStrategy;
 
     /**
      * Singleton.
@@ -84,49 +79,49 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
     /**
      * Singleton pattern.
      *
-     * @param pool
-     * @param fallbackStrategy
+     * @param <T> object type.
+     * @param pool object pool
+     * @param fallbackStrategy real object creator
      * @return CachedConnectionStrategy singleton instance
      */
-    public static ObjectStrategy getInstance(BoneOP pool, ObjectStrategy fallbackStrategy) {
-        CachedObjectStrategy cs = SingletonHolder.INSTANCE;
+    public static <T> ObjectStrategy<T> getInstance(BoneOP<T> pool, ObjectStrategy<T> fallbackStrategy) {
+        CachedObjectStrategy<T> cs = (CachedObjectStrategy<T>) SingletonHolder.INSTANCE;
         cs.pool = pool;
         cs.fallbackStrategy = fallbackStrategy;
         return cs;
     }
 
     /**
-     * Connections are stored here. No need for static here, this class is a
-     * singleton.
+     * Connections are stored here. No need for static here, this class is a singleton.
      */
-    private ThreadLocal<ObjectHandle> tlConnections = new ThreadLocal<ObjectHandle>() {
+    private final ThreadLocal<ObjectHandle<T>> objects = new ThreadLocal<ObjectHandle<T>>() {
 
         @Override
-        protected ObjectHandle initialValue() {
-            ObjectHandle result;
+        protected ObjectHandle<T> initialValue() {
+            ObjectHandle<T> result;
             try {
                 // grab a connection from any other configured fallback strategy
-                result = pollFallbackConnection();
-
-            } catch (SQLException e) {
+                result = pollFallbackObject();
+            } catch (PoolException e) {
+                LOG.warn("Initial thread local object handle", e);
                 result = null;
             }
             return result;
         }
 
         @Override
-        public ObjectHandle get() {
-            ObjectHandle result = super.get();
+        public ObjectHandle<T> get() {
+            ObjectHandle<T> result = super.get();
             // have we got one that's cached and unused? Mark it as in use. 
             if (result != null && !result.inUseInThreadLocalContext.compareAndSet(false, true)) {
                 try {
                     // ... otherwise grab a new connection 
-                    result = pollFallbackConnection();
-                } catch (SQLException e) {
+                    result = pollFallbackObject();
+                } catch (PoolException e) {
+                    LOG.warn("Get thread local object handle", e);
                     result = null;
                 }
             }
-
             return result;
         }
     };
@@ -137,20 +132,18 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
      * @return handle
      * @throws SQLException
      */
-    ObjectHandle pollFallbackConnection() throws SQLException {
-        ObjectHandle result = (ObjectHandle) this.fallbackStrategy.pollObject();
+    ObjectHandle<T> pollFallbackObject() throws PoolException {
+        ObjectHandle<T> result = this.fallbackStrategy.pollObject();
         // if we were successfull remember this connection to be able to shutdown cleanly.
         if (result != null) {
             threadWatch(result);
         }
-
         return result;
     }
 
     /**
-     * Tries to close off all the unused assigned connections back to the pool.
-     * Assumes that the strategy mode has already been flipped prior to calling
-     * this routine. Called whenever our no of connection requests > no of
+     * Tries to close off all the unused assigned connections back to the pool. Assumes that the strategy mode has
+     * already been flipped prior to calling this routine. Called whenever our no of connection requests > no of
      * threads.
      */
     private synchronized void stealExistingAllocations() {
@@ -163,20 +156,19 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
                 try {
                     this.pool.releaseObject(handle);
                 } catch (PoolException e) {
-                    e.printStackTrace();
+                    LOG.error("Cannot release object handle {}", handle, e);
                 }
             }
         }
         if (this.warnApp.compareAndSet(false, true)) { // only issue warning once.
-            logger.warn("Cached strategy chosen, but more threads are requesting a connection than are configured. Switching permanently to default strategy.");
+            LOG.warn("Cached strategy chosen, but more threads are requesting a connection than are configured. Switching permanently to default strategy.");
         }
         this.finalizableRefs.clear();
-
     }
 
     /**
-     * Keep track of this handle tied to which thread so that if the thread is
-     * terminated we can reclaim our connection handle.
+     * Keep track of this handle tied to which thread so that if the thread is terminated we can reclaim our connection
+     * handle.
      *
      * @param handle connection handle to track.
      */
@@ -185,12 +177,12 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
             @Override
             public void finalizeReferent() {
                 if (!CachedObjectStrategy.this.pool.poolShuttingDown) {
-                    logger.debug("Monitored thread is dead, closing off allocated connection.");
+                    LOG.debug("Monitored thread is dead, closing off allocated connection.");
                 }
                 try {
                     handle.close();
                 } catch (PoolException ex) {
-                    logger.error("Cnoo", ex);
+                    LOG.error("Failed to close handle {}", handle, ex);
                 }
                 CachedObjectStrategy.this.finalizableRefs.remove(handle);
             }
@@ -200,7 +192,7 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
     @Override
     protected ObjectHandle<T> getObjectInternal() throws PoolException {
         // try to get the connection from thread local storage.
-        ObjectHandle result = this.tlConnections.get();
+        ObjectHandle<T> result = this.objects.get();
         // we should always be successfull. If not, it means we have more threads asking
         // us for a connection than we've got available. This is not supported so we flip
         // back our strategy.
@@ -209,23 +201,17 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
             this.pool.connectionStrategy = this.fallbackStrategy;
             stealExistingAllocations();
             // get a connection as if under our fallback strategy now.
-            result = (ObjectHandle) this.pool.connectionStrategy.getObject();
+            result = this.pool.connectionStrategy.getObject();
         }
         return result;
     }
 
     @Override
-    public ObjectHandle<T> pollObject() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void destroyAllObjects() {
-        for (ObjectHandle conn : this.finalizableRefs.keySet()) {
-            this.pool.destroyObject(conn);
+        for (ObjectHandle<T> handle : this.finalizableRefs.keySet()) {
+            this.pool.destroyObject(handle);
         }
         this.finalizableRefs.clear();
-
         this.fallbackStrategy.destroyAllObjects();
     }
 

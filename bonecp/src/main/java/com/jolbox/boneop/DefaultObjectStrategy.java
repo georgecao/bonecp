@@ -1,25 +1,22 @@
 /**
  * Copyright 2010 Wallace Wadge
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.jolbox.boneop;
 
 import java.util.concurrent.TimeUnit;
 
 /**
- * The normal getConnection() strategy class in use. Attempts to get a
- * connection from one or more configured partitions.
+ * The normal getConnection() strategy class in use. Attempts to get a connection from one or more configured
+ * partitions.
  *
  * @author wallacew
  * @param <T> object type.
@@ -49,13 +46,10 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
                 }
             }
         }
-
         if (!partition.isUnableToCreateMoreTransactions()) { // unless we can't create any more connections...
             this.pool.maybeSignalForMoreObjects(partition);  // see if we need to create more
         }
-
         return result;
-
     }
 
     @Override
@@ -67,14 +61,14 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
             try {
                 result = partition.getFreeObjects().poll(this.pool.waitTimeInMs, TimeUnit.MILLISECONDS);
                 if (result == null) {
-                    if (this.pool.nullOnConnectionTimeout) {
+                    if (this.pool.nullOnObjectTimeout) {
                         return null;
                     }
                     // 08001 = The application requester is unable to establish the connection.
                     throw new PoolException("Timed out waiting for a free available connection.", "08001");
                 }
             } catch (InterruptedException e) {
-                if (this.pool.nullOnConnectionTimeout) {
+                if (this.pool.nullOnObjectTimeout) {
                     return null;
                 }
                 throw new PoolException(e);

@@ -33,27 +33,27 @@ public class ObjectTesterThread<T> implements Runnable {
     /**
      * Connections used less than this time ago are not keep-alive tested.
      */
-    private long idleConnectionTestPeriodInMs;
+    private final long idleConnectionTestPeriodInMs;
     /**
      * Max no of ms to wait before a connection that isn't used is killed off.
      */
-    private long idleMaxAgeInMs;
+    private final long idleMaxAgeInMs;
     /**
      * Partition being handled.
      */
-    private ObjectPartition<T> partition;
+    private final ObjectPartition<T> partition;
     /**
      * Scheduler handle. *
      */
-    private ScheduledExecutorService scheduler;
+    private final ScheduledExecutorService scheduler;
     /**
      * Handle to connection pool.
      */
-    private BoneOP<T> pool;
+    private final BoneOP<T> pool;
     /**
      * If true, we're operating in a LIFO fashion.
      */
-    private boolean lifoMode;
+    private final boolean lifoMode;
     /**
      * Logger handle.
      */
@@ -178,7 +178,7 @@ public class ObjectTesterThread<T> implements Runnable {
                     LOG.error("", ex);
                 }
             } finally {
-                this.pool.postDestroyConnection(connection);
+                this.pool.postDestroyObject(connection);
             }
         }
     }

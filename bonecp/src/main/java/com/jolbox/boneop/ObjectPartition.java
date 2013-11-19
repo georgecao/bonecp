@@ -1,17 +1,14 @@
 /**
  * Copyright 2010 Wallace Wadge
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.jolbox.boneop;
 
@@ -70,8 +67,7 @@ public class ObjectPartition<T> implements Serializable {
      */
     private int createdObjects = 0;
     /**
-     * If set to true, don't bother calling method to attempt to create more
-     * connections because we've hit our limit.
+     * If set to true, don't bother calling method to attempt to create more connections because we've hit our limit.
      */
     private volatile boolean unableToCreateMoreTransactions = false;
     /**
@@ -83,13 +79,11 @@ public class ObjectPartition<T> implements Serializable {
      */
     private final boolean disableTracking;
     /**
-     * Signal trigger to pool watch thread. Making it a queue means our signal
-     * is persistent.
+     * Signal trigger to pool watch thread. Making it a queue means our signal is persistent.
      */
     private final BlockingQueue<Object> poolWatchThreadSignalQueue = new ArrayBlockingQueue<>(1);
     /**
-     * Store the unit translation here to avoid recalculating it in statement
-     * handles.
+     * Store the unit translation here to avoid recalculating it in statement handles.
      */
     private final long queryExecuteTimeLimitInNanoSeconds;
     /**
@@ -116,12 +110,9 @@ public class ObjectPartition<T> implements Serializable {
      * @param increment value to add/subtract
      */
     protected void updateCreatedObjects(int increment) {
-
         try {
             this.statsLock.writeLock().lock();
             this.createdObjects += increment;
-            //		assert this.createdConnections >= 0 : "Created connections < 0!";
-
         } finally {
             this.statsLock.writeLock().unlock();
         }
@@ -157,19 +148,14 @@ public class ObjectPartition<T> implements Serializable {
     }
 
     /**
-     * This method is a replacement for finalize() but avoids all its pitfalls
-     * (see Joshua Bloch et. all).
+     * This method is a replacement for finalize() but avoids all its pitfalls (see Joshua Bloch et. all).
      *
-     * Keeps a handle on the connection. If the application called closed, then
-     * it means that the handle gets pushed back to the connection pool and thus
-     * we get a strong reference again. If the application forgot to call
-     * close() and subsequently lost the strong reference to it, the handle
-     * becomes eligible to garbage connection and thus the the finalizeReferent
-     * method kicks in to safely close off the database handle. Note that we do
-     * not return the connectionHandle back to the pool since that is not
-     * possible (for otherwise the GC would not have kicked in), but we merely
-     * safely release the database internal handle and update our counters
-     * instead.
+     * Keeps a handle on the connection. If the application called closed, then it means that the handle gets pushed
+     * back to the connection pool and thus we get a strong reference again. If the application forgot to call close()
+     * and subsequently lost the strong reference to it, the handle becomes eligible to garbage connection and thus the
+     * the finalizeReferent method kicks in to safely close off the database handle. Note that we do not return the
+     * connectionHandle back to the pool since that is not possible (for otherwise the GC would not have kicked in), but
+     * we merely safely release the database internal handle and update our counters instead.
      *
      * @param handle handle to watch
      */
@@ -178,17 +164,17 @@ public class ObjectPartition<T> implements Serializable {
             //	assert !connectionHandle.getPool().getFinalizableRefs().containsKey(connectionHandle) : "Already tracking this handle";
             T con = handle.getInternalObject();
             final T obj = con;
-            final BoneOP<T> pool = handle.getPool();
+            final BoneOP<T> associatedPool = handle.getPool();
             handle.getPool().getFinalizableRefs().put(obj, new FinalizableWeakReference<ObjectHandle<T>>(handle, handle.getPool().getFinalizableRefQueue()) {
                 @Override
                 public void finalizeReferent() {
                     try {
-                        pool.getFinalizableRefs().remove(obj);
-                        if (obj != null && pool.factory.validateObject(obj)) { // safety!
+                        associatedPool.getFinalizableRefs().remove(obj);
+                        if (obj != null && associatedPool.factory.validateObject(obj)) { // safety!
 
                             LOG.warn("BoneCP detected an unclosed connection " + ObjectPartition.this.poolName + "and will now attempt to close it for you. "
                                     + "You should be closing this connection in your application - enable connectionWatch for additional debugging assistance.");
-                            pool.factory.destroyObject(obj);
+                            associatedPool.factory.destroyObject(obj);
                             updateCreatedObjects(-1);
                         }
                     } catch (Exception t) {
@@ -318,8 +304,7 @@ public class ObjectPartition<T> implements Serializable {
     }
 
     /**
-     * Store the unit translation here to avoid recalculating it in the
-     * constructor of StatementHandle.
+     * Store the unit translation here to avoid recalculating it in the constructor of StatementHandle.
      *
      * @return value
      */

@@ -98,7 +98,7 @@ public class TestConnectionMaxAgeTester {
 		mockConnectionExpired.internalClose();
 		expectLastCall().once();
 		
-		mockPool.postDestroyConnection(mockConnectionExpired);
+		mockPool.postDestroyObject(mockConnectionExpired);
 		expectLastCall().once();
 		
 		
@@ -220,7 +220,7 @@ public class TestConnectionMaxAgeTester {
 	@Test
 	public void testCloseConnectionNormalCase() throws SQLException{
 		ObjectHandle mockConnection = createNiceMock(ObjectHandle.class);
-		mockPool.postDestroyConnection(mockConnection);
+		mockPool.postDestroyObject(mockConnection);
 		expectLastCall().once();
 		
 		mockConnection.internalClose();
@@ -237,7 +237,7 @@ public class TestConnectionMaxAgeTester {
 	@Test
 	public void testCloseConnectionWithException() throws SQLException{
 		ObjectHandle mockConnection = createNiceMock(ObjectHandle.class);
-		mockPool.postDestroyConnection(mockConnection);
+		mockPool.postDestroyObject(mockConnection);
 		expectLastCall().once();
 		
 		mockConnection.internalClose();
@@ -254,7 +254,7 @@ public class TestConnectionMaxAgeTester {
 	@Test
 	public void testCloseConnectionWithExceptionCoverage() throws Exception{
 		ObjectHandle mockConnection = createNiceMock(ObjectHandle.class);
-		mockPool.postDestroyConnection(mockConnection);
+		mockPool.postDestroyObject(mockConnection);
 		expectLastCall().once();
     // set logger to null so that exception will be thrown in catch clause
     Field field = ObjectMaxAgeThread.class.getDeclaredField("logger");

@@ -90,7 +90,7 @@ public class TestConnectionThreadTester {
 		
 		// connection should be closed
 		mockConnection.internalClose();
-		mockPool.postDestroyConnection(mockConnection);
+		mockPool.postDestroyObject(mockConnection);
 		expectLastCall().once();
 		replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
 		this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
@@ -118,7 +118,7 @@ public class TestConnectionThreadTester {
 		
 		// connection should be closed
 		mockConnection.internalClose();
-		mockPool.postDestroyConnection(mockConnection);
+		mockPool.postDestroyObject(mockConnection);
 		expectLastCall().once();
 
 		replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
@@ -149,7 +149,7 @@ public class TestConnectionThreadTester {
 		// connection should be closed
 		mockConnection.internalClose();
 		expectLastCall().andThrow(new RuntimeException());
-		mockPool.postDestroyConnection(mockConnection);
+		mockPool.postDestroyObject(mockConnection);
 		expectLastCall().once();
 
 		replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
@@ -264,7 +264,7 @@ public class TestConnectionThreadTester {
 		
 		// connection should be closed
 		mockConnection.internalClose();
-		mockPool.postDestroyConnection(mockConnection);
+		mockPool.postDestroyObject(mockConnection);
 		expectLastCall().once();
 
 		

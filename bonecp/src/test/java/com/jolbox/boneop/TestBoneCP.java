@@ -338,7 +338,7 @@ public class TestBoneCP {
 		mockConnectionHook.onDestroy(mockConnection);
 		expectLastCall().once();
 		replay(mockRealConnection, mockConnectionHook, mockConnection);
-		testClass.postDestroyConnection(mockConnection);
+		testClass.postDestroyObject(mockConnection);
 		verify(mockConnectionHook, mockConnection);
 	}
 
@@ -614,7 +614,7 @@ public class TestBoneCP {
 		reset(mockPartition, mockConnectionHandles, mockConnection);
 		expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
 		expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
-		testClass.nullOnConnectionTimeout = true;
+		testClass.nullOnObjectTimeout = true;
 		expect(mockConnectionHandles.poll()).andReturn(null).once();
 		expect(mockConnectionHandles.poll(Long.MAX_VALUE, TimeUnit.MILLISECONDS)).andThrow(new InterruptedException()).once();
 
@@ -670,7 +670,7 @@ public class TestBoneCP {
 		expect(mockConnectionHandles.poll(Long.MAX_VALUE, TimeUnit.MILLISECONDS)).andReturn(null).once();
 		BlockingQueue<Object> bq = new ArrayBlockingQueue<Object>(1);
 		bq.add(new Object());
-		testClass.nullOnConnectionTimeout = true;
+		testClass.nullOnObjectTimeout = true;
 		expect(mockPartition.getPoolWatchThreadSignalQueue()).andReturn(bq);
 		replay(mockPartition, mockConnectionHandles, mockConnection);
 		try{ 
@@ -925,7 +925,7 @@ public class TestBoneCP {
 		mockInternalConnection.rollback();
 		mockInternalConnection.setAutoCommit(true);
 		replay(mockInternalConnection, mockPartition, mockConnectionHandles, mockConnection);
-		testClass.resetConnectionOnClose = true;
+		testClass.resetObjectOnClose = true;
 		testClass.putObjectBackInPartition(mockConnection);
 		verify(mockPartition, mockConnectionHandles);
 
