@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
@@ -150,7 +150,7 @@ public class ObjectPartition<T> implements Serializable {
             updateCreatedConnections(-1); // compensate our createdConnection count.
 
             if (!this.disableTracking) {
-                this.pool.getFinalizableRefs().remove(connectionHandle.getInternalConnection());
+                this.pool.getFinalizableRefs().remove(connectionHandle.getInternalObject());
             }
             // terminate the internal handle.
             connectionHandle.internalClose();
@@ -177,7 +177,7 @@ public class ObjectPartition<T> implements Serializable {
     protected void trackConnectionFinalizer(ObjectHandle<T> connectionHandle) {
         if (!this.disableTracking) {
             //	assert !connectionHandle.getPool().getFinalizableRefs().containsKey(connectionHandle) : "Already tracking this handle";
-            T con = connectionHandle.getInternalConnection();
+            T con = connectionHandle.getInternalObject();
             final T obj = con;
             final BoneOP<T> pool = connectionHandle.getPool();
             connectionHandle.getPool().getFinalizableRefs().put(obj, new FinalizableWeakReference<ObjectHandle<T>>(connectionHandle, connectionHandle.getPool().getFinalizableRefQueue()) {

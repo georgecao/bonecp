@@ -22,9 +22,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jolbox.bonecp.ObjectHandle;
-import com.jolbox.bonecp.PoolException;
-import com.jolbox.bonecp.PoolUtil;
+import com.jolbox.boneop.ObjectHandle;
+import com.jolbox.boneop.PoolException;
+import com.jolbox.boneop.PoolUtil;
 
 /**
  * A no-op implementation of the ConnectionHook interface.

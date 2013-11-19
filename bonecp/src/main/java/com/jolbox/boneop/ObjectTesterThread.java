@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -107,14 +107,14 @@ public class ObjectTesterThread<T> implements Runnable {
 
                     // check if connection has been idle for too long (or is marked as broken)
                     if (!connection.isPoison() && connection.isPossiblyBroken()
-                            || ((this.idleMaxAgeInMs > 0) && (this.partition.getAvailableConnections() >= this.partition.getMinConnections() && System.currentTimeMillis() - connection.getConnectionLastUsedInMs() > this.idleMaxAgeInMs))) {
+                            || ((this.idleMaxAgeInMs > 0) && (this.partition.getAvailableConnections() >= this.partition.getMinConnections() && System.currentTimeMillis() - connection.getObjectLastUsedInMs() > this.idleMaxAgeInMs))) {
                         // kill off this connection - it's broken or it has been idle for too long
                         closeConnection(connection);
                         continue;
                     }
 
                     // check if it's time to send a new keep-alive test statement.
-                    if (!connection.isPoison() && this.idleConnectionTestPeriodInMs > 0 && (currentTimeInMs - connection.getConnectionLastUsedInMs() > this.idleConnectionTestPeriodInMs)
+                    if (!connection.isPoison() && this.idleConnectionTestPeriodInMs > 0 && (currentTimeInMs - connection.getObjectLastUsedInMs() > this.idleConnectionTestPeriodInMs)
                             && (currentTimeInMs - connection.getObjectLastResetInMs() >= this.idleConnectionTestPeriodInMs)) {
                         // send a keep-alive, close off connection if we fail.
                         if (!this.pool.isConnectionHandleAlive(connection)) {
@@ -129,7 +129,7 @@ public class ObjectTesterThread<T> implements Runnable {
                     } else {
                         // determine the next time to wake up (connection test time or idle Max age?) 
                         tmp = Math.abs(this.idleConnectionTestPeriodInMs - (currentTimeInMs - connection.getObjectLastResetInMs()));
-                        long tmp2 = Math.abs(this.idleMaxAgeInMs - (currentTimeInMs - connection.getConnectionLastUsedInMs()));
+                        long tmp2 = Math.abs(this.idleMaxAgeInMs - (currentTimeInMs - connection.getObjectLastUsedInMs()));
                         if (this.idleMaxAgeInMs > 0) {
                             tmp = Math.min(tmp, tmp2);
                         }

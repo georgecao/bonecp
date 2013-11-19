@@ -17,7 +17,7 @@
 /**
  * 
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

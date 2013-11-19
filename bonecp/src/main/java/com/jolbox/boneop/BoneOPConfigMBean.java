@@ -16,7 +16,7 @@
 /**
  *
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import com.jolbox.bonecp.hooks.ObjectListener;
 

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -78,7 +78,7 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
      */
     protected void postConnection(ObjectHandle<T> handle, long statsObtainTime) {
 
-        handle.renewConnection(); // mark it as being logically "open"
+        handle.renewObject(); // mark it as being logically "open"
 
         // Give an application a chance to do something with it.
         if (handle.getObjectListener() != null) {

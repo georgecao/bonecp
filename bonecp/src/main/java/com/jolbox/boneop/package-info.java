@@ -18,4 +18,4 @@
  * The core package for the BoneCP connection pool.
  * 
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;

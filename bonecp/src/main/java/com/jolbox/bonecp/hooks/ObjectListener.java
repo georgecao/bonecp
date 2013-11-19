@@ -19,8 +19,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 
-import com.jolbox.bonecp.ObjectHandle;
-import com.jolbox.bonecp.PoolException;
+import com.jolbox.boneop.ObjectHandle;
+import com.jolbox.boneop.PoolException;
 
 /**
  * Interface to the hooking mechanism of a connection lifecycle. Applications

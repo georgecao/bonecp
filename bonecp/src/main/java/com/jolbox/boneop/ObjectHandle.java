@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Proxy;
@@ -354,7 +354,7 @@ public class ObjectHandle<T> {
         do {
             try {
                 // keep track of this hook.
-                this.object = pool.obtainRawInternalConnection();
+                this.object = pool.obtainRawInternalObject();
                 tryAgain = false;
 
                 if (acquireRetryAttempts != pool.getConfig().getAcquireRetryAttempts()) {
@@ -530,7 +530,7 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Close off the connection.
+     * Close off the object.
      *
      * @throws PoolException
      */
@@ -538,8 +538,6 @@ public class ObjectHandle<T> {
         try {
             if (this.object != null) { // safety!
                 pool.factory.destroyObject(object);
-                // TODO this.connection.close();
-
                 if (!this.connectionTrackingDisabled && this.finalizableRefs != null) {
                     this.finalizableRefs.remove(this.object);
                 }
@@ -563,25 +561,25 @@ public class ObjectHandle<T> {
     /**
      * @return the connectionLastUsed
      */
-    public long getConnectionLastUsedInMs() {
+    public long getObjectLastUsedInMs() {
         return this.objectLastUsedInMs;
     }
 
     /**
-     * Deprecated. Use {@link #getConnectionLastUsedInMs()} instead.
+     * Deprecated. Use {@link #getObjectLastUsedInMs()} instead.
      *
      * @return the connectionLastUsed
      * @deprecated Use {@link #getConnectionLastUsedInMs()} instead.
      */
     @Deprecated
-    public long getConnectionLastUsed() {
-        return getConnectionLastUsedInMs();
+    public long getObjectLastUsed() {
+        return getObjectLastUsedInMs();
     }
 
     /**
      * @param connectionLastUsed the connectionLastUsed to set
      */
-    protected void setConnectionLastUsedInMs(long connectionLastUsed) {
+    protected void setObjectLastUsedInMs(long connectionLastUsed) {
         this.objectLastUsedInMs = connectionLastUsed;
     }
 
@@ -641,7 +639,7 @@ public class ObjectHandle<T> {
      * Renews this connection, i.e. Sets this connection to be logically open
      * (although it was never really physically closed)
      */
-    protected void renewConnection() {
+    protected void renewObject() {
         this.logicallyClosed = false;
         this.threadUsingConnection = Thread.currentThread();
         if (this.doubleCloseCheck) {
@@ -676,7 +674,7 @@ public class ObjectHandle<T> {
      */
     @Deprecated
     public T getRawConnection() {
-        return getInternalConnection();
+        return getInternalObject();
     }
 
     /**
@@ -684,7 +682,7 @@ public class ObjectHandle<T> {
      *
      * @return the raw connection
      */
-    public T getInternalConnection() {
+    public T getInternalObject() {
         return this.object;
     }
 
@@ -868,6 +866,6 @@ public class ObjectHandle<T> {
     public void refreshConnection() throws PoolException {
         // TODO 
         // this.connection.close(); // if it's still in use, close it.
-        this.object = this.pool.obtainRawInternalConnection();
+        this.object = this.pool.obtainRawInternalObject();
     }
 }

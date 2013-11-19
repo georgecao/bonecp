@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import java.io.Closeable;
 import java.io.Serializable;
@@ -222,10 +222,6 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      */
     @VisibleForTesting
     protected Properties clientInfo;
-    /**
-     * If false, we haven't made a dummy driver call first.
-     */
-    private volatile boolean driverInitialized = false;
 
     /**
      * Closes off this connection pool.
@@ -312,8 +308,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     protected void postDestroyConnection(ObjectHandle<T> handle) {
         ObjectPartition<T> partition = handle.getOriginatingPartition();
         if (this.finalizableRefQueue != null) { //safety
-            this.finalizableRefs.remove(handle.getInternalConnection());
-            //			assert o != null : "Did not manage to remove connection from finalizable ref queue";
+            this.finalizableRefs.remove(handle.getInternalObject());
         }
         partition.updateCreatedConnections(-1);
         partition.setUnableToCreateMoreTransactions(false); // we can create new ones now, this is an optimization
@@ -332,7 +327,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      * @return Connection handle
      * @throws PoolException on error
      */
-    protected T obtainRawInternalConnection() throws PoolException {
+    protected T obtainRawInternalObject() throws PoolException {
         try {
             return factory.makeObject();
         } catch (Exception ex) {
@@ -370,7 +365,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
 
         if (!config.isLazyInit()) {
             try {
-                T sanityConnection = obtainRawInternalConnection();
+                T sanityConnection = obtainRawInternalObject();
             } catch (Exception e) {
                 if (config.getConnectionHook() != null) {
                     config.getConnectionHook().onAcquireFail(e, acquireConfig);
@@ -509,7 +504,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      */
     public T getConnection() throws PoolException {
         ObjectHandle<T> handle = this.connectionStrategy.getConnection();
-        return handle.getInternalConnection();
+        return handle.getInternalObject();
     }
 
     /**
@@ -635,7 +630,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
             return; // don't place back in queue - connection is broken or expired.
         }
 
-        objectHandle.setConnectionLastUsedInMs(System.currentTimeMillis());
+        objectHandle.setObjectLastUsedInMs(System.currentTimeMillis());
         if (!this.poolShuttingDown) {
 
             putConnectionBackInPartition(objectHandle);
@@ -680,7 +675,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
             if (logicallyClosed) {
                 handle.logicallyClosed = false; // avoid checks later on if it's marked as closed.
             }
-            result = factory.validateObject(handle.getInternalConnection());
+            result = factory.validateObject(handle.getInternalObject());
         } catch (Exception ignored) {
             // connection must be broken!
             result = false;

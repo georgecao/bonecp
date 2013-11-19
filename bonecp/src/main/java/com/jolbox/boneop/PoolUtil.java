@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
