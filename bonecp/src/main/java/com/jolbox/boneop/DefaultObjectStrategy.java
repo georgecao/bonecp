@@ -51,7 +51,7 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
         }
 
         if (!partition.isUnableToCreateMoreTransactions()) { // unless we can't create any more connections...
-            this.pool.maybeSignalForMoreConnections(partition);  // see if we need to create more
+            this.pool.maybeSignalForMoreObjects(partition);  // see if we need to create more
         }
 
         return result;

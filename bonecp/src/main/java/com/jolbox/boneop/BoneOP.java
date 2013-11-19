@@ -502,7 +502,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      * @return Connection handle.
      * @throws PoolException
      */
-    public T getConnection() throws PoolException {
+    public T getObject() throws PoolException {
         ObjectHandle<T> handle = this.connectionStrategy.getObject();
         return handle.getInternalObject();
     }
@@ -551,13 +551,13 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      *
      * @return A Future task returning a connection.
      */
-    public ListenableFuture<T> getAsyncConnection() {
+    public ListenableFuture<T> getAsyncObject() {
 
         return this.asyncExecutor.submit(new Callable<T>() {
 
             @Override
             public T call() throws Exception {
-                return getConnection();
+                return getObject();
             }
         });
     }
@@ -568,7 +568,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      *
      * @param connectionPartition to test for.
      */
-    protected void maybeSignalForMoreConnections(ObjectPartition connectionPartition) {
+    protected void maybeSignalForMoreObjects(ObjectPartition connectionPartition) {
 
         if (!connectionPartition.isUnableToCreateMoreTransactions() && !this.poolShuttingDown
                 && connectionPartition.getAvailableConnections() * 100 / connectionPartition.getMaxObjects() <= this.poolAvailabilityThreshold) {
@@ -576,9 +576,9 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
         }
     }
 
-    protected void releaseConnection(T connection) throws PoolException {
+    protected void releaseObject(T connection) throws PoolException {
         // TODO connect to handle
-        releaseConnection(connection);
+        releaseObject(connection);
     }
 
     /**
@@ -590,7 +590,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      * @param handle connection to release
      * @throws PoolException
      */
-    protected void releaseConnection(ObjectHandle<T> handle) throws PoolException {
+    protected void releaseObject(ObjectHandle<T> handle) throws PoolException {
 
         // hook calls
         if (handle.getObjectListener() != null) {
@@ -626,14 +626,14 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
 
             ObjectPartition connectionPartition = objectHandle.getOriginatingPartition();
             postDestroyConnection(objectHandle);
-            maybeSignalForMoreConnections(connectionPartition);
+            maybeSignalForMoreObjects(connectionPartition);
             return; // don't place back in queue - connection is broken or expired.
         }
 
         objectHandle.setObjectLastUsedInMs(System.currentTimeMillis());
         if (!this.poolShuttingDown) {
 
-            putConnectionBackInPartition(objectHandle);
+            putObjectBackInPartition(objectHandle);
         } else {
             objectHandle.internalClose();
         }
@@ -645,7 +645,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      * @param objectHandle to place back
      * @throws PoolException on error
      */
-    protected void putConnectionBackInPartition(ObjectHandle<T> objectHandle) throws PoolException {
+    protected void putObjectBackInPartition(ObjectHandle<T> objectHandle) throws PoolException {
 
         if (this.cachedPoolStrategy && objectHandle.inUseInThreadLocalContext.get()) {
             // this might fail if we have a thread that takes up more than one thread
@@ -843,18 +843,18 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
 
     @Override
     public T borrowObject() throws Exception {
-        return getConnection();
+        return getObject();
     }
 
     @Override
     public void returnObject(T obj) throws Exception {
-        releaseConnection(obj);
+        releaseObject(obj);
     }
 
     @Override
     public void invalidateObject(T obj) throws Exception {
-        releaseConnection(obj);
+        releaseObject(obj);
         postDestroyConnection(null);
-        releaseConnection(obj);
+        releaseObject(obj);
     }
 }

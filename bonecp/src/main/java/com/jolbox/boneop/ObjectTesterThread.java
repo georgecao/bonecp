@@ -145,7 +145,7 @@ public class ObjectTesterThread<T> implements Runnable {
                             connection.internalClose();
                         }
                     } else {
-                        this.pool.putConnectionBackInPartition(connection);
+                        this.pool.putObjectBackInPartition(connection);
                     }
 
                     Thread.sleep(20L); // test slowly, this is not an operation that we're in a hurry to deal with (avoid CPU spikes)...

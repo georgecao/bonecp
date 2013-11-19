@@ -485,7 +485,7 @@ public class ObjectHandle<T> {
 
                 ObjectHandle<T> handle = this.recreateConnectionHandle();
                 this.logicallyClosed = true;
-                this.pool.releaseConnection(handle);
+                this.pool.releaseObject(handle);
 
                 if (this.doubleCloseCheck) {
                     this.doubleCloseException = this.pool.captureStackTrace(CLOSED_TWICE_EXCEPTION_MESSAGE);

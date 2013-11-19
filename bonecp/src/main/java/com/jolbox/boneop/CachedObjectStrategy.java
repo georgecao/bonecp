@@ -161,7 +161,7 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
             // prior to this method invocation.
             if (handle.inUseInThreadLocalContext.compareAndSet(false, true)) {
                 try {
-                    this.pool.releaseConnection(handle);
+                    this.pool.releaseObject(handle);
                 } catch (PoolException e) {
                     e.printStackTrace();
                 }
