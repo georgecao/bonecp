@@ -17,7 +17,7 @@
 /**
  * 
  */
-package com.jolbox.bonecp;
+package com.jolbox.boneop;
 
 import java.sql.Connection;
 import java.sql.SQLException;
