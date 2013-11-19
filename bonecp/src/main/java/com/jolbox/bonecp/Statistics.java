@@ -43,12 +43,12 @@ public class Statistics implements StatisticsMBean{
 	private final AtomicLong statementsPrepared = new AtomicLong(0);
 	
 	/** Pool handle. */
-	private BoneCP pool;
+	private BoneOP pool;
 
 	/** BoneCP handle.
 	 * @param pool
 	 */
-	public Statistics(BoneCP pool){
+	public Statistics(BoneOP pool){
 		this.pool = pool;
 	}
 	

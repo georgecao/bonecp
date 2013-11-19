@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class CloseThreadMonitor implements Runnable {
 
 	/** Handle to the connection we are monitoring.	 */
-	private ConnectionHandle connectionHandle;
+	private ObjectHandle connectionHandle;
 	/** Location where getConnection() was called. */
 	private String stackTrace;
 	/** Thread to wait for termination. */
@@ -48,7 +48,7 @@ public class CloseThreadMonitor implements Runnable {
 	 * @param stackTrace where the getConnection() request started off.
 	 * @param closeConnectionWatchTimeout no of ms to wait in thread.join(). 0 = wait forever
 	 */
-	public CloseThreadMonitor(Thread threadToMonitor, ConnectionHandle connectionHandle, String stackTrace, long closeConnectionWatchTimeout) {
+	public CloseThreadMonitor(Thread threadToMonitor, ObjectHandle connectionHandle, String stackTrace, long closeConnectionWatchTimeout) {
 		this.connectionHandle = connectionHandle;
 		this.stackTrace = stackTrace;
 		this.threadToMonitor = threadToMonitor;
