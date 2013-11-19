@@ -15,13 +15,10 @@
  */
 package com.jolbox.boneop;
 
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
-import sun.font.EAttribute;
 
 /**
  * A bounded version of {@link LinkedTransferQueue}.
@@ -116,15 +113,15 @@ public class BoundedLinkedTransferQueue<E> extends LinkedTransferQueue<E> {
         boolean result = false;
         if (!isFull()) {
             this.lock.lock();
-            if (!isFull()) {
-                try {
+            try {
+                if (!isFull()) {
                     result = super.offer(e);
                     if (result) {
                         this.size.incrementAndGet();
                     }
-                } finally {
-                    this.lock.unlock();
                 }
+            } finally {
+                this.lock.unlock();
             }
         }
         return result;
