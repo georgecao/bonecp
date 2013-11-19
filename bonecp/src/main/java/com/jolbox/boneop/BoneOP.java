@@ -42,7 +42,7 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.jolbox.bonecp.hooks.AcquireFailConfig;
+import com.jolbox.boneop.listener.AcquireFailConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedTransferQueue;
@@ -555,6 +555,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
 
         return this.asyncExecutor.submit(new Callable<T>() {
 
+            @Override
             public T call() throws Exception {
                 return getConnection();
             }
@@ -852,6 +853,8 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
 
     @Override
     public void invalidateObject(T obj) throws Exception {
+        releaseConnection(obj);
+        postDestroyConnection(null);
         releaseConnection(obj);
     }
 }

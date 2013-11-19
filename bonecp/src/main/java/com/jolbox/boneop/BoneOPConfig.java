@@ -36,7 +36,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.jolbox.bonecp.hooks.ObjectListener;
+import com.jolbox.boneop.listener.ObjectListener;
 import java.util.Objects;
 
 /**
@@ -260,6 +260,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return a pool name.
      */
+    @Override
     public String getPoolName() {
         return this.poolName;
     }
@@ -278,6 +279,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @see com.jolbox.bonecp.BoneCPConfigMBean#getMinConnectionsPerPartition()
      */
+    @Override
     public int getMinObjectsPerPartition() {
         return this.minObjectsPerPartition;
     }
@@ -297,6 +299,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @see com.jolbox.bonecp.BoneCPConfigMBean#getMaxConnectionsPerPartition()
      */
+    @Override
     public int getMaxObjectsPerPartition() {
         return this.maxObjectsPerPartition;
     }
@@ -320,6 +323,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @see com.jolbox.bonecp.BoneCPConfigMBean#getAcquireIncrement()
      */
+    @Override
     public int getAcquireIncrement() {
         return this.acquireIncrement;
     }
@@ -345,6 +349,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @see com.jolbox.bonecp.BoneCPConfigMBean#getPartitionCount()
      */
+    @Override
     public int getPartitionCount() {
         return this.partitionCount;
     }
@@ -403,6 +408,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      * @see
      * com.jolbox.bonecp.BoneCPConfigMBean#getIdleConnectionTestPeriodInMinutes()
      */
+    @Override
     public long getIdleConnectionTestPeriodInMinutes() {
         return this.idleObjectTestPeriodInSeconds / 60;
     }
@@ -492,6 +498,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return idleMaxAge in minutes
      */
+    @Override
     public long getIdleMaxAgeInMinutes() {
         return this.idleMaxAgeInSeconds / 60;
     }
@@ -557,6 +564,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @see com.jolbox.bonecp.BoneCPConfigMBean#getConnectionTestStatement()
      */
+    @Override
     public String getConnectionTestStatement() {
         return this.objectTestStatement;
     }
@@ -588,6 +596,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @see com.jolbox.bonecp.BoneCPConfigMBean#getReleaseHelperThreads()
      */
+    @Override
     public int getReleaseHelperThreads() {
         return this.releaseHelperThreads;
     }
@@ -620,6 +629,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @see com.jolbox.bonecp.BoneCPConfigMBean#getConnectionHook()
      */
+    @Override
     public ObjectListener getObjectListener() {
         return this.objectListener;
     }

@@ -18,7 +18,7 @@
  */
 package com.jolbox.boneop;
 
-import com.jolbox.bonecp.hooks.ObjectListener;
+import com.jolbox.boneop.listener.ObjectListener;
 
 /**
  * MBean interface for config.

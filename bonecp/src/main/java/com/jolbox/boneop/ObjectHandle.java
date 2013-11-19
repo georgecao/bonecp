@@ -29,9 +29,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.MapMaker;
-import com.jolbox.bonecp.hooks.AcquireFailConfig;
-import com.jolbox.bonecp.hooks.ObjectListener;
-import com.jolbox.bonecp.hooks.ConnectionState;
+import com.jolbox.boneop.listener.AcquireFailConfig;
+import com.jolbox.boneop.listener.ObjectListener;
+import com.jolbox.boneop.listener.ConnectionState;
 
 /**
  * Connection handle wrapper around a JDBC connection.
