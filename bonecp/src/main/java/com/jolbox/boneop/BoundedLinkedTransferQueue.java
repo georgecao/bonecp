@@ -15,10 +15,13 @@
  */
 package com.jolbox.boneop;
 
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import sun.font.EAttribute;
 
 /**
  * A bounded version of {@link LinkedTransferQueue}.
@@ -72,25 +75,19 @@ public class BoundedLinkedTransferQueue<E> extends LinkedTransferQueue<E> {
 
     @Override
     public E poll() {
-
         E result = super.poll();
-
         if (result != null) {
             this.size.decrementAndGet();
         }
-
         return result;
     }
 
     @Override
     public E poll(long timeout, TimeUnit unit) throws InterruptedException {
-
         E result = super.poll(timeout, unit);
-
         if (result != null) {
             this.size.decrementAndGet();
         }
-
         return result;
     }
 
@@ -103,30 +100,38 @@ public class BoundedLinkedTransferQueue<E> extends LinkedTransferQueue<E> {
         return result;
     }
 
-    @Override
+    public boolean isFull() {
+        return remainingCapacity() > 0;
+    }
+
     /**
      * Inserts the specified element at the tail of this queue. Will return
      * false if the queue limit has been reached.
      *
+     * @param e element to add
+     * @return true
      */
+    @Override
     public boolean offer(E e) {
         boolean result = false;
-        this.lock.lock();
-        try {
-            if (this.size.get() < this.maxQueueSize) {
-                super.put(e);
-                this.size.incrementAndGet();
-                result = true;
+        if (!isFull()) {
+            this.lock.lock();
+            if (!isFull()) {
+                try {
+                    result = super.offer(e);
+                    if (result) {
+                        this.size.incrementAndGet();
+                    }
+                } finally {
+                    this.lock.unlock();
+                }
             }
-
-        } finally {
-            this.lock.unlock();
         }
         return result;
     }
 
     @Override
     public void put(E e) {
-        throw new UnsupportedOperationException(); // we don't offer blocking yet
+        throw new UnsupportedOperationException("We don't offer blocking yet");
     }
 }
