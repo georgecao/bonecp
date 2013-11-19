@@ -36,8 +36,8 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.google.common.base.Objects;
 import com.jolbox.bonecp.hooks.ObjectListener;
+import java.util.Objects;
 
 /**
  * Configuration class.
@@ -370,8 +370,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
         this.partitionCount = partitionCount;
     }
 
-  
-
     /**
      * Deprecated.
      *
@@ -585,8 +583,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
         this.objectTestStatement = connectionTestStatement;
     }
 
-    
-   
     /**
      * {@inheritDoc}
      *
@@ -618,8 +614,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     public void setReleaseHelperThreads(int releaseHelperThreads) {
         this.releaseHelperThreads = releaseHelperThreads;
     }
-
-   
 
     /**
      * {@inheritDoc}
@@ -1697,8 +1691,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
             this.releaseHelperThreads = 3;
         }
 
-      
-
         if (this.acquireRetryDelayInMs <= 0) {
             this.acquireRetryDelayInMs = 1000;
         }
@@ -1728,7 +1720,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
             }
         }
     }
-
 
     /**
      * Loads the given class, respecting the given classloader.
@@ -1787,30 +1778,29 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      * @return true if the instance has the same config, false otherwise.
      */
     public boolean hasSameConfiguration(BoneOPConfig that) {
-        if (that != null && Objects.equal(this.acquireIncrement, that.getAcquireIncrement())
-                && Objects.equal(this.acquireRetryDelayInMs, that.getAcquireRetryDelayInMs())
-                && Objects.equal(this.closeConnectionWatch, that.isCloseConnectionWatch())
-                && Objects.equal(this.logStatementsEnabled, that.isLogStatementsEnabled())
-                && Objects.equal(this.connectionHook, that.getConnectionHook())
-                && Objects.equal(this.objectTestStatement, that.getConnectionTestStatement())
-                && Objects.equal(this.idleObjectTestPeriodInSeconds, that.getIdleConnectionTestPeriod(TimeUnit.SECONDS))
-                && Objects.equal(this.idleMaxAgeInSeconds, that.getIdleMaxAge(TimeUnit.SECONDS))
-                && Objects.equal(this.initSQL, that.getInitSQL())
-                && Objects.equal(this.maxObjectsPerPartition, that.getMaxObjectsPerPartition())
-                && Objects.equal(this.minObjectsPerPartition, that.getMinObjectsPerPartition())
-                && Objects.equal(this.partitionCount, that.getPartitionCount())
-                && Objects.equal(this.releaseHelperThreads, that.getReleaseHelperThreads())
-
-                && Objects.equal(this.lazyInit, that.isLazyInit())
-                && Objects.equal(this.transactionRecoveryEnabled, that.isTransactionRecoveryEnabled())
-                && Objects.equal(this.acquireRetryAttempts, that.getAcquireRetryAttempts())
-                && Objects.equal(this.closeConnectionWatchTimeoutInMs, that.getCloseConnectionWatchTimeout())
-                && Objects.equal(this.connectionTimeoutInMs, that.getConnectionTimeoutInMs())
-                && Objects.equal(this.datasourceBean, that.getDatasourceBean())
-                && Objects.equal(this.getQueryExecuteTimeLimitInMs(), that.getQueryExecuteTimeLimitInMs())
-                && Objects.equal(this.poolAvailabilityThreshold, that.getPoolAvailabilityThreshold())
-                && Objects.equal(this.poolName, that.getPoolName())
-                && Objects.equal(this.disableConnectionTracking, that.isDisableConnectionTracking())) {
+        if (that != null && Objects.equals(this.acquireIncrement, that.getAcquireIncrement())
+                && Objects.equals(this.acquireRetryDelayInMs, that.getAcquireRetryDelayInMs())
+                && Objects.equals(this.closeConnectionWatch, that.isCloseConnectionWatch())
+                && Objects.equals(this.logStatementsEnabled, that.isLogStatementsEnabled())
+                && Objects.equals(this.connectionHook, that.getConnectionHook())
+                && Objects.equals(this.objectTestStatement, that.getConnectionTestStatement())
+                && Objects.equals(this.idleObjectTestPeriodInSeconds, that.getIdleConnectionTestPeriod(TimeUnit.SECONDS))
+                && Objects.equals(this.idleMaxAgeInSeconds, that.getIdleMaxAge(TimeUnit.SECONDS))
+                && Objects.equals(this.initSQL, that.getInitSQL())
+                && Objects.equals(this.maxObjectsPerPartition, that.getMaxObjectsPerPartition())
+                && Objects.equals(this.minObjectsPerPartition, that.getMinObjectsPerPartition())
+                && Objects.equals(this.partitionCount, that.getPartitionCount())
+                && Objects.equals(this.releaseHelperThreads, that.getReleaseHelperThreads())
+                && Objects.equals(this.lazyInit, that.isLazyInit())
+                && Objects.equals(this.transactionRecoveryEnabled, that.isTransactionRecoveryEnabled())
+                && Objects.equals(this.acquireRetryAttempts, that.getAcquireRetryAttempts())
+                && Objects.equals(this.closeConnectionWatchTimeoutInMs, that.getCloseConnectionWatchTimeout())
+                && Objects.equals(this.connectionTimeoutInMs, that.getConnectionTimeoutInMs())
+                && Objects.equals(this.datasourceBean, that.getDatasourceBean())
+                && Objects.equals(this.getQueryExecuteTimeLimitInMs(), that.getQueryExecuteTimeLimitInMs())
+                && Objects.equals(this.poolAvailabilityThreshold, that.getPoolAvailabilityThreshold())
+                && Objects.equals(this.poolName, that.getPoolName())
+                && Objects.equals(this.disableConnectionTracking, that.isDisableConnectionTracking())) {
             return true;
         }
 

@@ -117,7 +117,7 @@ public class ObjectTesterThread<T> implements Runnable {
                     if (!connection.isPoison() && this.idleConnectionTestPeriodInMs > 0 && (currentTimeInMs - connection.getObjectLastUsedInMs() > this.idleConnectionTestPeriodInMs)
                             && (currentTimeInMs - connection.getObjectLastResetInMs() >= this.idleConnectionTestPeriodInMs)) {
                         // send a keep-alive, close off connection if we fail.
-                        if (!this.pool.isConnectionHandleAlive(connection)) {
+                        if (!this.pool.isObjectHandleAlive(connection)) {
                             closeConnection(connection);
                             continue;
                         }

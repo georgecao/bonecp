@@ -17,15 +17,9 @@ package com.jolbox.boneop;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Proxy;
-import java.sql.Connection;
 import java.sql.Statement;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
-/* #ifdef JDK7
- import java.util.concurrent.Executor;
- #endif JDK7 */
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -206,27 +200,6 @@ public class ObjectHandle<T> {
      */
     private boolean closeOpenStatements;
 
-    /*
-     * From: http://publib.boulder.ibm.com/infocenter/db2luw/v8/index.jsp?topic=/com.ibm.db2.udb.doc/core/r0sttmsg.htm
-     * Table 7. Class Code 08: Connection Exception
-     SQLSTATE Value	  
-     Value	Meaning
-     08001	The application requester is unable to establish the connection.
-     08002	The connection already exists.
-     08003	The connection does not exist.
-     08004	The application server rejected establishment of the connection.
-     08007	Transaction resolution unknown.
-     08502	The CONNECT statement issued by an application process running with a SYNCPOINT of TWOPHASE has failed, because no transaction manager is available.
-     08504	An error was encountered while processing the specified path rename configuration file.
-     */
-    /**
-     * SQL Failure codes indicating the database is broken/died (and thus kill
-     * off remaining connections). Anything else will be taken as the
-     * *connection* (not the db) being broken. Note: 08S01 is considered as
-     * connection failure in MySQL. 57P01 means that postgresql was restarted.
-     * HY000 is firebird specific triggered when a connection is broken
-     */
-    private static final ImmutableSet<String> sqlStateDBFailureCodes = ImmutableSet.of("08001", "08007", "08S01", "57P01", "HY000");
     /**
      * Keep track of open statements.
      */
@@ -443,9 +416,9 @@ public class ObjectHandle<T> {
             state = "08999";
         }
 
-        if (((sqlStateDBFailureCodes.contains(state) || connectionState.equals(ConnectionState.TERMINATE_ALL_CONNECTIONS)) && this.pool != null) && this.pool.getDbIsDown().compareAndSet(false, true)) {
+        if (((connectionState.equals(ConnectionState.TERMINATE_ALL_CONNECTIONS)) && this.pool != null) && this.pool.getDbIsDown().compareAndSet(false, true)) {
             logger.error("Database access problem. Killing off all remaining connections in the connection pool. SQL State = " + state);
-            this.pool.connectionStrategy.terminateAllConnections();
+            this.pool.connectionStrategy.destroyAllObjects();
             this.pool.poisonAndRepopulatePartitions();
         }
 
@@ -631,7 +604,7 @@ public class ObjectHandle<T> {
      *
      * @param originatingPartition to set
      */
-    protected void setOriginatingPartition(ObjectPartition originatingPartition) {
+    protected void setOriginatingPartition(ObjectPartition<T> originatingPartition) {
         this.originatingPartition = originatingPartition;
     }
 
@@ -673,7 +646,7 @@ public class ObjectHandle<T> {
      * @return the raw connection
      */
     @Deprecated
-    public T getRawConnection() {
+    public T getRawObject() {
         return getInternalObject();
     }
 
@@ -696,31 +669,13 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Returns true if logging of statements is enabled
-     *
-     * @return logStatementsEnabled status
-     */
-    public boolean isLogStatementsEnabled() {
-        return this.logStatementsEnabled;
-    }
-
-    /**
-     * Enable or disable logging of this connection.
-     *
-     * @param logStatementsEnabled true to enable logging, false to disable.
-     */
-    public void setLogStatementsEnabled(boolean logStatementsEnabled) {
-        this.logStatementsEnabled = logStatementsEnabled;
-    }
-
-    /**
      * Sends a test query to the underlying connection and return true if
      * connection is alive.
      *
      * @return True if connection is valid, false otherwise.
      */
-    public boolean isConnectionAlive() {
-        return this.pool.isConnectionHandleAlive(this);
+    public boolean isObjectAlive() {
+        return this.pool.isObjectHandleAlive(this);
     }
 
     /**

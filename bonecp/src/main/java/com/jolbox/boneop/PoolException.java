@@ -11,6 +11,10 @@ package com.jolbox.boneop;
  */
 public class PoolException extends Exception {
 
+    public PoolException() {
+    }
+
+    
     public PoolException(String message) {
         super(message);
     }

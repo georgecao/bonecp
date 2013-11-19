@@ -41,9 +41,9 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
      *
      * @return if stats are enabled, return the nanoTime when this connection
      * was requested.
-     * @throws com.jolbox.bonecp.PoolException
+     * @throws com.jolbox.boneop.PoolException
      */
-    protected long preConnection() throws PoolException {
+    protected long preObject() throws PoolException {
         long statsObtainTime = 0;
 
         if (this.pool.poolShuttingDown) {
@@ -76,7 +76,7 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
      * @param handle
      * @param statsObtainTime
      */
-    protected void postConnection(ObjectHandle<T> handle, long statsObtainTime) {
+    protected void postObject(ObjectHandle<T> handle, long statsObtainTime) {
 
         handle.renewObject(); // mark it as being logically "open"
 
@@ -86,7 +86,7 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
         }
 
         if (this.pool.closeConnectionWatch) { // a debugging tool
-            this.pool.watchConnection(handle);
+            this.pool.watchObject(handle);
         }
 
         if (this.pool.statisticsEnabled) {
@@ -95,12 +95,12 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
     }
 
     @Override
-    public ObjectHandle<T> getConnection() throws PoolException {
-        long statsObtainTime = preConnection();
+    public ObjectHandle<T> getObject() throws PoolException {
+        long statsObtainTime = preObject();
 
-        ObjectHandle<T> result = getConnectionInternal();
+        ObjectHandle<T> result = getObjectInternal();
         if (result != null) {
-            postConnection(result, statsObtainTime);
+            postObject(result, statsObtainTime);
         }
 
         return result;
@@ -110,12 +110,12 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
      * Actual call that returns a connection
      *
      * @return Connection
-     * @throws com.jolbox.bonecp.PoolException
+     * @throws com.jolbox.boneop.PoolException
      */
-    protected abstract ObjectHandle<T> getConnectionInternal() throws PoolException;
+    protected abstract ObjectHandle<T> getObjectInternal() throws PoolException;
 
     @Override
-    public ObjectHandle<T> pollConnection() {
+    public ObjectHandle<T> pollObject() {
         // usually overridden
         return null;
     }

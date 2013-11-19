@@ -31,7 +31,7 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
     }
 
     @Override
-    public ObjectHandle<T> pollConnection() {
+    public ObjectHandle<T> pollObject() {
         ObjectHandle<T> result = null;
         int partition = selectPartition();
         ObjectPartition<T> connectionPartition = getPartition(partition);
@@ -59,8 +59,8 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
     }
 
     @Override
-    protected ObjectHandle<T> getConnectionInternal() throws PoolException {
-        ObjectHandle<T> result = pollConnection();
+    protected ObjectHandle<T> getObjectInternal() throws PoolException {
+        ObjectHandle<T> result = pollObject();
         ObjectPartition<T> connectionPartition = currentPartition();
         // we still didn't find an empty one, wait forever (or as per config) until our partition is free
         if (result == null) {
@@ -95,15 +95,15 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
      * Closes off all connections in all partitions.
      */
     @Override
-    public void terminateAllConnections() {
+    public void destroyAllObjects() {
         this.terminationLock.lock();
         try {
-            ObjectHandle<T> conn;
+            ObjectHandle<T> objectHandle;
             // close off all connections.
             for (ObjectPartition<T> partition : this.pool.partitions) {
                 partition.setUnableToCreateMoreTransactions(false); // we can create new ones now, this is an optimization
-                while ((conn = partition.getFreeObjects().poll()) != null) {
-                    this.pool.destroyConnection(conn);
+                while ((objectHandle = partition.getFreeObjects().poll()) != null) {
+                    this.pool.destroyObject(objectHandle);
                 }
 
             }

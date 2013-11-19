@@ -27,20 +27,20 @@ public interface ObjectStrategy<T> {
     /**
      * Obtains a connection using the configured strategy. Main entry point.
      *
-     * @return Connection
-     * @throws com.jolbox.bonecp.PoolException
+     * @return pooled object.
+     * @throws com.jolbox.boneop.PoolException
      */
-    ObjectHandle<T> getConnection() throws PoolException;
+    ObjectHandle<T> getObject() throws PoolException;
 
     /**
-     * Obtains a connection using the configured strategy without blocking.
+     * Obtains a object using the configured strategy without blocking.
      *
-     * @return Connection
+     * @return object instance
      */
-    ObjectHandle<T> pollConnection();
+    ObjectHandle<T> pollObject();
 
     /**
-     * Destroys all connections using this strategy.
+     * Destroys all objects using this strategy.
      */
-    void terminateAllConnections();
+    void destroyAllObjects();
 }

@@ -138,7 +138,7 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
      * @throws SQLException
      */
     ObjectHandle pollFallbackConnection() throws SQLException {
-        ObjectHandle result = (ObjectHandle) this.fallbackStrategy.pollConnection();
+        ObjectHandle result = (ObjectHandle) this.fallbackStrategy.pollObject();
         // if we were successfull remember this connection to be able to shutdown cleanly.
         if (result != null) {
             threadWatch(result);
@@ -198,7 +198,7 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
     }
 
     @Override
-    protected ObjectHandle<T> getConnectionInternal() throws PoolException {
+    protected ObjectHandle<T> getObjectInternal() throws PoolException {
         // try to get the connection from thread local storage.
         ObjectHandle result = this.tlConnections.get();
         // we should always be successfull. If not, it means we have more threads asking
@@ -209,24 +209,24 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
             this.pool.connectionStrategy = this.fallbackStrategy;
             stealExistingAllocations();
             // get a connection as if under our fallback strategy now.
-            result = (ObjectHandle) this.pool.connectionStrategy.getConnection();
+            result = (ObjectHandle) this.pool.connectionStrategy.getObject();
         }
         return result;
     }
 
     @Override
-    public ObjectHandle<T> pollConnection() {
+    public ObjectHandle<T> pollObject() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void terminateAllConnections() {
+    public void destroyAllObjects() {
         for (ObjectHandle conn : this.finalizableRefs.keySet()) {
-            this.pool.destroyConnection(conn);
+            this.pool.destroyObject(conn);
         }
         this.finalizableRefs.clear();
 
-        this.fallbackStrategy.terminateAllConnections();
+        this.fallbackStrategy.destroyAllObjects();
     }
 
 }

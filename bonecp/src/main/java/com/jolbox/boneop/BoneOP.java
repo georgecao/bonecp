@@ -261,7 +261,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
             } catch (InterruptedException e) {
                 // do nothing
             }
-            this.connectionStrategy.terminateAllConnections();
+            this.connectionStrategy.destroyAllObjects();
             registerUnregisterJMX(false);
             LOG.info("Connection pool has been shutdown.");
         }
@@ -289,7 +289,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     /**
      * @param conn
      */
-    protected void destroyConnection(ObjectHandle<T> conn) {
+    protected void destroyObject(ObjectHandle<T> conn) {
         postDestroyConnection(conn);
         try {
             if (!conn.isPoison()) {
@@ -317,7 +317,6 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
         if (handle.getObjectListener() != null) {
             handle.getObjectListener().onDestroy(handle);
         }
-
     }
 
     /**
@@ -458,7 +457,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     }
 
     /**
-     * Initialises JMX stuff.
+     * Initializes JMX stuff.
      *
      * @param doRegister if true, perform registration, if false unregister
      */
@@ -503,7 +502,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      * @throws PoolException
      */
     public T getConnection() throws PoolException {
-        ObjectHandle<T> handle = this.connectionStrategy.getConnection();
+        ObjectHandle<T> handle = this.connectionStrategy.getObject();
         return handle.getInternalObject();
     }
 
@@ -512,7 +511,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      *
      * @param connectionHandle to monitor
      */
-    protected void watchConnection(ObjectHandle connectionHandle) {
+    protected void watchObject(ObjectHandle<T> connectionHandle) {
         String message = captureStackTrace(UNCLOSED_EXCEPTION_MESSAGE);
         this.closeConnectionExecutor.submit(new CloseThreadMonitor(Thread.currentThread(), connectionHandle, message, this.closeConnectionWatchTimeoutInMs));
     }
@@ -618,7 +617,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     protected void internalReleaseObject(ObjectHandle<T> objectHandle) throws PoolException {
 
         if (objectHandle.isExpired() || (!this.poolShuttingDown && objectHandle.isPossiblyBroken()
-                && !isConnectionHandleAlive(objectHandle))) {
+                && !isObjectHandleAlive(objectHandle))) {
 
             if (objectHandle.isExpired()) {
                 objectHandle.internalClose();
@@ -668,7 +667,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      * @param handle Connection handle to perform activity on
      * @return true if test query worked, false otherwise
      */
-    public boolean isConnectionHandleAlive(ObjectHandle<T> handle) {
+    public boolean isObjectHandleAlive(ObjectHandle<T> handle) {
         boolean result = false;
         boolean logicallyClosed = handle.logicallyClosed;
         try {

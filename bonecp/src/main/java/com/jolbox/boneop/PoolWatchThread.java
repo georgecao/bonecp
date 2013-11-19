@@ -69,6 +69,7 @@ public class PoolWatchThread<T> implements Runnable {
         this.poolAvailabilityThreshold = this.pool.getConfig().getPoolAvailabilityThreshold();
     }
 
+    @Override
     public void run() {
         int maxNewConnections;
         while (!this.signalled) {
@@ -78,7 +79,6 @@ public class PoolWatchThread<T> implements Runnable {
                 if (this.lazyInit) { // block the first time if this is on.
                     this.partition.getPoolWatchThreadSignalQueue().take();
                 }
-
                 maxNewConnections = this.partition.getMaxConnections() - this.partition.getCreatedConnections();
                 // loop for spurious interrupt
                 while (maxNewConnections == 0 || (this.partition.getAvailableConnections() * 100 / this.partition.getMaxConnections() > this.poolAvailabilityThreshold)) {
@@ -89,7 +89,6 @@ public class PoolWatchThread<T> implements Runnable {
                     maxNewConnections = this.partition.getMaxConnections() - this.partition.getCreatedConnections();
 
                 }
-
                 if (maxNewConnections > 0 && !this.pool.poolShuttingDown) {
                     fillConnections(Math.min(maxNewConnections, this.partition.getAcquireIncrement()));
                 }
