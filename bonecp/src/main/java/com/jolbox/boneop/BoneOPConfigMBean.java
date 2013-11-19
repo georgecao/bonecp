@@ -102,7 +102,7 @@ public interface BoneOPConfigMBean {
      *
      * @return the connectionHook
      */
-    ObjectListener getConnectionHook();
+    ObjectListener getObjectListener();
 
     /**
      * Returns the initSQL parameter.
@@ -175,7 +175,7 @@ public interface BoneOPConfigMBean {
      *
      * @return the disableConnectionTracking
      */
-    boolean isDisableConnectionTracking();
+    boolean isDisableObjectTracking();
 
     /**
      * Returns the maximum time (in milliseconds) to wait before a call to
@@ -183,7 +183,7 @@ public interface BoneOPConfigMBean {
      *
      * @return the connectionTimeout
      */
-    long getConnectionTimeoutInMs();
+    long getWaitTimeInMs();
 
     /**
      * Returns the no of ms to wait when close connection watch threads are
@@ -191,14 +191,14 @@ public interface BoneOPConfigMBean {
      *
      * @return the watchTimeout currently set.
      */
-    long getCloseConnectionWatchTimeoutInMs();
+    long getCloseObjectWatchTimeoutInMs();
 
     /**
      * Returns the maxConnectionAge field.
      *
      * @return maxConnectionAge
      */
-    long getMaxConnectionAgeInSeconds();
+    long getMaxObjectAgeInSeconds();
 
     /**
      * Returns the configFile field.

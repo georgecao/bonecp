@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.FinalizableReferenceQueue;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -177,7 +178,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      * Time to wait before timing out the connection. Default in config is
      * Long.MAX_VALUE milliseconds.
      */
-    protected long connectionTimeoutInMs;
+    protected long waitTimeInMs;
     /**
      * No of ms to wait for thread.join() in connection watch thread.
      */
@@ -310,7 +311,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
         if (this.finalizableRefQueue != null) { //safety
             this.finalizableRefs.remove(handle.getInternalObject());
         }
-        partition.updateCreatedConnections(-1);
+        partition.updateCreatedObjects(-1);
         partition.setUnableToCreateMoreTransactions(false); // we can create new ones now, this is an optimization
 
         // "Destroying" for us means: don't put it back in the pool.
@@ -347,16 +348,16 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
         config.sanitize();
 
         this.statisticsEnabled = config.isStatisticsEnabled();
-        this.closeConnectionWatchTimeoutInMs = config.getCloseConnectionWatchTimeoutInMs();
+        this.closeConnectionWatchTimeoutInMs = config.getCloseObjectWatchTimeoutInMs();
         this.poolAvailabilityThreshold = config.getPoolAvailabilityThreshold();
-        this.connectionTimeoutInMs = config.getConnectionTimeoutInMs();
+        this.waitTimeInMs = config.getWaitTimeInMs();
         this.externalAuth = config.isExternalAuth();
 
-        if (this.connectionTimeoutInMs == 0) {
-            this.connectionTimeoutInMs = Long.MAX_VALUE;
+        if (this.waitTimeInMs == 0) {
+            this.waitTimeInMs = Long.MAX_VALUE;
         }
-        this.nullOnConnectionTimeout = config.isNullOnConnectionTimeout();
-        this.resetConnectionOnClose = config.isResetConnectionOnClose();
+        this.nullOnConnectionTimeout = config.isNullOnObjectTimeout();
+        this.resetConnectionOnClose = config.isResetObjectOnClose();
         AcquireFailConfig acquireConfig = new AcquireFailConfig();
         acquireConfig.setAcquireRetryAttempts(new AtomicInteger(0));
         acquireConfig.setAcquireRetryDelayInMs(0);
@@ -366,13 +367,13 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
             try {
                 T sanityConnection = obtainRawInternalObject();
             } catch (Exception e) {
-                if (config.getConnectionHook() != null) {
-                    config.getConnectionHook().onAcquireFail(e, acquireConfig);
+                if (config.getObjectListener() != null) {
+                    config.getObjectListener().onAcquireFail(e, acquireConfig);
                 }
                 // TODO throw new PoolException(String.format(ERROR_TEST_CONNECTION, config.getJdbcUrl(), config.getUsername(), PoolUtil.stringifyException(e)), e);
             }
         }
-        if (!config.isDisableConnectionTracking()) {
+        if (!config.isDisableObjectTracking()) {
             this.finalizableRefQueue = new FinalizableReferenceQueue();
         }
 
@@ -427,7 +428,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
             if (!config.isLazyInit()) {
                 for (int i = 0; i < config.getMinObjectsPerPartition(); i++) {
                     final ObjectHandle<T> handle = ObjectHandle.createConnectionHandle(this);
-                    this.partitions.get(p).addFreeConnection(handle);
+                    this.partitions.get(p).addFreeObject(handle);
                 }
             }
             if (config.getIdleConnectionTestPeriod(TimeUnit.SECONDS) > 0 || config.getIdleMaxAge(TimeUnit.SECONDS) > 0) {
@@ -443,9 +444,9 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
                 this.keepAliveScheduler.schedule(connectionTester, delayInSeconds, TimeUnit.SECONDS);
             }
 
-            if (config.getMaxConnectionAgeInSeconds() > 0) {
+            if (config.getMaxObjectAgeInSeconds() > 0) {
                 final Runnable connectionMaxAgeTester = new ObjectMaxAgeThread(connectionPartition, this.maxAliveScheduler, this, config.getMaxConnectionAge(TimeUnit.MILLISECONDS), queueLIFO);
-                this.maxAliveScheduler.schedule(connectionMaxAgeTester, config.getMaxConnectionAgeInSeconds(), TimeUnit.SECONDS);
+                this.maxAliveScheduler.schedule(connectionMaxAgeTester, config.getMaxObjectAgeInSeconds(), TimeUnit.SECONDS);
             }
             // watch this partition for low no of threads
             this.connectionsScheduler.execute(new PoolWatchThread(connectionPartition, this));
@@ -569,7 +570,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     protected void maybeSignalForMoreConnections(ObjectPartition connectionPartition) {
 
         if (!connectionPartition.isUnableToCreateMoreTransactions() && !this.poolShuttingDown
-                && connectionPartition.getAvailableConnections() * 100 / connectionPartition.getMaxConnections() <= this.poolAvailabilityThreshold) {
+                && connectionPartition.getAvailableConnections() * 100 / connectionPartition.getMaxObjects() <= this.poolAvailabilityThreshold) {
             connectionPartition.getPoolWatchThreadSignalQueue().offer(new Object()); // item being pushed is not important.
         }
     }
@@ -585,8 +586,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      * connection.close() instead which will return the connection back to the
      * pool.
      *
-     * @param handle
-     * @param connection to release
+     * @param handle connection to release
      * @throws PoolException
      */
     protected void releaseConnection(ObjectHandle<T> handle) throws PoolException {
@@ -693,7 +693,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     public int getTotalLeased() {
         int total = 0;
         for (ObjectPartition<T> partition : partitions) {
-            total += partition.getCreatedConnections() - partition.getAvailableConnections();
+            total += partition.getCreatedObjects() - partition.getAvailableConnections();
         }
         return total;
     }
@@ -717,10 +717,10 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      *
      * @return number of created connections
      */
-    public int getTotalCreatedConnections() {
+    public int getTotalCreatedObjects() {
         int total = 0;
         for (ObjectPartition<T> partition : partitions) {
-            total += partition.getCreatedConnections();
+            total += partition.getCreatedObjects();
         }
         return total;
     }
@@ -854,5 +854,4 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     public void invalidateObject(T obj) throws Exception {
         releaseConnection(obj);
     }
-
 }

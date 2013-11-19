@@ -79,14 +79,14 @@ public class PoolWatchThread<T> implements Runnable {
                 if (this.lazyInit) { // block the first time if this is on.
                     this.partition.getPoolWatchThreadSignalQueue().take();
                 }
-                maxNewConnections = this.partition.getMaxConnections() - this.partition.getCreatedConnections();
+                maxNewConnections = this.partition.getMaxObjects() - this.partition.getCreatedObjects();
                 // loop for spurious interrupt
-                while (maxNewConnections == 0 || (this.partition.getAvailableConnections() * 100 / this.partition.getMaxConnections() > this.poolAvailabilityThreshold)) {
+                while (maxNewConnections == 0 || (this.partition.getAvailableConnections() * 100 / this.partition.getMaxObjects() > this.poolAvailabilityThreshold)) {
                     if (maxNewConnections == 0) {
                         this.partition.setUnableToCreateMoreTransactions(true);
                     }
                     this.partition.getPoolWatchThreadSignalQueue().take();
-                    maxNewConnections = this.partition.getMaxConnections() - this.partition.getCreatedConnections();
+                    maxNewConnections = this.partition.getMaxObjects() - this.partition.getCreatedObjects();
 
                 }
                 if (maxNewConnections > 0 && !this.pool.poolShuttingDown) {
@@ -126,7 +126,7 @@ public class PoolWatchThread<T> implements Runnable {
                         // otherwise just consume it.
                     }
                 }
-                this.partition.addFreeConnection(handle);
+                this.partition.addFreeObject(handle);
 
             }
         } catch (PoolException e) {

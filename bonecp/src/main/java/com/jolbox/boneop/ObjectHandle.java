@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
 import com.jolbox.bonecp.hooks.AcquireFailConfig;
 import com.jolbox.bonecp.hooks.ObjectListener;
@@ -294,13 +293,13 @@ public class ObjectHandle<T> {
         this.defaultCatalog = pool.getConfig().getDefaultCatalog();
         this.defaultTransactionIsolationValue = pool.getConfig().getDefaultTransactionIsolationValue();
         this.defaultAutoCommit = pool.getConfig().getDefaultAutoCommit();
-        this.resetConnectionOnClose = pool.getConfig().isResetConnectionOnClose();
-        this.connectionTrackingDisabled = pool.getConfig().isDisableConnectionTracking();
+        this.resetConnectionOnClose = pool.getConfig().isResetObjectOnClose();
+        this.connectionTrackingDisabled = pool.getConfig().isDisableObjectTracking();
         this.statisticsEnabled = pool.getConfig().isStatisticsEnabled();
         this.statistics = pool.getStatistics();
         this.detectUnclosedStatements = pool.getConfig().isDetectUnclosedStatements();
         this.threadUsingConnection = null;
-        this.objectListener = this.pool.getConfig().getConnectionHook();
+        this.objectListener = this.pool.getConfig().getObjectListener();
 
         this.maxObjectAgeInMs = pool.getConfig().getMaxConnectionAge(TimeUnit.MILLISECONDS);
         this.doubleCloseCheck = pool.getConfig().isCloseConnectionWatch();
@@ -323,7 +322,7 @@ public class ObjectHandle<T> {
         acquireConfig.setAcquireRetryAttempts(new AtomicInteger(acquireRetryAttempts));
         acquireConfig.setAcquireRetryDelayInMs(acquireRetryDelayInMs);
         acquireConfig.setLogMessage("Failed to acquire connection to ");
-        this.objectListener = pool.getConfig().getConnectionHook();
+        this.objectListener = pool.getConfig().getObjectListener();
         do {
             try {
                 // keep track of this hook.

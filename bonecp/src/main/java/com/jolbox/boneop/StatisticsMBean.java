@@ -26,7 +26,7 @@ public interface StatisticsMBean {
 	 * Return the average time it takes for a getConnection request to be services (in ms).
 	 * @return Time in ms
 	 */
-	double getConnectionWaitTimeAvg();
+	double getObjectWaitTimeAvg();
 	
 	/** 
 	 * Return the average execution time for prepared statements to execute (in ms).
@@ -57,7 +57,7 @@ public interface StatisticsMBean {
 	 *
 	 * @return number of created connections
 	 */
-	int getTotalCreatedConnections();
+	int getTotalCreatedObjects();
 
 	/**
 	 * Returns the cacheHits field.
@@ -87,13 +87,13 @@ public interface StatisticsMBean {
 	 * Returns the connectionsRequested field.
 	 * @return connectionsRequested
 	 */
-	long getConnectionsRequested();
+	long getObjectsRequested();
 
 	/**
 	 * Returns the total time that the application waited in order to obtain its connections (in ms).
 	 * @return connectionWaitTime
 	 */
-	long getCumulativeConnectionWaitTime();
+	long getCumulativeObjectWaitTime();
 
 	/**
 	 * Returns the time taken for the prepared statements to execute (in ms).

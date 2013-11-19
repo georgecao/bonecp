@@ -52,7 +52,7 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
 
         if (this.pool.statisticsEnabled) {
             statsObtainTime = System.nanoTime();
-            this.pool.statistics.incrementConnectionsRequested();
+            this.pool.statistics.incrementObjectsRequested();
         }
 
         return statsObtainTime;
@@ -90,19 +90,17 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
         }
 
         if (this.pool.statisticsEnabled) {
-            this.pool.statistics.addCumulativeConnectionWaitTime(System.nanoTime() - statsObtainTime);
+            this.pool.statistics.addCumulativeObjectWaitTime(System.nanoTime() - statsObtainTime);
         }
     }
 
     @Override
     public ObjectHandle<T> getObject() throws PoolException {
         long statsObtainTime = preObject();
-
         ObjectHandle<T> result = getObjectInternal();
         if (result != null) {
             postObject(result, statsObtainTime);
         }
-
         return result;
     }
 
@@ -113,10 +111,4 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
      * @throws com.jolbox.boneop.PoolException
      */
     protected abstract ObjectHandle<T> getObjectInternal() throws PoolException;
-
-    @Override
-    public ObjectHandle<T> pollObject() {
-        // usually overridden
-        return null;
-    }
 }

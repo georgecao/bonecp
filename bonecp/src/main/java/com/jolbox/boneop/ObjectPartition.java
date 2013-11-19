@@ -16,8 +16,6 @@
 package com.jolbox.boneop;
 
 import java.io.Serializable;
-import java.lang.reflect.Proxy;
-import java.sql.Connection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +32,7 @@ import java.util.concurrent.TransferQueue;
  * Connection Partition structure
  *
  * @author wwadge
+ * @param <T>
  *
  */
 public class ObjectPartition<T> implements Serializable {
@@ -45,7 +44,7 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * Logger class.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ObjectPartition.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectPartition.class);
     /**
      * Connections available to be taken
      */
@@ -57,11 +56,11 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * Minimum number of connections to start off with.
      */
-    private final int minConnections;
+    private final int minObjects;
     /**
      * Maximum number of connections that will ever be created.
      */
-    private final int maxConnections;
+    private final int maxObjects;
     /**
      * Statistics lock.
      */
@@ -69,7 +68,7 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * Number of connections that have been created.
      */
-    private int createdConnections = 0;
+    private int createdObjects = 0;
     /**
      * If set to true, don't bother calling method to attempt to create more
      * connections because we've hit our limit.
@@ -78,25 +77,25 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * Scratch queue of connections awaiting to be placed back in queue.
      */
-    private LinkedTransferQueue<ObjectHandle<T>> objectsPendingRelease;
+    private final LinkedTransferQueue<ObjectHandle<T>> objectsPendingRelease;
     /**
      * Config setting.
      */
-    private boolean disableTracking;
+    private final boolean disableTracking;
     /**
      * Signal trigger to pool watch thread. Making it a queue means our signal
      * is persistent.
      */
-    private BlockingQueue<Object> poolWatchThreadSignalQueue = new ArrayBlockingQueue<Object>(1);
+    private final BlockingQueue<Object> poolWatchThreadSignalQueue = new ArrayBlockingQueue<>(1);
     /**
      * Store the unit translation here to avoid recalculating it in statement
      * handles.
      */
-    private long queryExecuteTimeLimitInNanoSeconds;
+    private final long queryExecuteTimeLimitInNanoSeconds;
     /**
      * Cached copy of the config-specified pool name.
      */
-    private String poolName;
+    private final String poolName;
     /**
      * Handle to the pool.
      */
@@ -116,11 +115,11 @@ public class ObjectPartition<T> implements Serializable {
      *
      * @param increment value to add/subtract
      */
-    protected void updateCreatedConnections(int increment) {
+    protected void updateCreatedObjects(int increment) {
 
         try {
             this.statsLock.writeLock().lock();
-            this.createdConnections += increment;
+            this.createdObjects += increment;
             //		assert this.createdConnections >= 0 : "Created connections < 0!";
 
         } finally {
@@ -131,29 +130,29 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * Adds a free connection.
      *
-     * @param connectionHandle
+     * @param handle
      * @throws PoolException on error
      */
-    protected void addFreeConnection(ObjectHandle<T> connectionHandle) throws PoolException {
-        connectionHandle.setOriginatingPartition(this);
+    protected void addFreeObject(ObjectHandle<T> handle) throws PoolException {
+        handle.setOriginatingPartition(this);
         // assume success to avoid racing where we insert an item in a queue and having that item immediately
         // taken and closed off thus decrementing the created connection count.
-        updateCreatedConnections(1);
+        updateCreatedObjects(1);
         if (!this.disableTracking) {
-            trackConnectionFinalizer(connectionHandle);
+            trackObjectFinalizer(handle);
         }
 
         // the instant the following line is executed, consumers can start making use of this 
         // connection.
-        if (!this.freeObjects.offer(connectionHandle)) {
+        if (!this.freeObjects.offer(handle)) {
             // we failed. rollback.
-            updateCreatedConnections(-1); // compensate our createdConnection count.
+            updateCreatedObjects(-1); // compensate our createdConnection count.
 
             if (!this.disableTracking) {
-                this.pool.getFinalizableRefs().remove(connectionHandle.getInternalObject());
+                this.pool.getFinalizableRefs().remove(handle.getInternalObject());
             }
             // terminate the internal handle.
-            connectionHandle.internalClose();
+            handle.internalClose();
         }
     }
 
@@ -172,28 +171,28 @@ public class ObjectPartition<T> implements Serializable {
      * safely release the database internal handle and update our counters
      * instead.
      *
-     * @param connectionHandle handle to watch
+     * @param handle handle to watch
      */
-    protected void trackConnectionFinalizer(ObjectHandle<T> connectionHandle) {
+    protected void trackObjectFinalizer(ObjectHandle<T> handle) {
         if (!this.disableTracking) {
             //	assert !connectionHandle.getPool().getFinalizableRefs().containsKey(connectionHandle) : "Already tracking this handle";
-            T con = connectionHandle.getInternalObject();
+            T con = handle.getInternalObject();
             final T obj = con;
-            final BoneOP<T> pool = connectionHandle.getPool();
-            connectionHandle.getPool().getFinalizableRefs().put(obj, new FinalizableWeakReference<ObjectHandle<T>>(connectionHandle, connectionHandle.getPool().getFinalizableRefQueue()) {
+            final BoneOP<T> pool = handle.getPool();
+            handle.getPool().getFinalizableRefs().put(obj, new FinalizableWeakReference<ObjectHandle<T>>(handle, handle.getPool().getFinalizableRefQueue()) {
                 @Override
                 public void finalizeReferent() {
                     try {
                         pool.getFinalizableRefs().remove(obj);
                         if (obj != null && pool.factory.validateObject(obj)) { // safety!
 
-                            logger.warn("BoneCP detected an unclosed connection " + ObjectPartition.this.poolName + "and will now attempt to close it for you. "
+                            LOG.warn("BoneCP detected an unclosed connection " + ObjectPartition.this.poolName + "and will now attempt to close it for you. "
                                     + "You should be closing this connection in your application - enable connectionWatch for additional debugging assistance.");
                             pool.factory.destroyObject(obj);
-                            updateCreatedConnections(-1);
+                            updateCreatedObjects(-1);
                         }
-                    } catch (Throwable t) {
-                        logger.error("Error while closing off internal db connection", t);
+                    } catch (Exception t) {
+                        LOG.error("Error while closing off internal db connection", t);
                     }
                 }
             });
@@ -221,14 +220,14 @@ public class ObjectPartition<T> implements Serializable {
      */
     public ObjectPartition(BoneOP<T> pool) {
         BoneOPConfig config = pool.getConfig();
-        this.minConnections = config.getMinObjectsPerPartition();
-        this.maxConnections = config.getMaxObjectsPerPartition();
+        this.minObjects = config.getMinObjectsPerPartition();
+        this.maxObjects = config.getMaxObjectsPerPartition();
         this.acquireIncrement = config.getAcquireIncrement();
         this.poolName = config.getPoolName() != null ? "(in pool '" + config.getPoolName() + "') " : "";
         this.pool = pool;
 
         this.objectsPendingRelease = new LinkedTransferQueue<>();
-        this.disableTracking = config.isDisableConnectionTracking();
+        this.disableTracking = config.isDisableObjectTracking();
         this.queryExecuteTimeLimitInNanoSeconds = TimeUnit.NANOSECONDS.convert(config.getQueryExecuteTimeLimitInMs(), TimeUnit.MILLISECONDS);
         /**
          * Create a number of helper threads for connection release.
@@ -250,24 +249,24 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * @return the minConnections
      */
-    protected int getMinConnections() {
-        return this.minConnections;
+    protected int getMinObjects() {
+        return this.minObjects;
     }
 
     /**
      * @return the maxConnections
      */
-    protected int getMaxConnections() {
-        return this.maxConnections;
+    protected int getMaxObjects() {
+        return this.maxObjects;
     }
 
     /**
      * @return the leasedConnections
      */
-    protected int getCreatedConnections() {
+    protected int getCreatedObjects() {
         try {
             this.statsLock.readLock().lock();
-            return this.createdConnections;
+            return this.createdObjects;
         } finally {
             this.statsLock.readLock().unlock();
         }

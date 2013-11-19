@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  * connection from one or more configured partitions.
  *
  * @author wallacew
+ * @param <T> object type.
  *
  */
 public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
@@ -32,26 +33,25 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
 
     @Override
     public ObjectHandle<T> pollObject() {
-        ObjectHandle<T> result = null;
-        int partition = selectPartition();
-        ObjectPartition<T> connectionPartition = getPartition(partition);
-        result = connectionPartition.getFreeObjects().poll();
+        int pid = selectPartition();
+        ObjectPartition<T> partition = getPartition(pid);
+        ObjectHandle<T> result = partition.getFreeObjects().poll();
         if (result == null) {
             // we ran out of space on this partition, pick another free one
             for (int i = 0; i < this.pool.partitionCount; i++) {
-                if (i == partition) {
+                if (i == pid) {
                     continue; // we already determined it's not here
                 }
                 result = getPartition(i).getFreeObjects().poll(); // try our luck with this partition
-                connectionPartition = getPartition(i);
+                partition = getPartition(i);
                 if (result != null) {
                     break;  // we found a connection
                 }
             }
         }
 
-        if (!connectionPartition.isUnableToCreateMoreTransactions()) { // unless we can't create any more connections...
-            this.pool.maybeSignalForMoreConnections(connectionPartition);  // see if we need to create more
+        if (!partition.isUnableToCreateMoreTransactions()) { // unless we can't create any more connections...
+            this.pool.maybeSignalForMoreConnections(partition);  // see if we need to create more
         }
 
         return result;
@@ -61,11 +61,11 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
     @Override
     protected ObjectHandle<T> getObjectInternal() throws PoolException {
         ObjectHandle<T> result = pollObject();
-        ObjectPartition<T> connectionPartition = currentPartition();
+        ObjectPartition<T> partition = currentPartition();
         // we still didn't find an empty one, wait forever (or as per config) until our partition is free
         if (result == null) {
             try {
-                result = connectionPartition.getFreeObjects().poll(this.pool.connectionTimeoutInMs, TimeUnit.MILLISECONDS);
+                result = partition.getFreeObjects().poll(this.pool.waitTimeInMs, TimeUnit.MILLISECONDS);
                 if (result == null) {
                     if (this.pool.nullOnConnectionTimeout) {
                         return null;
@@ -82,9 +82,9 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
         }
 
         if (result.isPoison()) {
-            if (this.pool.getDbIsDown().get() && connectionPartition.getFreeObjects().hasWaitingConsumer()) {
+            if (this.pool.getDbIsDown().get() && partition.getFreeObjects().hasWaitingConsumer()) {
                 // poison other waiting threads.
-                connectionPartition.getFreeObjects().offer(result);
+                partition.getFreeObjects().offer(result);
             }
             throw new PoolException("Pool connections have been terminated. Aborting getConnection() request.", "08001");
         }
