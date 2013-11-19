@@ -101,7 +101,7 @@ public class BoundedLinkedTransferQueue<E> extends LinkedTransferQueue<E> {
     }
 
     public boolean isFull() {
-        return remainingCapacity() > 0;
+        return remainingCapacity() <= 0;
     }
 
     /**
