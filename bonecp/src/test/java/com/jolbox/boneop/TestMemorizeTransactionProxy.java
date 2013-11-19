@@ -114,7 +114,7 @@ public class TestMemorizeTransactionProxy {
 		this.config.setReleaseHelperThreads(0);
 		this.config.setTransactionRecoveryEnabled(true);
 		BoneOP pool = new BoneOP(this.config);
-		Connection c = pool.getConnection();
+		Connection c = pool.getObject();
 		Statement st = c.createStatement();
 		try{
 			st.execute("CREATE TABLE foo(id INTEGER)");
@@ -158,7 +158,7 @@ public class TestMemorizeTransactionProxy {
 		this.config.setTransactionRecoveryEnabled(true);
 		expect(mockConnection.prepareCall("")).andReturn(mockCallableStatement).anyTimes();
 		replay(mockConnection);
-		Connection con = pool.getConnection();
+		Connection con = pool.getObject();
 		PreparedStatement ps = con.prepareStatement("");
 		CallableStatement cs = con.prepareCall("");
 
@@ -282,7 +282,7 @@ public class TestMemorizeTransactionProxy {
 
 		replay(mockConnection, mockPreparedStatement,mockConnection2, mockPreparedStatement2, mockCallableStatement2, mockStatement, mockStatement2);
 
-		Connection con = pool.getConnection();
+		Connection con = pool.getObject();
 
 		((ObjectHandle)con).recoveryResult=new TransactionRecoveryResult(); 		// for code coverage
 		((ObjectHandle)con).recoveryResult.getReplaceTarget().put(mockConnection, mockConnection); 		// for code coverage
@@ -339,7 +339,7 @@ public class TestMemorizeTransactionProxy {
 
 		replay(mockConnection, mockPreparedStatement);
 
-		Connection con = pool.getConnection();
+		Connection con = pool.getObject();
 		count=0;
 
 		PreparedStatement ps = con.prepareStatement("whatever");
@@ -421,7 +421,7 @@ public class TestMemorizeTransactionProxy {
 
 		replay(mockConnection, mockPreparedStatement,mockConnection2, mockPreparedStatement2, mockPreparedStatement3, mockConnection3);
 
-		Connection con = pool.getConnection();
+		Connection con = pool.getObject();
 		count=0;
 
 //		mockDriver.setConnection(mockConnection2);
@@ -490,7 +490,7 @@ public class TestMemorizeTransactionProxy {
 
 		replay(mockConnection, mockPreparedStatement,mockConnection2, mockPreparedStatement2);
 
-		Connection con = pool.getConnection();
+		Connection con = pool.getObject();
 		count=0;
 
 //		mockDriver.setConnection(mockConnection2);
@@ -565,7 +565,7 @@ public class TestMemorizeTransactionProxy {
 
 		replay(mockConnection, mockPreparedStatement,mockConnection2, mockPreparedStatement2);
 
-		Connection con = pool.getConnection();
+		Connection con = pool.getObject();
 		count=0;
 
 		final Thread currentThread = Thread.currentThread();
@@ -655,7 +655,7 @@ public class TestMemorizeTransactionProxy {
 
 		replay(mockConnection, mockPreparedStatement,mockConnection2, mockPreparedStatement2);
 
-		Connection con = pool.getConnection();
+		Connection con = pool.getObject();
 		count=0;
 
 

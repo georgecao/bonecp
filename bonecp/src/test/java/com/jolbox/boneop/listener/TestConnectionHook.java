@@ -118,7 +118,7 @@ public class TestConnectionHook {
 	 */
 	@Test
 	public void testOnCheckOutAndOnCheckin() throws SQLException {
-		poolClass.getConnection().close();
+		poolClass.getObject().close();
 		assertEquals(1, hookClass.checkout);
 		assertEquals(1, hookClass.checkin);
 	}
@@ -157,7 +157,7 @@ public class TestConnectionHook {
 		
 		poolClass = new BoneOP(mockConfig);	
 		
-		poolClass.getConnection().close();
+		poolClass.getObject().close();
 		poolClass.close();
 		
 		reset(mockConfig);
@@ -214,7 +214,7 @@ public class TestConnectionHook {
 		
 		try{
 			poolClass = new BoneOP(mockConfig);	
-			poolClass.getConnection();
+			poolClass.getObject();
 		} catch (Exception e){
 			// do nothing
 		}
@@ -275,7 +275,7 @@ public class TestConnectionHook {
 		replay(mockConfig, mockPreparedStatement, mockConnection);
 		
 			poolClass = new BoneOP(mockConfig);	
-			Connection con = poolClass.getConnection();
+			Connection con = poolClass.getObject();
 			con.prepareStatement("").execute();
 			
 		
@@ -317,7 +317,7 @@ public class TestConnectionHook {
 		replay(mockConfig, mockPreparedStatement, mockConnection);
 		
 			poolClass = new BoneOP(mockConfig);	
-			Connection con = poolClass.getConnection();
+			Connection con = poolClass.getObject();
 			con.prepareStatement("").execute();
 			
 		

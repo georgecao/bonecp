@@ -16,12 +16,6 @@
 package com.jolbox.boneop;
 
 
-import com.jolbox.boneop.BoneOP;
-import com.jolbox.boneop.BoneOPConfig;
-import com.jolbox.boneop.Statistics;
-import com.jolbox.boneop.DefaultObjectStrategy;
-import com.jolbox.boneop.ObjectHandle;
-import com.jolbox.boneop.ObjectPartition;
 import java.lang.Thread.State;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
@@ -49,8 +43,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -291,7 +283,7 @@ public class TestConnectionHandle {
 		field.set(this.testClass, true);
 
 		this.testClass.renewObject();
-		this.mockPool.releaseConnection((Connection)anyObject());
+		this.mockPool.releaseObject((Connection)anyObject());
 		expectLastCall().once().andThrow(new SQLException()).once();
 		expect(this.mockPool.getConfig()).andReturn(this.config).anyTimes();
 		replay(this.mockPool);
@@ -392,7 +384,7 @@ public class TestConnectionHandle {
 		this.mockLogger.error((String)anyObject(), anyObject());
 		expectLastCall().once();
 
-		this.mockPool.releaseConnection((Connection)anyObject());
+		this.mockPool.releaseObject((Connection)anyObject());
 		expectLastCall().once().andThrow(new SQLException()).once();
 		replay(this.mockLogger, this.mockPool);
 

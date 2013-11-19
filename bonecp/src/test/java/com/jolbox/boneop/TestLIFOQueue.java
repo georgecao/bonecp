@@ -16,7 +16,6 @@
 
 package com.jolbox.boneop;
 
-import com.jolbox.boneop.LIFOQueue;
 import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.TimeUnit;

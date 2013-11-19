@@ -363,7 +363,7 @@ public class TestBoneCP {
 		expectLastCall().once();
 
 		replay(mockPartition, mockConnectionHandles, mockConnection);
-		assertEquals(mockConnection, testClass.getConnection());
+		assertEquals(mockConnection, testClass.getObject());
 		verify(mockPartition, mockConnectionHandles, mockConnection);
 	}
 
@@ -385,7 +385,7 @@ public class TestBoneCP {
 
 		replay(mockPartition, mockConnectionHandles, mockConnection);
 		try{
-			testClass.getConnection();
+			testClass.getObject();
 			fail("Should have thrown an exception");
 		} catch (SQLException e){
 			// do nothing
@@ -494,7 +494,7 @@ public class TestBoneCP {
 		// Test #8: 
 		testClass.poolShuttingDown = true;
 		try{
-			testClass.getConnection();
+			testClass.getObject();
 			fail("Should have thrown an exception");
 		} catch (SQLException e){
 			// do nothing
@@ -515,7 +515,7 @@ public class TestBoneCP {
 		expect(mockPartition.getMaxObjects()).andReturn(0).anyTimes(); // cause a division by zero error
 		replay(mockPartition, mockConnectionHandles, mockConnection, mockLock);
 		try{
-			testClass.getConnection();
+			testClass.getObject();
 			fail("Should have thrown an exception");
 		} catch (Throwable t){
 			// do nothing
@@ -548,7 +548,7 @@ public class TestBoneCP {
 		expectLastCall().once();
 
 		replay(mockPartition, mockConnectionHandles, mockConnection);
-		testClass.getConnection();
+		testClass.getObject();
 		verify(mockPartition, mockConnectionHandles, mockConnection);
 	}
 
@@ -572,7 +572,7 @@ public class TestBoneCP {
 		expectLastCall().once();
 
 		replay(mockPartition, mockConnectionHandles, mockConnection);
-		assertEquals(mockConnection, testClass.getConnection());
+		assertEquals(mockConnection, testClass.getObject());
 		verify(mockPartition, mockConnectionHandles, mockConnection);
 	}
 
@@ -594,7 +594,7 @@ public class TestBoneCP {
 
 		replay(mockPartition, mockConnectionHandles, mockConnection);
 		try{
-			testClass.getConnection();
+			testClass.getObject();
 			fail("Should have throw an SQL Exception");
 		} catch (SQLException e){
 			// do nothing
@@ -620,7 +620,7 @@ public class TestBoneCP {
 
 		replay(mockPartition, mockConnectionHandles, mockConnection);
 		try{
-			assertNull(testClass.getConnection());
+			assertNull(testClass.getObject());
 		} catch (SQLException e){
 			fail("Should not have throw an SQL Exception");
 			// do nothing
@@ -647,7 +647,7 @@ public class TestBoneCP {
 		expect(mockPartition.getPoolWatchThreadSignalQueue()).andReturn(bq);
 		replay(mockPartition, mockConnectionHandles, mockConnection);
 		try{ 
-			testClass.getConnection();
+			testClass.getObject();
 			fail("Should have throw an SQL Exception");
 		} catch (SQLException e){
 			// do nothing
@@ -674,7 +674,7 @@ public class TestBoneCP {
 		expect(mockPartition.getPoolWatchThreadSignalQueue()).andReturn(bq);
 		replay(mockPartition, mockConnectionHandles, mockConnection);
 		try{ 
-			assertNull(testClass.getConnection());
+			assertNull(testClass.getObject());
 		} catch (SQLException e){
 			fail("Should have throw an SQL Exception");
 			// do nothing
@@ -702,7 +702,7 @@ public class TestBoneCP {
 		expectLastCall().once();
 
 		replay(mockPartition, mockConnectionHandles, mockConnection);
-		assertEquals(mockConnection, testClass.getConnection());
+		assertEquals(mockConnection, testClass.getObject());
 		verify(mockPartition, mockConnectionHandles, mockConnection);
 	}
 
@@ -720,7 +720,7 @@ public class TestBoneCP {
 		expectLastCall().once();
 
 		replay(mockPartition, mockConnectionHandles, mockConnection);
-		assertEquals(mockConnection, testClass.getAsyncConnection().get());
+		assertEquals(mockConnection, testClass.getAsyncObject().get());
 		verify(mockPartition, mockConnectionHandles, mockConnection);
 
 	}
@@ -756,7 +756,7 @@ public class TestBoneCP {
 		expect(mockConnection.getInternalObject()).andReturn(mockRealConnection).anyTimes();
 	
 		replay(mockRealConnection, mockConnection, mockPartition, mockConnectionHandles);
-		testClass.releaseConnection(mockConnection);
+		testClass.releaseObject(mockConnection);
 		verify(mockConnection, mockPartition, mockConnectionHandles);
 
 		reset(mockConnection, mockPartition, mockConnectionHandles);
@@ -793,7 +793,7 @@ public class TestBoneCP {
 		expectLastCall().once();
 
 		replay(mockConnection, mockPartition, mockConnectionHandles, mockPendingRelease);
-		testClass.releaseConnection(mockConnection);
+		testClass.releaseObject(mockConnection);
 		verify(mockConnection, mockPartition, mockConnectionHandles, mockPendingRelease);
 
 	}
@@ -898,7 +898,7 @@ public class TestBoneCP {
 		expect(mockConnectionHandles.tryTransfer(mockConnection)).andReturn(false).anyTimes();
 		expect(mockConnectionHandles.offer(mockConnection)).andReturn(true).once();
 		replay(mockRealConnection, mockPartition, mockConnectionHandles, mockConnection);
-		testClass.putConnectionBackInPartition(mockConnection);
+		testClass.putObjectBackInPartition(mockConnection);
 		// FIXME
 		//		assertEquals(2, ai.get());
 		verify(mockPartition, mockConnectionHandles);
@@ -926,7 +926,7 @@ public class TestBoneCP {
 		mockInternalConnection.setAutoCommit(true);
 		replay(mockInternalConnection, mockPartition, mockConnectionHandles, mockConnection);
 		testClass.resetConnectionOnClose = true;
-		testClass.putConnectionBackInPartition(mockConnection);
+		testClass.putObjectBackInPartition(mockConnection);
 		verify(mockPartition, mockConnectionHandles);
 
 	}

@@ -67,7 +67,7 @@ public class TestStressTest {
 //			@Override
 			public void run() {
 				try {
-					Connection c = pool.getConnection();
+					Connection c = pool.getObject();
 //					Thread.sleep(rand.nextInt(50));
 					PreparedStatement ps = c.prepareStatement("FOO");
 //					Thread.sleep(rand.nextInt(50));

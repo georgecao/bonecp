@@ -15,13 +15,6 @@
  */
 package com.jolbox.boneop;
 
-import com.jolbox.boneop.BoneOP;
-import com.jolbox.boneop.BoneOPConfig;
-import com.jolbox.boneop.BoundedLinkedTransferQueue;
-import com.jolbox.boneop.ObjectTesterThread;
-import com.jolbox.boneop.ObjectHandle;
-import com.jolbox.boneop.LIFOQueue;
-import com.jolbox.boneop.ObjectPartition;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -184,7 +177,7 @@ public class TestConnectionThreadTester {
 		expect(mockConnection.isPossiblyBroken()).andReturn(false);
 		expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
 		expect(mockPool.isObjectHandleAlive((ObjectHandle)anyObject())).andReturn(true).anyTimes();
-		mockPool.putConnectionBackInPartition((ObjectHandle)anyObject());
+		mockPool.putObjectBackInPartition((ObjectHandle)anyObject());
 		
 
 		replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
@@ -212,7 +205,7 @@ public class TestConnectionThreadTester {
 		expect(mockConnection.isPossiblyBroken()).andReturn(false);
 		expect(mockConnection.getObjectLastUsedInMs()).andReturn(Long.MAX_VALUE);
 		expect(mockPool.isObjectHandleAlive((ObjectHandle)anyObject())).andReturn(true).anyTimes();
-		mockPool.putConnectionBackInPartition((ObjectHandle)anyObject());
+		mockPool.putObjectBackInPartition((ObjectHandle)anyObject());
 		
 
 		replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
@@ -300,7 +293,7 @@ public class TestConnectionThreadTester {
 		expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
 		expect(mockPool.isObjectHandleAlive((ObjectHandle)anyObject())).andReturn(true).anyTimes();
 		expect(mockExecutor.isShutdown()).andReturn(true);
-		mockPool.putConnectionBackInPartition((ObjectHandle)anyObject());
+		mockPool.putObjectBackInPartition((ObjectHandle)anyObject());
 		expectLastCall().andThrow(new RuntimeException());
 		
 		
@@ -334,7 +327,7 @@ public class TestConnectionThreadTester {
 		expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
 		expect(mockPool.isObjectHandleAlive((ObjectHandle)anyObject())).andReturn(true).anyTimes();
 		expect(mockExecutor.isShutdown()).andReturn(false);
-		mockPool.putConnectionBackInPartition((ObjectHandle)anyObject());
+		mockPool.putObjectBackInPartition((ObjectHandle)anyObject());
 		expectLastCall().andThrow(new RuntimeException());
 		mockLogger.error((String)anyObject(), (Exception)anyObject());
 		

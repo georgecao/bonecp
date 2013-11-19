@@ -17,7 +17,6 @@
 
 package com.jolbox.boneop;
 
-import com.jolbox.boneop.CustomThreadFactory;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.Test;

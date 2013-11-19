@@ -16,18 +16,12 @@
 
 package com.jolbox.boneop;
 
-import com.jolbox.boneop.BoneOP;
-import com.jolbox.boneop.BoneOPConfig;
-import com.jolbox.boneop.ObjectHandle;
-import com.jolbox.boneop.LIFOQueue;
-import com.jolbox.boneop.ObjectPartition;
-import com.jolbox.boneop.ObjectMaxAgeThread;
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import jsr166y.TransferQueue;
+import java.util.concurrent.TransferQueue;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -164,7 +158,7 @@ public class TestConnectionMaxAgeTester {
 
 		expect(mockExecutor.isShutdown()).andReturn(false).once();
 		
-		mockPool.putConnectionBackInPartition(mockConnection);
+		mockPool.putObjectBackInPartition(mockConnection);
 		expectLastCall().once();
 		
 		
@@ -209,7 +203,7 @@ public class TestConnectionMaxAgeTester {
 		expect(mockQueue.poll()).andReturn(mockConnectionException).times(1);
 		expect(mockConnectionException.isExpired(anyLong())).andReturn(false).anyTimes();
 		expect(mockExecutor.isShutdown()).andReturn(false).anyTimes();
-		mockPool.putConnectionBackInPartition(mockConnectionException);
+		mockPool.putObjectBackInPartition(mockConnectionException);
 		expectLastCall().andThrow(new SQLException()).once();
 		
 		// we should be able to reschedule

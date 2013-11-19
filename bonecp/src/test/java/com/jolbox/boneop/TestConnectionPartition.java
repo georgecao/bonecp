@@ -15,11 +15,6 @@
  */
 package com.jolbox.boneop;
 
-import com.jolbox.boneop.BoneOP;
-import com.jolbox.boneop.BoneOPConfig;
-import com.jolbox.boneop.BoundedLinkedTransferQueue;
-import com.jolbox.boneop.ObjectHandle;
-import com.jolbox.boneop.ObjectPartition;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
