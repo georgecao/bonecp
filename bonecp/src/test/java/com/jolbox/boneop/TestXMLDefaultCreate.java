@@ -32,7 +32,7 @@ import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaMethod;
 
 /**
- * Not really a test - this creates the bonecp-default-config.xml by reading BonecpConfig.java. 
+ * Not really a test - this creates the boneop-default-config.xml by reading BonecpConfig.java.
  * 
  * @author wallacew
  * 
@@ -66,10 +66,10 @@ public class TestXMLDefaultCreate {
 		FileReader fr;
 		if (f.canRead()){
 			fr = new FileReader(f);
-			out = new File("bonecp/src/main/resources/bonecp-default-config.xml");
+			out = new File("bonecp/src/main/resources/boneop-default-config.xml");
 		} else {
 			fr = new FileReader("src/main/java/com/jolbox/bonecp/BoneCPConfig.java");
-			out = new File("src/main/resources/bonecp-default-config.xml");
+			out = new File("src/main/resources/boneop-default-config.xml");
 		}
 		builder.addSource(fr);
 		JavaClass cls = builder

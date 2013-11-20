@@ -30,7 +30,7 @@ public class TransactionRecoveryResult {
 	/** Final result obtained from playback of transaction. */
 	private Object result;
 	/** Mappings between old connections/statements to new ones. */
-	private Map<Object, Object> replaceTarget = new HashMap<Object, Object>();
+	private Map<Object, Object> replaceTarget = new HashMap<>();
 	
 	/** Getter for result.
 	 * @return the result

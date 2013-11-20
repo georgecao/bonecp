@@ -39,7 +39,7 @@ public interface BoneOPConfigMBean {
      * Gets the minimum number of connections that will be contained in every
      * partition.
      *
-     * @return minConnectionsPerPartition
+     * @return minObjectsPerPartition
      */
     int getMinObjectsPerPartition();
 

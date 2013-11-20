@@ -63,9 +63,9 @@ public class TestBoneCPConfig {
 	 */
 	@Test
 	public void testXMLConfig() throws Exception{
-		// read off from the default bonecp-config.xml
+		// read off from the default boneop-config.xml
 //		System.out
-//				.println(BoneCPConfig.class.getResource("/bonecp-config.xml"));
+//				.println(BoneCPConfig.class.getResource("/boneop-config.xml"));
 		BoneOPConfig config = new BoneOPConfig("specialApp");
 		assertEquals(99, config.getMinObjectsPerPartition());
 	}
@@ -75,7 +75,7 @@ public class TestBoneCPConfig {
 	 */
 	@Test
 	public void testXMLConfig2() throws Exception{
-		// read off from the default bonecp-config.xml
+		// read off from the default boneop-config.xml
 		BoneOPConfig config = new BoneOPConfig("specialApp2");
 		assertEquals(123, config.getMinObjectsPerPartition());
 	}
@@ -87,7 +87,7 @@ public class TestBoneCPConfig {
 	@Test
 	public void testXmlConfigViaInputStream() throws Exception{
 		// read off from an input stream
-		BoneOPConfig config = new BoneOPConfig(this.getClass().getResourceAsStream("/bonecp-config.xml"), "specialApp");
+		BoneOPConfig config = new BoneOPConfig(this.getClass().getResourceAsStream("/boneop-config.xml"), "specialApp");
 		assertEquals(99, config.getMinObjectsPerPartition());
 	}
 	
@@ -392,7 +392,7 @@ public class TestBoneCPConfig {
 	public void testLoadPropertyFileValid() throws CloneNotSupportedException, IOException, URISyntaxException{
 		BoneOPConfig config = new BoneOPConfig();
 		//coverage
-		config.loadProperties("bonecp-config.xml");
+		config.loadProperties("boneop-config.xml");
 	}
 	
 	/** See how the config handles a garbage filled file.

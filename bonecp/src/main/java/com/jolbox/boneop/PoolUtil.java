@@ -40,31 +40,31 @@ public class PoolUtil {
 	 */
 	public static String fillLogParams(String sql, Map<Object, Object> logParams) {
 		StringBuilder result = new StringBuilder();
-		Map<Object, Object> tmpLogParam = (logParams == null ? new HashMap<Object, Object>() : logParams);
+		Map<Object, Object> tmpLogParam = (logParams == null ? new HashMap<>() : logParams);
 		
 		Iterator<Object> it = tmpLogParam.values().iterator();
 		boolean inQuote = false;
 		boolean inQuote2 = false;
 		char[] sqlChar = sql != null ? sql.toCharArray() : new char[]{};
 
-		for (int i=0; i < sqlChar.length; i++){
-			if (sqlChar[i] == '\''){
-				inQuote = !inQuote;
-			}
-			if (sqlChar[i] == '"'){
-				inQuote2 = !inQuote2;
-			}
+        for (char aSqlChar : sqlChar) {
+            if (aSqlChar == '\'') {
+                inQuote = !inQuote;
+            }
+            if (aSqlChar == '"') {
+                inQuote2 = !inQuote2;
+            }
 
-			if (sqlChar[i] == '?' && !(inQuote || inQuote2)){
-				if (it.hasNext()){
-					result.append(prettyPrint(it.next()));
-				} else {
-					result.append('?');
-				}
-			} else {
-				result.append(sqlChar[i]);
-			}
-		}
+            if (aSqlChar == '?' && !(inQuote || inQuote2)) {
+                if (it.hasNext()) {
+                    result.append(prettyPrint(it.next()));
+                } else {
+                    result.append('?');
+                }
+            } else {
+                result.append(aSqlChar);
+            }
+        }
 
 
 		return result.toString();
@@ -99,7 +99,7 @@ public class PoolUtil {
 		} else if (obj instanceof Array){
 			sb.append(formatLogParam((Array)obj));
 		} else if (obj instanceof String){
-			sb.append("'" + obj.toString()+"'");
+			sb.append("'").append(obj.toString()).append("'");
 		} else {
 			sb.append(obj.toString());
 		}

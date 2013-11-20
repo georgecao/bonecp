@@ -53,7 +53,7 @@ import org.apache.commons.pool.PoolableObjectFactory;
  * @param <T>
  *
  */
-public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closeable {
+public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closeable {
 
     /**
      * The object factory to create, validate and destroy object.

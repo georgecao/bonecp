@@ -23,9 +23,8 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * A bounded version of {@link LinkedTransferQueue}.
  *
- * @author wallacew
- *
  * @param <E>
+ * @author wallacew
  */
 public class BoundedLinkedTransferQueue<E> extends LinkedTransferQueue<E> {
 
@@ -36,7 +35,7 @@ public class BoundedLinkedTransferQueue<E> extends LinkedTransferQueue<E> {
     /**
      * No of elements in queue.
      */
-    private final AtomicInteger size = new AtomicInteger();
+    private final AtomicInteger size = new AtomicInteger(0);
     /**
      * bound of queue.
      */

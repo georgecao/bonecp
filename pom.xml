@@ -209,7 +209,7 @@ under the License. -->
                             <Import-Package>com.google.*;version="0.8",*</Import-Package>
                             <Public-Package>com.jolbox.*</Public-Package>
                             <Private-Package>jsr166y.*</Private-Package>
-                            <Export-Package>com.jolbox.bonecp.*;version="${project.version}"</Export-Package>
+                            <Export-Package>com.jolbox.boneop.*;version="${project.version}"</Export-Package>
                         </instructions>
                     </configuration>
                 </plugin>
@@ -313,7 +313,7 @@ under the License. -->
                             <value>/* #ifdef JDK5</value>
                         </replacement>
                         <replacement>
-                            <token>// #endif JDK5 </token>
+                            <token>// #endif JDK5</token>
                             <value>#endif JDK5 */</value>
                         </replacement>
                     </replacements>
@@ -332,7 +332,7 @@ under the License. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.7.2</version>
+                <version>2.16</version>
                 <inherited>false</inherited>
                 <configuration>
                     <forkMode>once</forkMode>
@@ -381,238 +381,6 @@ under the License. -->
         </extensions>
 
     </build>
-
-    <profiles>
-        <profile>
-            <id>JDK5</id>
-            <properties>
-                <javac.src.version>1.5</javac.src.version>
-                <javac.target.version>1.5</javac.target.version>
-            </properties>
-
-            <build>
-                <plugins>
-                    <!-- | Make sure we only use Java5 methods <plugin> <groupId>org.codehaus.mojo</groupId> 
-                    <artifactId>animal-sniffer-maven-plugin</artifactId> <version>1.6</version> 
-                    <configuration> <signature> <groupId>org.codehaus.mojo.signature</groupId> 
-                    <artifactId>java15</artifactId> <version>1.0</version> </signature> </configuration> 
-                    <executions> <execution> <id>check-java-1.5-compat</id> <phase>process-classes</phase> 
-                    <goals> <goal>check</goal> </goals> </execution> </executions> </plugin> -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <classifier>jdk5</classifier>
-                        </configuration>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.felix</groupId>
-                        <artifactId>maven-bundle-plugin</artifactId>
-                        <configuration>
-                            <classifier>jdk5</classifier>
-                        </configuration>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>com.google.code.maven-replacer-plugin</groupId>
-                        <artifactId>replacer</artifactId>
-                        <version>1.5.0</version>
-                        <executions>
-                            <execution>
-                                <phase>process-sources</phase>
-                                <goals>
-                                    <goal>replace</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <regex>false</regex>
-                            <includes>
-                                <include>**/*.java</include>
-                            </includes>
-                            <replacements>
-                                <replacement>
-                                    <token>// #ifdef JDK6</token>
-                                    <value>/* #ifdef JDK6</value>
-                                </replacement>
-                                <replacement>
-                                    <token>// #endif JDK6</token>
-                                    <value>#endif JDK6 */</value>
-                                </replacement>
-                                <replacement>
-                                    <token>/* #ifdef JDK5</token>
-                                    <value>// #ifdef JDK5</value>
-                                </replacement>
-                                <replacement>
-                                    <token>#endif JDK5 */</token>
-                                    <value>// #endif JDK5</value>
-                                </replacement>
-                            </replacements>
-                        </configuration>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <fork>true</fork>
-                            <executable>${jdk5home}/bin/javac</executable>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>JDK6</id>
-            <properties>
-                <javac.src.version>1.6</javac.src.version>
-                <javac.target.version>1.6</javac.target.version>
-            </properties>
-
-            <build>
-                <plugins>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <classifier>jdk6</classifier>
-                        </configuration>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.felix</groupId>
-                        <artifactId>maven-bundle-plugin</artifactId>
-                        <configuration>
-                            <classifier>jdk6</classifier>
-                        </configuration>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>com.google.code.maven-replacer-plugin</groupId>
-                        <artifactId>replacer</artifactId>
-                        <version>1.5.0</version>
-                        <executions>
-                            <execution>
-                                <phase>process-sources</phase>
-                                <goals>
-                                    <goal>replace</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <regex>false</regex>
-                            <includes>
-                                <include>**/*.java</include>
-                            </includes>
-
-                            <replacements>
-                                <replacement>
-                                    <token>// #ifdef JDK7</token>
-                                    <value>/* #ifdef JDK7</value>
-                                </replacement>
-                                <replacement>
-                                    <token>// #endif JDK7</token>
-                                    <value>#endif JDK7 */</value>
-                                </replacement>
-                                <replacement>
-                                    <token>// #ifdef JDK5</token>
-                                    <value>/* #ifdef JDK5</value>
-                                </replacement>
-                                <replacement>
-                                    <token>// #endif JDK5</token>
-                                    <value>#endif JDK5 */</value>
-                                </replacement>
-                            </replacements>
-                        </configuration>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <fork>true</fork>
-                            <executable>${jdk6home}/bin/javac</executable>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.1.2</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                                <configuration>
-                                    <archive>
-                                        <manifest>
-                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                                        </manifest>
-                                        <manifestEntries>
-                                            <Implementation-Build>${implementation.build}</Implementation-Build>
-                                            <X-Compile-Source-JDK>${javac.src.version}</X-Compile-Source-JDK>
-                                            <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
-                                        </manifestEntries>
-                                    </archive>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.7</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                                <configuration>
-                                    <archive>
-                                        <manifest>
-                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                                        </manifest>
-                                        <manifestEntries>
-                                            <Implementation-Build>${implementation.build}</Implementation-Build>
-                                            <X-Compile-Source-JDK>${javac.src.version}</X-Compile-Source-JDK>
-                                            <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
-                                        </manifestEntries>
-                                    </archive>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.1</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <reporting>
         <plugins>
