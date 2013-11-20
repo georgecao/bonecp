@@ -63,7 +63,7 @@ public class TestReleaseHelperThread {
 	 * @throws SQLException 
 	 */
 	@Test
-	public void testNormalCycle() throws InterruptedException, SQLException {
+	public void testNormalCycle() throws Exception {
 		expect(mockQueue.take()).andAnswer(new IAnswer<ObjectHandle>() {
 
 			// @Override
@@ -97,7 +97,7 @@ public class TestReleaseHelperThread {
 	 * @throws SQLException 
 	 */
 	@Test
-	public void testSQLExceptionCycle() throws InterruptedException, SQLException {
+	public void testSQLExceptionCycle() throws Exception {
 		first = true;
 		expect(mockQueue.take()).andReturn(mockConnection);
 		mockPool.internalReleaseObject(mockConnection);

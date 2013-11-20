@@ -109,7 +109,7 @@ public class PoolWatchThread<T> implements Runnable {
                 if (this.pool.poolShuttingDown) {
                     break;
                 }
-                ObjectHandle<T> handle = ObjectHandle.<T>createConnectionHandle(this.pool);
+                ObjectHandle<T> handle = ObjectHandle.<T>createObjectHandle(this.pool);
 
                 if (dbDown && !this.pool.getDbIsDown().get()) { // we've just recovered
                     ObjectHandle<T> maybePoison = this.partition.getFreeObjects().poll();

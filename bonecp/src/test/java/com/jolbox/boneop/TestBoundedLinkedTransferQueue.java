@@ -16,7 +16,6 @@
 
 package com.jolbox.boneop;
 
-import com.jolbox.boneop.BoundedLinkedTransferQueue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 

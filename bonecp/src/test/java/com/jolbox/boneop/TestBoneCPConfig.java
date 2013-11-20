@@ -17,7 +17,6 @@
 package com.jolbox.boneop;
 
 
-import com.jolbox.boneop.BoneOPConfig;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -140,13 +139,8 @@ public class TestBoneCPConfig {
 	public void testGettersSetters(){
 		Properties driverProperties = new Properties();
 		DataSource mockDataSource = EasyMock.createNiceMock(DataSource.class);
-		config.setJdbcUrl(CommonTestUtils.url);
-		config.setUsername(CommonTestUtils.username);
-		config.setUser(CommonTestUtils.username);
-		config.setPassword(CommonTestUtils.password);
 		config.setIdleConnectionTestPeriod(60);
 		config.setIdleMaxAge(60);
-		config.setStatementsCacheSize(2);
 		config.setReleaseHelperThreads(3);
 		config.setMaxObjectsPerPartition(5);
 		config.setMinObjectsPerPartition(5);
@@ -168,13 +162,10 @@ public class TestBoneCPConfig {
 		config.setStatisticsEnabled(true);
 		config.setDeregisterDriverOnClose(true);
 		config.setNullOnObjectTimeout(true);
-		config.setDetectUnresolvedTransactions(true);
 		config.setResetObjectOnClose(true);
 		
-		assertTrue(config.isDetectUnresolvedTransactions());
 		assertTrue(config.isNullOnObjectTimeout());
 		assertTrue(config.isResetObjectOnClose());
-		assertEquals(config.getUser(), config.getUsername());
 		assertEquals("foo", config.getDefaultCatalog());
 		assertTrue(config.isDeregisterDriverOnClose());
 		assertTrue(config.getDefaultAutoCommit());
@@ -197,12 +188,8 @@ public class TestBoneCPConfig {
 		};
 		config.setObjectListener(hook);
 		
-		config.setStatementsCachedPerConnection(7);
-		config.setPreparedStatementsCacheSize(2);
-		config.setStatementCacheSize(2);
 		config.setPoolName("foo");
 		config.setDisableJMX(false);
-		config.setDatasourceBean(mockDataSource);
 		config.setQueryExecuteTimeLimit(123);
 		config.setQueryExecuteTimeLimitInMs(123);
 		config.setDisableObjectTracking(true);
@@ -216,8 +203,6 @@ public class TestBoneCPConfig {
 		config.setWaitTimeInMs(1000);
 		config.setCloseObjectWatchTimeoutInMs(1000);
 		
-		config.setExternalAuth(true);
-		assertEquals(true, config.isExternalAuth());
 		assertEquals("abc", config.getInitSQL());
 		assertEquals(hook, config.getObjectListener());
 		assertEquals(1000, config.getWaitTimeInMs());
@@ -230,27 +215,16 @@ public class TestBoneCPConfig {
 		assertEquals("abc", config.getConfigFile());
 		assertEquals(1000, config.getCloseObjectWatchTimeout());
 		assertEquals("foo", config.getPoolName());
-		assertEquals(CommonTestUtils.url, config.getJdbcUrl());
-		assertEquals(CommonTestUtils.username, config.getUsername());
-		assertEquals(CommonTestUtils.password, config.getPassword());
-		assertEquals(2, config.getStatementsCacheSize());
-		assertEquals(2, config.getStatementCacheSize());
-		assertEquals(2, config.getPreparedStatementsCacheSize());
-		assertEquals(2, config.getPreparedStatementCacheSize());
 		assertEquals(3, config.getReleaseHelperThreads());
 		assertEquals(5, config.getMaxObjectsPerPartition());
 		assertEquals(5, config.getMinObjectsPerPartition());
 		assertEquals(6, config.getAcquireIncrement());
 		assertEquals(1000, config.getWaitTime());
 		assertEquals(true, config.isDisableObjectTracking());
-		assertEquals(7, config.getStatementsCachedPerConnection());
 		assertEquals(123, config.getQueryExecuteTimeLimit());
 		assertEquals(1, config.getPartitionCount());
 		assertEquals("test", config.getConnectionTestStatement());
-		assertEquals(mockDataSource, config.getDatasourceBean());
 		assertEquals(driverProperties, config.getDriverProperties());
-		
-		config.setExternalAuth(false);
 	}
 	/**
 	 * Config file scrubbing
@@ -260,14 +234,12 @@ public class TestBoneCPConfig {
 		config.setMaxObjectsPerPartition(-1);
 		config.setMinObjectsPerPartition(-1);
 		config.setPartitionCount(-1);
-		config.setStatementsCacheSize(-1);
+
 		config.setConnectionTestStatement("");
-		config.setJdbcUrl(null);
-		config.setUsername(null);
+
 		config.setAcquireIncrement(0);
-		config.setPassword(null);
+
 		config.setPoolAvailabilityThreshold(-50);
-		config.setStatementReleaseHelperThreads(-50);
 		config.setWaitTimeInMs(0);
 		config.setServiceOrder("something non-sensical");
 		config.setAcquireRetryDelayInMs(-1);
@@ -280,13 +252,11 @@ public class TestBoneCPConfig {
 		assertEquals("FIFO", config.getServiceOrder());
 		assertEquals(0, config.getWaitTimeInMs());
 		assertNotNull(config.toString());
-		assertEquals(3, config.getStatementReleaseHelperThreads());
 		assertFalse(config.getAcquireIncrement() == 0);
 		assertFalse(config.getReleaseHelperThreads() == -1);
 		assertFalse(config.getMaxObjectsPerPartition() == -1);
 		assertFalse(config.getMinObjectsPerPartition() == -1);
 		assertFalse(config.getPartitionCount() == -1);
-		assertFalse(config.getStatementsCacheSize() == -1);
 
 		config.setMinObjectsPerPartition(config.getMaxObjectsPerPartition()+1);
 		config.setServiceOrder(null);
@@ -321,10 +291,7 @@ public class TestBoneCPConfig {
 		
 		// coverage
 		BoneOPConfig config = new BoneOPConfig();
-		config.setDatasourceBean(null);
 		config.setDriverProperties(null);
-		config.setJdbcUrl("");
-		config.setPassword(null);
 		config.sanitize();
 	}
 	
@@ -333,12 +300,8 @@ public class TestBoneCPConfig {
 	 */
 	@Test
 	public void testDriverPropertiesConfigSanitize(){
-		config.setDatasourceBean(null);
-		config.setUsername("foo");
-		config.setPassword("bar");
 		config.setMaxObjectsPerPartition(2);
 		config.setMinObjectsPerPartition(2);
-		config.setJdbcUrl("test");
 		
 		config.sanitize();
 		
@@ -365,8 +328,7 @@ public class TestBoneCPConfig {
 		assertEquals("bar", config.getDriverProperties().getProperty("password"));
 		
 		
-		config.setUsername(null);
-		config.setPassword(null);
+
 		config.setDriverProperties(new Properties());
 		config.sanitize();
 	}
@@ -377,13 +339,9 @@ public class TestBoneCPConfig {
 	 */
 	@Test
 	public void testDriverPropertiesConfigSanitize2(){
-		config.setDatasourceBean(null);
-		config.setUsername("foo");
-		config.setPassword("bar");
 		config.setMaxObjectsPerPartition(2);
 		config.setMinObjectsPerPartition(2);
-		config.setJdbcUrl("test");
-		
+
 		config.sanitize();
 		
 		Properties props = new Properties();
@@ -406,8 +364,6 @@ public class TestBoneCPConfig {
 		
 		assertFalse(clone.hasSameConfiguration(null));
 		assertTrue(clone.hasSameConfiguration(clone));
-		
-		clone.setJdbcUrl("something else");
 		assertFalse(clone.hasSameConfiguration(config));
 	}
 	

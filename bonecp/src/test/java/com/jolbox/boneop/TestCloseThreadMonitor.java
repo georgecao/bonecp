@@ -19,8 +19,6 @@
  */
 package com.jolbox.boneop;
 
-import com.jolbox.boneop.ObjectHandle;
-import com.jolbox.boneop.CloseThreadMonitor;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;

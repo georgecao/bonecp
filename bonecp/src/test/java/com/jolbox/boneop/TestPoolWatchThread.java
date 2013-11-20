@@ -189,7 +189,7 @@ public class TestPoolWatchThread {
 
         expect(mockPartition.getAcquireIncrement()).andReturn(1);
 
-        expect(mockPartition.getAvailableConnections()).andReturn(fakeConnections.size()).anyTimes();
+        expect(mockPartition.getAvailableObjects()).andReturn(fakeConnections.size()).anyTimes();
 
         mockPartition.addFreeObject((ObjectHandle) anyObject());
         expectLastCall().once();
@@ -239,7 +239,7 @@ public class TestPoolWatchThread {
         }).anyTimes();
 
         expect(mockPartition.getAcquireIncrement()).andReturn(1).anyTimes();
-        expect(mockPartition.getAvailableConnections()).andReturn(fakeConnections.size()).anyTimes();
+        expect(mockPartition.getAvailableObjects()).andReturn(fakeConnections.size()).anyTimes();
         expect(mockPool.getConfig()).andReturn(mockConfig).anyTimes();
 
         expect(mockConfig.getAcquireRetryAttempts()).andReturn(0).anyTimes();

@@ -76,7 +76,6 @@ public class CustomHook extends AbstractObjectListener{
 		this.queryTimeout++;
 	}
 	
-	@Override
 	public ConnectionState onMarkPossiblyBroken(ObjectHandle connection,
 			String state, SQLException e) {
 		this.markPossiblyBroken++;

@@ -201,7 +201,7 @@ public class ObjectHandle<T> {
      * @throws PoolException on error
      * @return connection handle.
      */
-    public static <T> ObjectHandle<T> createConnectionHandle(BoneOP<T> pool) throws PoolException {
+    public static <T> ObjectHandle<T> createObjectHandle(BoneOP<T> pool) throws PoolException {
         return new ObjectHandle<>(pool);
     }
 
@@ -661,7 +661,7 @@ public class ObjectHandle<T> {
      *
      * @param rawConnection to set
      */
-    public void setInternalConnection(T rawConnection) {
+    public void setInternalObject(T rawConnection) {
         this.object = rawConnection;
     }
 

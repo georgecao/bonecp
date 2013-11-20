@@ -418,7 +418,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
 
             if (!config.isLazyInit()) {
                 for (int i = 0; i < config.getMinObjectsPerPartition(); i++) {
-                    final ObjectHandle<T> handle = ObjectHandle.createConnectionHandle(this);
+                    final ObjectHandle<T> handle = ObjectHandle.createObjectHandle(this);
                     partition.addFreeObject(handle);
                 }
             }
