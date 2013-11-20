@@ -1035,7 +1035,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#getTotalCreatedConnections()}.
+     * Test method for {@link BoneOP#getTotalCreatedObjects()} .
      */
     @Test
     public void testGetTotalCreatedConnections() {
@@ -1047,7 +1047,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#getConfig()}.
+     * Test method for {@link BoneOP#getConfig()}.
      */
     @Test
     public void testGetConfig() {
@@ -1091,7 +1091,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#setReleaseHelper(java.util.concurrent.ExecutorService)}.
+     * Test method for {@link BoneOP#setReleaseHelper(java.util.concurrent.ExecutorService)}.
      */
     @Test
     public void testSetReleaseHelper() {
