@@ -159,7 +159,7 @@
 		     Enable this option if you only ever obtain your connections via a mechanism 
 		     that is guaranteed to release the connection back to the pool (eg Spring's 
 		     jdbcTemplate,  some kind of transaction manager, etc). -->
-		<property name="disableConnectionTracking">false</property>
+		<property name="disableObjectTracking">false</property>
 
 		<!-- Sets the maximum time (in milliseconds) to wait before a call to getConnection 
 		     is timed out.   Setting this to zero is similar to setting 

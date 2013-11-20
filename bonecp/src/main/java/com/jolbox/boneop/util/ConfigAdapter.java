@@ -10,12 +10,26 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package com.jolbox.boneop;
+package com.jolbox.boneop.util;
+
+import com.jolbox.boneop.BoneOPConfig;
+import org.apache.commons.pool.impl.GenericObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
+ * Say it.
  *
  * @author george
+ * @since 11/20/13 2:32 PM
  */
-public class TestObject {
-    
+
+public class ConfigAdapter {
+    private static final Logger LOG = LoggerFactory.getLogger(ConfigAdapter.class);
+
+    public static BoneOPConfig create(GenericObjectPool.Config config) {
+        BoneOPConfig bone = new BoneOPConfig();
+        bone.setMaxObjectsPerPartition(config.maxActive);
+        return bone;
+    }
 }

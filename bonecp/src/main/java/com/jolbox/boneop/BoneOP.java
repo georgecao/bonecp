@@ -12,53 +12,49 @@
  */
 package com.jolbox.boneop;
 
-import java.io.Closeable;
-import java.io.Serializable;
-import java.lang.management.ManagementFactory;
-import java.lang.ref.Reference;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.FinalizableReferenceQueue;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.jolbox.boneop.listener.AcquireFailConfig;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.TransferQueue;
+import com.jolbox.boneop.util.ConfigAdapter;
 import org.apache.commons.pool.BaseObjectPool;
 import org.apache.commons.pool.PoolableObjectFactory;
+import org.apache.commons.pool.impl.GenericObjectPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.io.Closeable;
+import java.io.Serializable;
+import java.lang.management.ManagementFactory;
+import java.lang.ref.Reference;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Connection pool (main class).
  *
- * @author wwadge
  * @param <T>
- *
+ * @author wwadge
  */
 public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closeable {
 
     /**
-     * The object factory to create, validate and destroy object.
+     * JMX constant.
      */
-    protected PoolableObjectFactory<T> factory;
+    public static final String MBEAN_CONFIG = "com.jolbox.boneop:type=BoneOPConfig";
+    /**
+     * JMX constant.
+     */
+    public static final String MBEAN_BONECP = "com.jolbox.boneop:type=BoneOP";
     /**
      * Warning message.
      */
@@ -80,25 +76,13 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      */
     private static final String UNCLOSED_EXCEPTION_MESSAGE = "Connection obtained from thread [%s] was never closed. \nStack trace of location where connection was obtained follows:\n";
     /**
-     * JMX constant.
+     * Logger class.
      */
-    public static final String MBEAN_CONFIG = "com.jolbox.boneop:type=BoneOPConfig";
-    /**
-     * JMX constant.
-     */
-    public static final String MBEAN_BONECP = "com.jolbox.boneop:type=BoneOP";
+    private static final Logger LOG = LoggerFactory.getLogger(BoneOP.class);
     /**
      * Create more connections when we hit x% of our possible number of connections.
      */
     protected final int poolAvailabilityThreshold;
-    /**
-     * Number of partitions passed in constructor. *
-     */
-    protected int partitionCount;
-    /**
-     * Partitions handle.
-     */
-    protected List<ObjectPartition<T>> partitions;
     /**
      * Handle to factory that creates 1 thread per partition that periodically wakes up and performs some activity on
      * the connection.
@@ -114,43 +98,42 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      */
     private final ExecutorService connectionsScheduler;
     /**
-     * Configuration object used in constructor.
-     */
-    private BoneOPConfig config;
-    /**
      * If set to true, config has specified the use of helper threads.
      */
     private final boolean releaseHelperThreadsConfigured;
-    /**
-     * pointer to the thread containing the release helper threads.
-     */
-    private ExecutorService releaseHelper;
-    /**
-     * pointer to the service containing the statement close helper threads.
-     */
-    private ExecutorService statementCloseHelperExecutor;
     /**
      * Executor service for obtaining a connection in an asynchronous fashion.
      */
     private final ListeningExecutorService asyncExecutor;
     /**
-     * Logger class.
+     * Reference of objects that are to be watched.
      */
-    private static final Logger LOG = LoggerFactory.getLogger(BoneOP.class);
+    private final Map<T, Reference<ObjectHandle<T>>> finalizableRefs = new ConcurrentHashMap<>();
     /**
-     * JMX support.
+     * No of ms to wait for thread.join() in connection watch thread.
      */
-    private MBeanServer mbs;
-
+    private final long closeObjectWatchTimeoutInMs;
+    /**
+     * If true, there are no connections to be taken.
+     */
+    private final AtomicBoolean dbIsDown = new AtomicBoolean(false);
+    /**
+     * The object factory to create, validate and destroy object.
+     */
+    protected PoolableObjectFactory<T> factory;
+    /**
+     * Number of partitions passed in constructor. *
+     */
+    protected int partitionCount;
+    /**
+     * Partitions handle.
+     */
+    protected List<ObjectPartition<T>> partitions;
     /**
      * If set to true, create a new thread that monitors a connection and displays warnings if application failed to
      * close the connection.
      */
     protected boolean closeConnectionWatch = false;
-    /**
-     * Threads monitoring for bad connection requests.
-     */
-    private ExecutorService closeConnectionExecutor;
     /**
      * set to true if the connection pool has been flagged as shutting down.
      */
@@ -160,21 +143,9 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      */
     protected String shutdownStackTrace;
     /**
-     * Reference of objects that are to be watched.
-     */
-    private final Map<T, Reference<ObjectHandle<T>>> finalizableRefs = new ConcurrentHashMap<>();
-    /**
-     * Watch for connections that should have been safely closed but the application forgot.
-     */
-    private FinalizableReferenceQueue finalizableRefQueue;
-    /**
      * Time to wait before timing out the connection. Default in config is Long.MAX_VALUE milliseconds.
      */
     protected long waitTimeInMs;
-    /**
-     * No of ms to wait for thread.join() in connection watch thread.
-     */
-    private final long closeObjectWatchTimeoutInMs;
     /**
      * if true, we care about statistics.
      */
@@ -207,131 +178,43 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      */
     protected volatile ObjectStrategy<T> connectionStrategy;
     /**
-     * If true, there are no connections to be taken.
-     */
-    private final AtomicBoolean dbIsDown = new AtomicBoolean(false);
-    /**
      * Config setting.
      */
     @VisibleForTesting
     protected Properties clientInfo;
-
     /**
-     * Closes off this connection pool.
+     * Configuration object used in constructor.
      */
-    public synchronized void shutdown() {
-
-        if (!this.poolShuttingDown) {
-            LOG.info("Shutting down connection pool...");
-            this.poolShuttingDown = true;
-            this.shutdownStackTrace = captureStackTrace(SHUTDOWN_LOCATION_TRACE);
-            this.keepAliveScheduler.shutdownNow(); // stop threads from firing.
-            this.maxAliveScheduler.shutdownNow(); // stop threads from firing.
-            this.connectionsScheduler.shutdownNow(); // stop threads from firing.
-
-            try {
-                this.connectionsScheduler.awaitTermination(5, TimeUnit.SECONDS);
-
-                this.maxAliveScheduler.awaitTermination(5, TimeUnit.SECONDS);
-                this.keepAliveScheduler.awaitTermination(5, TimeUnit.SECONDS);
-
-                if (this.releaseHelperThreadsConfigured) {
-                    this.releaseHelper.shutdownNow();
-                    this.releaseHelper.awaitTermination(5, TimeUnit.SECONDS);
-                }
-                if (this.asyncExecutor != null) {
-                    this.asyncExecutor.shutdownNow();
-                    this.asyncExecutor.awaitTermination(5, TimeUnit.SECONDS);
-                }
-                if (this.closeConnectionExecutor != null) {
-                    this.closeConnectionExecutor.shutdownNow();
-                    this.closeConnectionExecutor.awaitTermination(5, TimeUnit.SECONDS);
-                }
-                if (!this.config.isDisableJMX()) {
-                    unregisterJMX();
-                }
-
-            } catch (InterruptedException e) {
-                // do nothing
-            }
-            this.connectionStrategy.destroyAllObjects();
-            registerUnregisterJMX(false);
-            LOG.info("Connection pool has been shutdown.");
-        }
-    }
-
+    private BoneOPConfig config;
     /**
-     * Just a synonym to shutdown.
+     * pointer to the thread containing the release helper threads.
      */
-    @Override
-    public void close() {
-        shutdown();
-    }
-
+    private ExecutorService releaseHelper;
     /**
-     * Add a poison connection handle so that waiting threads are terminated.
+     * pointer to the service containing the statement close helper threads.
      */
-    protected void poisonAndRepopulatePartitions() {
-        for (ObjectPartition<T> partition : this.partitions) {
-            partition.getFreeObjects().offer(ObjectHandle.<T>createPoisonObjectHandle());
-            // send a signal to try re-populating again.
-            partition.getPoolWatchThreadSignalQueue().offer(new Object()); // item being pushed is not important.
-        }
-    }
-
+    private ExecutorService statementCloseHelperExecutor;
     /**
-     * Destroying the object by don't put it back in the pool.
-     *
-     * @param handle object handle
+     * JMX support.
      */
-    protected void destroyObject(ObjectHandle<T> handle) {
-        postDestroyObject(handle);
-        try {
-            if (!handle.isPoison()) {
-                handle.internalClose();
-            }
-        } catch (PoolException e) {
-            LOG.error("Error in attempting to close connection", e);
-        }
-    }
-
+    private MBeanServer mbs;
     /**
-     * Update counters and call hooks.
-     *
-     * @param handle connection handle.
+     * Threads monitoring for bad connection requests.
      */
-    protected void postDestroyObject(ObjectHandle<T> handle) {
-        ObjectPartition<T> partition = handle.getOriginatingPartition();
-        if (this.finalizableRefQueue != null) { //safety
-            this.finalizableRefs.remove(handle.getInternalObject());
-        }
-        partition.updateCreatedObjects(-1);
-        partition.setUnableToCreateMoreTransactions(false); // we can create new ones now, this is an optimization
-
-        // "Destroying" for us means: don't put it back in the pool.
-        if (handle.getObjectListener() != null) {
-            handle.getObjectListener().onDestroy(handle);
-        }
-    }
-
+    private ExecutorService closeConnectionExecutor;
     /**
-     * Returns a database connection by using Driver.getConnection() or DataSource.getConnection()
-     *
-     * @return Connection handle
-     * @throws PoolException on error
+     * Watch for connections that should have been safely closed but the application forgot.
      */
-    protected T obtainRawInternalObject() throws PoolException {
-        try {
-            return factory.makeObject();
-        } catch (Exception ex) {
-            throw new PoolException(ex);
-        }
+    private FinalizableReferenceQueue finalizableRefQueue;
+
+    public BoneOP(GenericObjectPool.Config config, PoolableObjectFactory<T> factory) throws PoolException {
+        this(ConfigAdapter.create(config), factory);
     }
 
     /**
      * Constructor.
      *
-     * @param config Configuration for pool
+     * @param config  Configuration for pool
      * @param factory to create, validate and destroy the underlying object.
      * @throws PoolException on error
      */
@@ -449,6 +332,118 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
     }
 
     /**
+     * Closes off this connection pool.
+     */
+    public synchronized void shutdown() {
+
+        if (!this.poolShuttingDown) {
+            LOG.info("Shutting down connection pool...");
+            this.poolShuttingDown = true;
+            this.shutdownStackTrace = captureStackTrace(SHUTDOWN_LOCATION_TRACE);
+            this.keepAliveScheduler.shutdownNow(); // stop threads from firing.
+            this.maxAliveScheduler.shutdownNow(); // stop threads from firing.
+            this.connectionsScheduler.shutdownNow(); // stop threads from firing.
+
+            try {
+                this.connectionsScheduler.awaitTermination(5, TimeUnit.SECONDS);
+
+                this.maxAliveScheduler.awaitTermination(5, TimeUnit.SECONDS);
+                this.keepAliveScheduler.awaitTermination(5, TimeUnit.SECONDS);
+
+                if (this.releaseHelperThreadsConfigured) {
+                    this.releaseHelper.shutdownNow();
+                    this.releaseHelper.awaitTermination(5, TimeUnit.SECONDS);
+                }
+                if (this.asyncExecutor != null) {
+                    this.asyncExecutor.shutdownNow();
+                    this.asyncExecutor.awaitTermination(5, TimeUnit.SECONDS);
+                }
+                if (this.closeConnectionExecutor != null) {
+                    this.closeConnectionExecutor.shutdownNow();
+                    this.closeConnectionExecutor.awaitTermination(5, TimeUnit.SECONDS);
+                }
+                if (!this.config.isDisableJMX()) {
+                    unregisterJMX();
+                }
+
+            } catch (InterruptedException e) {
+                // do nothing
+            }
+            this.connectionStrategy.destroyAllObjects();
+            registerUnregisterJMX(false);
+            LOG.info("Connection pool has been shutdown.");
+        }
+    }
+
+    /**
+     * Just a synonym to shutdown.
+     */
+    @Override
+    public void close() {
+        shutdown();
+    }
+
+    /**
+     * Add a poison connection handle so that waiting threads are terminated.
+     */
+    protected void poisonAndRepopulatePartitions() {
+        for (ObjectPartition<T> partition : this.partitions) {
+            partition.getFreeObjects().offer(ObjectHandle.<T>createPoisonObjectHandle());
+            // send a signal to try re-populating again.
+            partition.getPoolWatchThreadSignalQueue().offer(new Object()); // item being pushed is not important.
+        }
+    }
+
+    /**
+     * Destroying the object by don't put it back in the pool.
+     *
+     * @param handle object handle
+     */
+    protected void destroyObject(ObjectHandle<T> handle) {
+        postDestroyObject(handle);
+        try {
+            if (!handle.isPoison()) {
+                handle.internalClose();
+            }
+        } catch (PoolException e) {
+            LOG.error("Error in attempting to close connection", e);
+        }
+    }
+
+    /**
+     * Update counters and call hooks.
+     *
+     * @param handle connection handle.
+     */
+    protected void postDestroyObject(ObjectHandle<T> handle) {
+        ObjectPartition<T> partition = handle.getOriginatingPartition();
+        if (this.finalizableRefQueue != null) { //safety
+            this.finalizableRefs.remove(handle.getInternalObject());
+        }
+        partition.updateCreatedObjects(-1);
+        partition.setUnableToCreateMoreTransactions(false); // we can create new ones now, this is an optimization
+
+        // "Destroying" for us means: don't put it back in the pool.
+        if (handle.getObjectListener() != null) {
+            handle.getObjectListener().onDestroy(handle);
+        }
+    }
+
+    /**
+     * Returns a database connection by using Driver.getConnection() or DataSource.getConnection()
+     *
+     * @return Connection handle
+     * @throws PoolException on error
+     */
+    protected T obtainRawInternalObject() throws PoolException {
+        try {
+            return factory.makeObject();
+        } catch (Exception ex) {
+            throw new PoolException(ex);
+        }
+    }
+
+    /**
      * Initializes JMX stuff.
      *
      * @param doRegister if true, perform registration, if false unregister
@@ -515,7 +510,6 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      *
      * @param message message to display
      * @return Stack trace message
-     *
      */
     protected String captureStackTrace(String message) {
         StringBuilder stringBuilder = new StringBuilder(String.format(message, Thread.currentThread().getName()));
@@ -531,11 +525,11 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
 
     /**
      * Obtain a connection asynchronously by queueing a request to obtain a connection in a separate thread.
-     *
+     * <p/>
      * Use as follows:
-     * <p>
+     * <p/>
      * Future&lt;Connection&gt; result = pool.getAsyncConnection();
-     * <p>
+     * <p/>
      * ... do something else in your application here
      * ...<p>
      * Connection connection = result.get(); // get the connection<p>
@@ -600,7 +594,6 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      *
      * @param objectHandle Object being released.
      * @throws PoolException
-     *
      */
     protected void internalReleaseObject(ObjectHandle<T> objectHandle) throws PoolException {
 
