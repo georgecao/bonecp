@@ -80,7 +80,7 @@ public class ObjectMaxAgeThread<T> implements Runnable {
         long tmp;
         long nextCheckInMs = this.maxAgeInMs;
 
-        int partitionSize = this.partition.getAvailableConnections();
+        int partitionSize = this.partition.getAvailableObjects();
         long currentTime = System.currentTimeMillis();
         for (int i = 0; i < partitionSize; i++) {
             try {

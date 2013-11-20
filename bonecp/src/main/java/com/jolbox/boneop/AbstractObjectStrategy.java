@@ -19,6 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Parent class for the different pool strategies.
  *
  * @author wallacew
+ * @param <T>
  *
  */
 public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {

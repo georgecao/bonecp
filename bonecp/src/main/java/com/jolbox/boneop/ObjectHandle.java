@@ -1,25 +1,20 @@
 /**
  * Copyright 2010 Wallace Wadge
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.jolbox.boneop;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Proxy;
-import java.sql.Statement;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,13 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.MapMaker;
 import com.jolbox.boneop.listener.AcquireFailConfig;
 import com.jolbox.boneop.listener.ObjectListener;
 import com.jolbox.boneop.listener.ConnectionState;
 
 /**
- * Connection handle wrapper around a JDBC connection.
+ * Object handle wrapper around a JDBC connection.
  *
  * @author wwadge
  *
@@ -92,11 +86,10 @@ public class ObjectHandle<T> {
     /**
      * Config setting.
      */
-    private boolean resetConnectionOnClose;
+    private boolean resetObjectOnClose;
     /**
-     * If true, this connection might have failed communicating with the
-     * database. We assume that exceptions should be rare here i.e. the normal
-     * case is assumed to succeed.
+     * If true, this connection might have failed communicating with the database. We assume that exceptions should be
+     * rare here i.e. the normal case is assumed to succeed.
      */
     protected boolean possiblyBroken;
     /**
@@ -110,7 +103,7 @@ public class ObjectHandle<T> {
     /**
      * Logger handle.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ObjectHandle.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectHandle.class);
     /**
      * An opaque handle for an application to use in any way it deems fit.
      */
@@ -120,8 +113,7 @@ public class ObjectHandle<T> {
      */
     private ObjectListener objectListener;
     /**
-     * If true, give warnings if application tried to issue a close twice (for
-     * debugging only).
+     * If true, give warnings if application tried to issue a close twice (for debugging only).
      */
     private boolean doubleCloseCheck;
     /**
@@ -154,8 +146,7 @@ public class ObjectHandle<T> {
      */
     private Statistics statistics;
     /**
-     * Pointer to a thread that is monitoring this connection (for the case
-     * where closeConnectionWatch) is enabled.
+     * Pointer to a thread that is monitoring this connection (for the case where closeConnectionWatch) is enabled.
      */
     private volatile Thread threadWatch;
     /**
@@ -165,7 +156,7 @@ public class ObjectHandle<T> {
     /**
      * If true, connection tracking is disabled in the config.
      */
-    private boolean connectionTrackingDisabled;
+    private boolean objectTrackingDisabled;
     /**
      * If true, transaction has been marked as COMMITed or ROLLBACKed.
      */
@@ -185,9 +176,8 @@ public class ObjectHandle<T> {
      */
     protected AtomicBoolean inUseInThreadLocalContext = new AtomicBoolean();
     /**
-     * If true, this is a poison dummy connection used to unblock threads that
-     * are currently waiting on getConnection() for nothing while the pool is
-     * trying to revive itself.
+     * If true, this is a poison dummy connection used to unblock threads that are currently waiting on getConnection()
+     * for nothing while the pool is trying to revive itself.
      */
     private boolean poison;
     /**
@@ -199,10 +189,6 @@ public class ObjectHandle<T> {
      */
     private boolean closeOpenStatements;
 
-    /**
-     * Keep track of open statements.
-     */
-    private ConcurrentMap<Statement, String> trackedStatement = new MapMaker().makeMap();
     /**
      * Avoid creating a new string object each time.
      */
@@ -229,22 +215,20 @@ public class ObjectHandle<T> {
      * @throws PoolException on error
      */
     private ObjectHandle(BoneOP<T> pool) throws PoolException {
-
         this.pool = pool;
-        this.object = obtainInternalConnection(pool);
-        fillConnectionFields(pool);
+        this.object = obtainInternalObject(pool);
+        fillObjectFields(pool);
     }
 
     /**
-     * Creates the connection handle again. We use this method to create a brand
-     * new connection handle. That way if the application (wrongly) tries to do
-     * something else with the connection that has already been "closed", it
-     * will fail.
+     * Creates the connection handle again. We use this method to create a brand new connection handle. That way if the
+     * application (wrongly) tries to do something else with the connection that has already been "closed", it will
+     * fail.
      *
      * @return ConnectionHandle
      * @throws PoolException
      */
-    public ObjectHandle<T> recreateConnectionHandle() throws PoolException {
+    public ObjectHandle<T> recreateObjectHandle() throws PoolException {
         ObjectHandle<T> handle = new ObjectHandle<>();
         handle.pool = this.pool;
         handle.object = this.object;
@@ -265,7 +249,7 @@ public class ObjectHandle<T> {
         handle.statistics = this.statistics;
         handle.threadWatch = this.threadWatch;
         handle.finalizableRefs = this.finalizableRefs;
-        handle.connectionTrackingDisabled = this.connectionTrackingDisabled;
+        handle.objectTrackingDisabled = this.objectTrackingDisabled;
         handle.txResolved = this.txResolved;
         handle.detectUnresolvedTransactions = this.detectUnresolvedTransactions;
         handle.autoCommitStackTrace = this.autoCommitStackTrace;
@@ -273,7 +257,6 @@ public class ObjectHandle<T> {
         handle.poison = this.poison;
         handle.detectUnclosedStatements = this.detectUnclosedStatements;
         handle.closeOpenStatements = this.closeOpenStatements;
-        handle.trackedStatement = this.trackedStatement;
         handle.noStackTrace = "";
         this.object = null;
         return handle;
@@ -286,15 +269,15 @@ public class ObjectHandle<T> {
      * @param url
      * @throws PoolException
      */
-    private void fillConnectionFields(BoneOP pool) throws PoolException {
+    private void fillObjectFields(BoneOP<T> pool) throws PoolException {
         this.pool = pool;
         this.finalizableRefs = pool.getFinalizableRefs();
         this.defaultReadOnly = pool.getConfig().getDefaultReadOnly();
         this.defaultCatalog = pool.getConfig().getDefaultCatalog();
         this.defaultTransactionIsolationValue = pool.getConfig().getDefaultTransactionIsolationValue();
         this.defaultAutoCommit = pool.getConfig().getDefaultAutoCommit();
-        this.resetConnectionOnClose = pool.getConfig().isResetObjectOnClose();
-        this.connectionTrackingDisabled = pool.getConfig().isDisableObjectTracking();
+        this.resetObjectOnClose = pool.getConfig().isResetObjectOnClose();
+        this.objectTrackingDisabled = pool.getConfig().isDisableObjectTracking();
         this.statisticsEnabled = pool.getConfig().isStatisticsEnabled();
         this.statistics = pool.getStatistics();
         this.detectUnclosedStatements = pool.getConfig().isDetectUnclosedStatements();
@@ -313,7 +296,7 @@ public class ObjectHandle<T> {
      * @return A DB connection.
      * @throws PoolException
      */
-    protected T obtainInternalConnection(BoneOP<T> pool) throws PoolException {
+    protected final T obtainInternalObject(BoneOP<T> pool) throws PoolException {
         boolean tryAgain = false;
         T result = null;
         int acquireRetryAttempts = pool.getConfig().getAcquireRetryAttempts();
@@ -330,7 +313,7 @@ public class ObjectHandle<T> {
                 tryAgain = false;
 
                 if (acquireRetryAttempts != pool.getConfig().getAcquireRetryAttempts()) {
-                    logger.info("Successfully re-established connection to ");
+                    LOG.info("Successfully re-established connection to ");
                 }
 
                 pool.getDbIsDown().set(false);
@@ -345,7 +328,7 @@ public class ObjectHandle<T> {
                 if (this.objectListener != null) {
                     tryAgain = this.objectListener.onAcquireFail(e, acquireConfig);
                 } else {
-                    logger.error(String.format("Failed to acquire connection to %s. Sleeping for %d ms. Attempts left: %d", acquireRetryDelayInMs, acquireRetryAttempts), e);
+                    LOG.error(String.format("Failed to acquire connection to %s. Sleeping for %d ms. Attempts left: %d", acquireRetryDelayInMs, acquireRetryAttempts), e);
 
                     try {
                         Thread.sleep(acquireRetryDelayInMs);
@@ -367,12 +350,11 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Create a dummy handle that is marked as poison (i.e. causes receiving
-     * thread to terminate).
+     * Create a dummy handle that is marked as poison (i.e. causes receiving thread to terminate).
      *
      * @return connection handle.
      */
-    public static <T> ObjectHandle<T> createPoisonConnectionHandle() {
+    public static <T> ObjectHandle<T> createPoisonObjectHandle() {
         ObjectHandle<T> handle = new ObjectHandle<>();
         handle.setPoison(true);
         return handle;
@@ -386,7 +368,7 @@ public class ObjectHandle<T> {
      * @param pool
      * @return Object Handle
      */
-    protected static <T> ObjectHandle<T> createTestConnectionHandle(T object, BoneOP<T> pool) {
+    protected static <T> ObjectHandle<T> createTestObjectHandle(T object, BoneOP<T> pool) {
         ObjectHandle<T> handle = new ObjectHandle<>();
         handle.object = object;
         handle.pool = pool;
@@ -401,9 +383,8 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Given an exception, flag the connection (or database) as being
-     * potentially broken. If the exception is a data-specific exception, do
-     * nothing except throw it back to the application.
+     * Given an exception, flag the connection (or database) as being potentially broken. If the exception is a
+     * data-specific exception, do nothing except throw it back to the application.
      *
      * @param e PoolException e
      * @return PoolException for further processing
@@ -416,7 +397,7 @@ public class ObjectHandle<T> {
         }
 
         if (((connectionState.equals(ConnectionState.TERMINATE_ALL_CONNECTIONS)) && this.pool != null) && this.pool.getDbIsDown().compareAndSet(false, true)) {
-            logger.error("Database access problem. Killing off all remaining connections in the connection pool. SQL State = " + state);
+            LOG.error("Database access problem. Killing off all remaining connections in the connection pool. SQL State = " + state);
             this.pool.connectionStrategy.destroyAllObjects();
             this.pool.poisonAndRepopulatePartitions();
         }
@@ -447,8 +428,7 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Checks if the connection is (logically) closed and throws an exception if
-     * it is.
+     * Checks if the connection is (logically) closed and throws an exception if it is.
      *
      * @throws PoolException on error
      *
@@ -468,7 +448,7 @@ public class ObjectHandle<T> {
         try {
             if (!this.logicallyClosed) {
 
-                if (this.resetConnectionOnClose /*FIXME: && !getAutoCommit() && !isTxResolved() */) {
+                if (this.resetObjectOnClose /*FIXME: && !getAutoCommit() && !isTxResolved() */) {
                     /*if (this.autoCommitStackTrace != null){
                      logger.debug(this.autoCommitStackTrace);
                      this.autoCommitStackTrace = null; 
@@ -483,7 +463,7 @@ public class ObjectHandle<T> {
                     this.threadWatch = null;
                 }
 
-                ObjectHandle<T> handle = this.recreateConnectionHandle();
+                ObjectHandle<T> handle = this.recreateObjectHandle();
                 this.logicallyClosed = true;
                 this.pool.releaseObject(handle);
 
@@ -493,7 +473,7 @@ public class ObjectHandle<T> {
             } else {
                 if (this.doubleCloseCheck && this.doubleCloseException != null) {
                     String currentLocation = this.pool.captureStackTrace("Last closed trace from thread [" + Thread.currentThread().getName() + "]:\n");
-                    logger.error(String.format(LOG_ERROR_MESSAGE, this.doubleCloseException, currentLocation));
+                    LOG.error(String.format(LOG_ERROR_MESSAGE, this.doubleCloseException, currentLocation));
                 }
             }
         } catch (PoolException e) {
@@ -510,7 +490,7 @@ public class ObjectHandle<T> {
         try {
             if (this.object != null) { // safety!
                 pool.factory.destroyObject(object);
-                if (!this.connectionTrackingDisabled && this.finalizableRefs != null) {
+                if (!this.objectTrackingDisabled && this.finalizableRefs != null) {
                     this.finalizableRefs.remove(this.object);
                 }
             }
@@ -569,7 +549,7 @@ public class ObjectHandle<T> {
      * @deprecated Please use {@link #getConnectionLastResetInMs()} instead
      */
     @Deprecated
-    public long getConnectionLastReset() {
+    public long getObjectLastReset() {
         return getObjectLastResetInMs();
     }
 
@@ -608,8 +588,8 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Renews this connection, i.e. Sets this connection to be logically open
-     * (although it was never really physically closed)
+     * Renews this connection, i.e. Sets this connection to be logically open (although it was never really physically
+     * closed)
      */
     protected void renewObject() {
         this.logicallyClosed = false;
@@ -629,9 +609,8 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Sets a debugHandle, an object that is not used by the connection pool at
-     * all but may be set by an application to track this particular connection
-     * handle for any purpose it deems fit.
+     * Sets a debugHandle, an object that is not used by the connection pool at all but may be set by an application to
+     * track this particular connection handle for any purpose it deems fit.
      *
      * @param debugHandle any object.
      */
@@ -668,8 +647,7 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Sends a test query to the underlying connection and return true if
-     * connection is alive.
+     * Sends a test query to the underlying connection and return true if connection is alive.
      *
      * @return True if connection is valid, false otherwise.
      */
@@ -678,8 +656,8 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Sets the internal connection to use. Be careful how to use this method,
-     * normally you should never need it! This is here for odd use cases only!
+     * Sets the internal connection to use. Be careful how to use this method, normally you should never need it! This
+     * is here for odd use cases only!
      *
      * @param rawConnection to set
      */
@@ -688,18 +666,16 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Returns a handle to the global pool from where this connection was
-     * obtained.
+     * Returns a handle to the global pool from where this connection was obtained.
      *
      * @return BoneCP handle
      */
-    public BoneOP getPool() {
+    public BoneOP<T> getPool() {
         return this.pool;
     }
 
     /**
-     * This method will be intercepted by the proxy if it is enabled to return
-     * the internal target.
+     * This method will be intercepted by the proxy if it is enabled to return the internal target.
      *
      * @return the target.
      */
@@ -767,8 +743,7 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * If true, autocommit is set to true or else commit/rollback has been
-     * called.
+     * If true, autocommit is set to true or else commit/rollback has been called.
      *
      * @return true/false
      */
@@ -817,9 +792,12 @@ public class ObjectHandle<T> {
      *
      * @throws PoolException
      */
-    public void refreshConnection() throws PoolException {
-        // TODO 
-        // this.connection.close(); // if it's still in use, close it.
-        this.object = this.pool.obtainRawInternalObject();
+    public void refreshObject() throws PoolException {
+        try {
+            this.pool.factory.destroyObject(object);
+            this.object = this.pool.obtainRawInternalObject();
+        } catch (Exception ex) {
+            LOG.error("Try to refresh object {}", object, ex);
+        }
     }
 }

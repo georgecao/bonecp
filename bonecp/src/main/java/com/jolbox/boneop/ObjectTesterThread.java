@@ -96,7 +96,7 @@ public class ObjectTesterThread<T> implements Runnable {
                 }
             }
 
-            int partitionSize = this.partition.getAvailableConnections();
+            int partitionSize = this.partition.getAvailableObjects();
             long currentTimeInMs = System.currentTimeMillis();
             // go thru all partitions
             for (int i = 0; i < partitionSize; i++) {
@@ -107,7 +107,7 @@ public class ObjectTesterThread<T> implements Runnable {
 
                     // check if connection has been idle for too long (or is marked as broken)
                     if (!connection.isPoison() && connection.isPossiblyBroken()
-                            || ((this.idleMaxAgeInMs > 0) && (this.partition.getAvailableConnections() >= this.partition.getMinObjects() && System.currentTimeMillis() - connection.getObjectLastUsedInMs() > this.idleMaxAgeInMs))) {
+                            || ((this.idleMaxAgeInMs > 0) && (this.partition.getAvailableObjects() >= this.partition.getMinObjects() && System.currentTimeMillis() - connection.getObjectLastUsedInMs() > this.idleMaxAgeInMs))) {
                         // kill off this connection - it's broken or it has been idle for too long
                         closeConnection(connection);
                         continue;

@@ -290,7 +290,7 @@ public class ObjectPartition<T> implements Serializable {
      *
      * @return avail connections.
      */
-    protected int getAvailableConnections() {
+    protected int getAvailableObjects() {
         return this.freeObjects.size();
     }
 

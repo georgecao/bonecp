@@ -1,17 +1,14 @@
 /**
  * Copyright 2010 Wallace Wadge
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
  */
 package com.jolbox.boneop;
 
@@ -22,6 +19,7 @@ import org.slf4j.LoggerFactory;
  * Watches a partition to create new connections when required.
  *
  * @author wwadge
+ * @param <T>
  *
  */
 public class PoolWatchThread<T> implements Runnable {
@@ -53,16 +51,16 @@ public class PoolWatchThread<T> implements Runnable {
     /**
      * Logger handle.
      */
-    private static final Logger logger = LoggerFactory.getLogger(PoolWatchThread.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PoolWatchThread.class);
 
     /**
      * Thread constructor
      *
-     * @param connectionPartition partition to monitor
+     * @param partition partition to monitor
      * @param pool Pool handle.
      */
-    public PoolWatchThread(ObjectPartition<T> connectionPartition, BoneOP<T> pool) {
-        this.partition = connectionPartition;
+    public PoolWatchThread(ObjectPartition<T> partition, BoneOP<T> pool) {
+        this.partition = partition;
         this.pool = pool;
         this.lazyInit = this.pool.getConfig().isLazyInit();
         this.acquireRetryDelayInMs = this.pool.getConfig().getAcquireRetryDelayInMs();
@@ -71,28 +69,23 @@ public class PoolWatchThread<T> implements Runnable {
 
     @Override
     public void run() {
-        int maxNewConnections;
         while (!this.signalled) {
-            maxNewConnections = 0;
-
             try {
                 if (this.lazyInit) { // block the first time if this is on.
                     this.partition.getPoolWatchThreadSignalQueue().take();
                 }
-                maxNewConnections = this.partition.getMaxObjects() - this.partition.getCreatedObjects();
+                int maxNewConnections = this.partition.getMaxObjects() - this.partition.getCreatedObjects();
                 // loop for spurious interrupt
-                while (maxNewConnections == 0 || (this.partition.getAvailableConnections() * 100 / this.partition.getMaxObjects() > this.poolAvailabilityThreshold)) {
+                while (maxNewConnections == 0 || (this.partition.getAvailableObjects() * 100 / this.partition.getMaxObjects() > this.poolAvailabilityThreshold)) {
                     if (maxNewConnections == 0) {
                         this.partition.setUnableToCreateMoreTransactions(true);
                     }
                     this.partition.getPoolWatchThreadSignalQueue().take();
                     maxNewConnections = this.partition.getMaxObjects() - this.partition.getCreatedObjects();
-
                 }
                 if (maxNewConnections > 0 && !this.pool.poolShuttingDown) {
-                    fillConnections(Math.min(maxNewConnections, this.partition.getAcquireIncrement()));
+                    fillObjects(Math.min(maxNewConnections, this.partition.getAcquireIncrement()));
                 }
-
                 if (this.pool.poolShuttingDown) {
                     return;
                 }
@@ -106,12 +99,12 @@ public class PoolWatchThread<T> implements Runnable {
     /**
      * Adds new connections to the partition.
      *
-     * @param connectionsToCreate number of connections to create
+     * @param objectsToCreate number of connections to create
      * @throws InterruptedException
      */
-    private void fillConnections(int connectionsToCreate) throws InterruptedException {
+    private void fillObjects(int objectsToCreate) throws InterruptedException {
         try {
-            for (int i = 0; i < connectionsToCreate; i++) {
+            for (int i = 0; i < objectsToCreate; i++) {
                 boolean dbDown = this.pool.getDbIsDown().get();
                 if (this.pool.poolShuttingDown) {
                     break;
@@ -127,10 +120,9 @@ public class PoolWatchThread<T> implements Runnable {
                     }
                 }
                 this.partition.addFreeObject(handle);
-
             }
         } catch (PoolException e) {
-            logger.error("Error in trying to obtain a connection. Retrying in " + this.acquireRetryDelayInMs + "ms", e);
+            LOG.error("Error in trying to obtain a connection. Retrying in {} ms", this.acquireRetryDelayInMs, e);
             Thread.sleep(this.acquireRetryDelayInMs);
         }
 

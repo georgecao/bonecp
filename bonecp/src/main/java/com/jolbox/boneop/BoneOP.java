@@ -273,7 +273,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
      */
     protected void poisonAndRepopulatePartitions() {
         for (ObjectPartition<T> partition : this.partitions) {
-            partition.getFreeObjects().offer(ObjectHandle.<T>createPoisonConnectionHandle());
+            partition.getFreeObjects().offer(ObjectHandle.<T>createPoisonObjectHandle());
             // send a signal to try re-populating again.
             partition.getPoolWatchThreadSignalQueue().offer(new Object()); // item being pushed is not important.
         }
@@ -561,7 +561,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     protected void maybeSignalForMoreObjects(ObjectPartition<T> partition) {
 
         if (!partition.isUnableToCreateMoreTransactions() && !this.poolShuttingDown
-                && partition.getAvailableConnections() * 100 / partition.getMaxObjects() <= this.poolAvailabilityThreshold) {
+                && partition.getAvailableObjects() * 100 / partition.getMaxObjects() <= this.poolAvailabilityThreshold) {
             partition.getPoolWatchThreadSignalQueue().offer(new Object()); // item being pushed is not important.
         }
     }
@@ -680,7 +680,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     public int getTotalLeased() {
         int total = 0;
         for (ObjectPartition<T> partition : partitions) {
-            total += partition.getCreatedObjects() - partition.getAvailableConnections();
+            total += partition.getCreatedObjects() - partition.getAvailableObjects();
         }
         return total;
     }
@@ -694,7 +694,7 @@ public final class BoneOP<T> extends BaseObjectPool<T> implements Serializable, 
     public int getTotalFree() {
         int total = 0;
         for (ObjectPartition<T> partition : partitions) {
-            total += partition.getAvailableConnections();
+            total += partition.getAvailableObjects();
         }
         return total;
     }

@@ -22,6 +22,7 @@ import java.util.concurrent.BlockingQueue;
  * moves those connections to the partition queue.
  *
  * @author wallacew
+ * @param <T>
  */
 public class ObjectReleaseHelperThread<T> implements Runnable {
 

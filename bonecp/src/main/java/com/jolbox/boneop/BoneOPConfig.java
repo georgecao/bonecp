@@ -21,7 +21,6 @@ import java.sql.Connection;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import javax.sql.DataSource;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -50,7 +49,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Logger class.
      */
-    private static final Logger logger = LoggerFactory.getLogger(BoneOPConfig.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BoneOPConfig.class);
     /**
      * Min number of connections per partition.
      */
@@ -134,10 +133,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      * Set to true to disable JMX.
      */
     private boolean disableJMX;
-    /**
-     * If set, use datasourceBean.getConnection() to obtain a new connection.
-     */
-    private DataSource datasourceBean;
     /**
      * Queries taking longer than this limit to execute are logged.
      */
@@ -360,7 +355,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public long getIdleConnectionTestPeriod() {
-        logger.warn("Please use getIdleConnectionTestPeriodInMinutes in place of getIdleConnectionTestPeriod. This method has been deprecated.");
+        LOG.warn("Please use getIdleConnectionTestPeriodInMinutes in place of getIdleConnectionTestPeriod. This method has been deprecated.");
         return getIdleConnectionTestPeriodInMinutes();
     }
 
@@ -373,7 +368,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public void setIdleConnectionTestPeriod(long idleConnectionTestPeriod) {
-        logger.warn("Please use setIdleConnectionTestPeriodInMinutes in place of setIdleConnectionTestPeriod. This method has been deprecated.");
+        LOG.warn("Please use setIdleConnectionTestPeriodInMinutes in place of setIdleConnectionTestPeriod. This method has been deprecated.");
         setIdleConnectionTestPeriod(idleConnectionTestPeriod * 60, TimeUnit.SECONDS);
     }
 
@@ -449,7 +444,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public long getIdleMaxAge() {
-        logger.warn("Please use getIdleMaxAgeInMinutes in place of getIdleMaxAge. This method has been deprecated.");
+        LOG.warn("Please use getIdleMaxAgeInMinutes in place of getIdleMaxAge. This method has been deprecated.");
         return getIdleMaxAgeInMinutes();
     }
 
@@ -481,7 +476,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public void setIdleMaxAge(long idleMaxAge) {
-        logger.warn("Please use setIdleMaxAgeInMinutes in place of setIdleMaxAge. This method has been deprecated.");
+        LOG.warn("Please use setIdleMaxAgeInMinutes in place of setIdleMaxAge. This method has been deprecated.");
         setIdleMaxAgeInMinutes(idleMaxAge);
     }
 
@@ -613,6 +608,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @see com.jolbox.bonecp.BoneCPConfigMBean#getInitSQL()
      */
+    @Override
     public String getInitSQL() {
         return this.initSQL;
     }
@@ -673,7 +669,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public long getAcquireRetryDelay() {
-        logger.warn("Please use getAcquireRetryDelayInMs in place of getAcquireRetryDelay. This method has been deprecated.");
+        LOG.warn("Please use getAcquireRetryDelayInMs in place of getAcquireRetryDelay. This method has been deprecated.");
         return this.acquireRetryDelayInMs;
     }
 
@@ -685,7 +681,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public void setAcquireRetryDelay(int acquireRetryDelayInMs) {
-        logger.warn("Please use setAcquireRetryDelayInMs in place of setAcquireRetryDelay. This method has been deprecated.");
+        LOG.warn("Please use setAcquireRetryDelayInMs in place of setAcquireRetryDelay. This method has been deprecated.");
         this.acquireRetryDelayInMs = acquireRetryDelayInMs;
     }
 
@@ -694,6 +690,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return the acquireRetryDelay
      */
+    @Override
     public long getAcquireRetryDelayInMs() {
         return this.acquireRetryDelayInMs;
     }
@@ -732,6 +729,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return lazyInit setting
      */
+    @Override
     public boolean isLazyInit() {
         return this.lazyInit;
     }
@@ -751,6 +749,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return the transactionRecoveryEnabled status
      */
+    @Override
     public boolean isTransactionRecoveryEnabled() {
         return this.transactionRecoveryEnabled;
     }
@@ -771,6 +770,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return the acquireRetryAttempts value
      */
+    @Override
     public int getAcquireRetryAttempts() {
         return this.acquireRetryAttempts;
     }
@@ -798,7 +798,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
                 hookClass = loadClass(connectionHookClassName).newInstance();
                 this.objectListener = (ObjectListener) hookClass;
             } catch (Exception e) {
-                logger.error("Unable to create an instance of the connection hook class (" + connectionHookClassName + ")");
+                LOG.error("Unable to create an instance of the connection hook class (" + connectionHookClassName + ")");
                 this.objectListener = null;
             }
         }
@@ -809,6 +809,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return the connectionHookClassName.
      */
+    @Override
     public String getConnectionHookClassName() {
         return this.connectionHookClassName;
     }
@@ -818,6 +819,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return the disableJMX.
      */
+    @Override
     public boolean isDisableJMX() {
         return this.disableJMX;
     }
@@ -832,24 +834,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Returns the bean being used to return a connection.
-     *
-     * @return the datasourceBean that was set.
-     */
-    public DataSource getDatasourceBean() {
-        return this.datasourceBean;
-    }
-
-    /**
-     * If set, use datasourceBean.getConnection() to obtain a new connection instead of Driver.getConnection().
-     *
-     * @param datasourceBean the datasourceBean to set
-     */
-    public void setDatasourceBean(DataSource datasourceBean) {
-        this.datasourceBean = datasourceBean;
-    }
-
-    /**
      * Deprecated.
      *
      * @deprecated Use {@link #getQueryExecuteTimeLimitInMs()} instead.
@@ -857,7 +841,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public long getQueryExecuteTimeLimit() {
-        logger.warn("Please use getQueryExecuteTimeLimitInMs in place of getQueryExecuteTimeLimit. This method has been deprecated.");
+        LOG.warn("Please use getQueryExecuteTimeLimitInMs in place of getQueryExecuteTimeLimit. This method has been deprecated.");
         return this.queryExecuteTimeLimitInMs;
     }
 
@@ -869,7 +853,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public void setQueryExecuteTimeLimit(int queryExecuteTimeLimit) {
-        logger.warn("Please use setQueryExecuteTimeLimitInMs in place of setQueryExecuteTimeLimit. This method has been deprecated.");
+        LOG.warn("Please use setQueryExecuteTimeLimitInMs in place of setQueryExecuteTimeLimit. This method has been deprecated.");
         setQueryExecuteTimeLimit(queryExecuteTimeLimit, TimeUnit.MILLISECONDS);
     }
 
@@ -878,6 +862,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return the queryTimeLimit
      */
+    @Override
     public long getQueryExecuteTimeLimitInMs() {
         return this.queryExecuteTimeLimitInMs;
     }
@@ -916,6 +901,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return the poolAvailabilityThreshold currently set.
      */
+    @Override
     public int getPoolAvailabilityThreshold() {
         return this.poolAvailabilityThreshold;
     }
@@ -944,6 +930,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @return the disableConnectionTracking
      */
+    @Override
     public boolean isDisableObjectTracking() {
         return this.disableObjectTracking;
     }
@@ -967,7 +954,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public long getWaitTime() {
-        logger.warn("Please use getConnectionTimeoutInMs in place of getConnectionTimeout. This method has been deprecated.");
+        LOG.warn("Please use getConnectionTimeoutInMs in place of getConnectionTimeout. This method has been deprecated.");
         return this.waitTimeInMs;
     }
 
@@ -979,7 +966,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public void setWaitTime(long connectionTimeout) {
-        logger.warn("Please use setConnectionTimeoutInMs in place of setConnectionTimeout. This method has been deprecated.");
+        LOG.warn("Please use setConnectionTimeoutInMs in place of setConnectionTimeout. This method has been deprecated.");
         this.waitTimeInMs = connectionTimeout;
     }
 
@@ -1065,7 +1052,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public long getCloseObjectWatchTimeout() {
-        logger.warn("Please use getCloseConnectionWatchTimeoutInMs in place of getCloseConnectionWatchTimeout. This method has been deprecated.");
+        LOG.warn("Please use getCloseConnectionWatchTimeoutInMs in place of getCloseConnectionWatchTimeout. This method has been deprecated.");
         return this.closeObjectWatchTimeoutInMs;
     }
 
@@ -1077,7 +1064,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public void setCloseObjectWatchTimeout(long closeConnectionWatchTimeout) {
-        logger.warn("Please use setCloseConnectionWatchTimeoutInMs in place of setCloseConnectionWatchTimeout. This method has been deprecated.");
+        LOG.warn("Please use setCloseConnectionWatchTimeoutInMs in place of setCloseConnectionWatchTimeout. This method has been deprecated.");
         setCloseObjectWatchTimeoutInMs(closeConnectionWatchTimeout);
     }
 
@@ -1128,7 +1115,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public long getMaxConnectionAge() {
-        logger.warn("Please use getMaxConnectionAgeInSeconds in place of getMaxConnectionAge. This method has been deprecated.");
+        LOG.warn("Please use getMaxConnectionAgeInSeconds in place of getMaxConnectionAge. This method has been deprecated.");
         return this.maxObjectAgeInSeconds;
     }
 
@@ -1159,7 +1146,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     @Deprecated
     public void setMaxConnectionAge(long maxConnectionAgeInSeconds) {
-        logger.warn("Please use setmaxConnectionAgeInSecondsInSeconds in place of setMaxConnectionAge. This method has been deprecated.");
+        LOG.warn("Please use setmaxConnectionAgeInSecondsInSeconds in place of setMaxConnectionAge. This method has been deprecated.");
         this.maxObjectAgeInSeconds = maxConnectionAgeInSeconds;
     }
 
@@ -1512,7 +1499,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
 
             if (found == -1) {
                 config = null;
-                logger.warn("Did not find " + sectionName + " section in config file. Reverting to defaults.");
+                LOG.warn("Did not find " + sectionName + " section in config file. Reverting to defaults.");
             }
         }
 
@@ -1547,7 +1534,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
         }
 
         if (this.poolStrategy == null || !(this.poolStrategy.equalsIgnoreCase("DEFAULT") || this.poolStrategy.equalsIgnoreCase("CACHED"))) {
-            logger.warn("Unrecognised pool strategy. Allowed values are DEFAULT and CACHED. Setting to DEFAULT.");
+            LOG.warn("Unrecognised pool strategy. Allowed values are DEFAULT and CACHED. Setting to DEFAULT.");
             this.poolStrategy = "DEFAULT";
         }
 
@@ -1571,34 +1558,34 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
             } else if (this.defaultTransactionIsolation.equals("SERIALIZABLE")) {
                 this.defaultTransactionIsolationValue = Connection.TRANSACTION_SERIALIZABLE;
             } else {
-                logger.warn("Unrecognized defaultTransactionIsolation value. Using driver default.");
+                LOG.warn("Unrecognized defaultTransactionIsolation value. Using driver default.");
                 this.defaultTransactionIsolationValue = -1;
             }
         }
         if (this.maxObjectsPerPartition < 1) {
-            logger.warn("Max Connections < 1. Setting to 20");
+            LOG.warn("Max Connections < 1. Setting to 20");
             this.maxObjectsPerPartition = 20;
         }
         if (this.minObjectsPerPartition < 0) {
-            logger.warn("Min Connections < 0. Setting to 1");
+            LOG.warn("Min Connections < 0. Setting to 1");
             this.minObjectsPerPartition = 1;
         }
 
         if (this.minObjectsPerPartition > this.maxObjectsPerPartition) {
-            logger.warn("Min Connections > max connections");
+            LOG.warn("Min Connections > max connections");
             this.minObjectsPerPartition = this.maxObjectsPerPartition;
         }
         if (this.acquireIncrement <= 0) {
-            logger.warn("acquireIncrement <= 0. Setting to 1.");
+            LOG.warn("acquireIncrement <= 0. Setting to 1.");
             this.acquireIncrement = 1;
         }
         if (this.partitionCount < 1) {
-            logger.warn("partitions < 1! Setting to 1");
+            LOG.warn("partitions < 1! Setting to 1");
             this.partitionCount = 1;
         }
 
         if (this.releaseHelperThreads < 0) {
-            logger.warn("releaseHelperThreads < 0! Setting to 3");
+            LOG.warn("releaseHelperThreads < 0! Setting to 3");
             this.releaseHelperThreads = 3;
         }
 
@@ -1608,7 +1595,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
         this.serviceOrder = this.serviceOrder != null ? this.serviceOrder.toUpperCase() : "FIFO";
 
         if (!(this.serviceOrder.equals("FIFO") || this.serviceOrder.equals("LIFO"))) {
-            logger.warn("Queue service order is not set to FIFO or LIFO. Defaulting to FIFO.");
+            LOG.warn("Queue service order is not set to FIFO or LIFO. Defaulting to FIFO.");
             this.serviceOrder = "FIFO";
         }
 
@@ -1706,7 +1693,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
                 && Objects.equals(this.acquireRetryAttempts, that.getAcquireRetryAttempts())
                 && Objects.equals(this.closeObjectWatchTimeoutInMs, that.getCloseObjectWatchTimeout())
                 && Objects.equals(this.waitTimeInMs, that.getWaitTimeInMs())
-                && Objects.equals(this.datasourceBean, that.getDatasourceBean())
                 && Objects.equals(this.getQueryExecuteTimeLimitInMs(), that.getQueryExecuteTimeLimitInMs())
                 && Objects.equals(this.poolAvailabilityThreshold, that.getPoolAvailabilityThreshold())
                 && Objects.equals(this.poolName, that.getPoolName())
