@@ -309,7 +309,7 @@ public class ObjectHandle<T> {
                     LOG.info("Successfully re-established connection to ");
                 }
 
-                pool.getDbIsDown().set(false);
+                pool.getDown().set(false);
 
                 // call the hook, if available.
                 if (this.objectListener != null) {
@@ -321,7 +321,7 @@ public class ObjectHandle<T> {
                 if (this.objectListener != null) {
                     tryAgain = this.objectListener.onAcquireFail(e, acquireConfig);
                 } else {
-                    LOG.error(String.format("Failed to acquire object. Sleeping for %d ms. Attempts left: %d", acquireRetryDelayInMs, acquireRetryAttempts), e);
+                    LOG.error("Failed to acquire object. Sleeping for {} ms. Attempts left: {}", acquireRetryDelayInMs, acquireRetryAttempts, e);
 
                     try {
                         Thread.sleep(acquireRetryDelayInMs);
@@ -356,7 +356,7 @@ public class ObjectHandle<T> {
             state = "08999";
         }
 
-        if (((connectionState.equals(ConnectionState.TERMINATE_ALL_CONNECTIONS)) && this.pool != null) && this.pool.getDbIsDown().compareAndSet(false, true)) {
+        if (((connectionState.equals(ConnectionState.TERMINATE_ALL_CONNECTIONS)) && this.pool != null) && this.pool.getDown().compareAndSet(false, true)) {
             LOG.error("Database access problem. Killing off all remaining connections in the connection pool. SQL State = " + state);
             this.pool.connectionStrategy.destroyAllObjects();
             this.pool.poisonAndRepopulatePartitions();

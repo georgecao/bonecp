@@ -14,8 +14,6 @@ package com.jolbox.boneop;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -258,8 +256,8 @@ public class TestConnectionPartition {
      */
     @Test
     public void testUnableToCreateMoreTransactionsFlag() {
-        testClass.setUnableToCreateMoreTransactions(true);
-        assertEquals(testClass.isUnableToCreateMoreTransactions(), true);
+        testClass.setUnableToCreateMoreObjects(true);
+        assertEquals(testClass.isUnableToCreateMoreObjects(), true);
     }
 
     /**

@@ -116,7 +116,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
     /**
      * If true, there are no connections to be taken.
      */
-    private final AtomicBoolean dbIsDown = new AtomicBoolean(false);
+    private final AtomicBoolean down = new AtomicBoolean(false);
     /**
      * The object factory to create, validate and destroy object.
      */
@@ -275,9 +275,9 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
         this.closeConnectionWatch = config.isCloseConnectionWatch();
         this.cachedPoolStrategy = config.getPoolStrategy() != null && config.getPoolStrategy().equalsIgnoreCase("CACHED");
         if (this.cachedPoolStrategy) {
-            this.connectionStrategy = CachedObjectStrategy.getInstance(this, new DefaultObjectStrategy(this));
+            this.connectionStrategy = CachedObjectStrategy.getInstance(this, new DefaultObjectStrategy<>(this));
         } else {
-            this.connectionStrategy = new DefaultObjectStrategy(this);
+            this.connectionStrategy = new DefaultObjectStrategy<>(this);
         }
         boolean queueLIFO = config.getServiceOrder() != null && config.getServiceOrder().equalsIgnoreCase("LIFO");
         if (this.closeConnectionWatch) {
@@ -290,7 +290,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
             this.partitions.add(p, partition);
             TransferQueue<ObjectHandle<T>> objectHandles;
             if (config.getMaxObjectsPerPartition() == config.getMinObjectsPerPartition()) {
-                // if we have a pool that we don't want resized, make it even faster by ignoring
+                // if we have a pool that we don't want re-sized, make it even faster by ignoring
                 // the size constraints.
                 objectHandles = queueLIFO ? new LIFOQueue<ObjectHandle<T>>() : new LinkedTransferQueue<ObjectHandle<T>>();
             } else {
@@ -322,8 +322,8 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
                 final Runnable connectionMaxAgeTester = new ObjectMaxAgeThread(partition, this.maxAliveScheduler, this, config.getMaxConnectionAge(TimeUnit.MILLISECONDS), queueLIFO);
                 this.maxAliveScheduler.schedule(connectionMaxAgeTester, config.getMaxObjectAgeInSeconds(), TimeUnit.SECONDS);
             }
-            // watch this partition for low no of threads
-            this.connectionsScheduler.execute(new PoolWatchThread(partition, this));
+            // watch this partition for low NO. of threads
+            this.connectionsScheduler.execute(new PoolWatchThread<>(partition, this));
         }
         if (!this.config.isDisableJMX()) {
             registerUnregisterJMX(true);
@@ -421,7 +421,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
             this.finalizableRefs.remove(handle.getInternalObject());
         }
         partition.updateCreatedObjects(-1);
-        partition.setUnableToCreateMoreTransactions(false); // we can create new ones now, this is an optimization
+        partition.setUnableToCreateMoreObjects(false); // we can create new ones now, this is an optimization
 
         // "Destroying" for us means: don't put it back in the pool.
         if (handle.getObjectListener() != null) {
@@ -490,9 +490,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      */
     public T getObject() throws PoolException {
         ObjectHandle<T> handle = this.connectionStrategy.getObject();
-        T result = handle.getInternalObject();
-
-        return result;
+        return handle.getInternalObject();
     }
 
     /**
@@ -502,7 +500,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      */
     protected void watchObject(ObjectHandle<T> connectionHandle) {
         String message = captureStackTrace(UNCLOSED_EXCEPTION_MESSAGE);
-        this.closeConnectionExecutor.submit(new CloseThreadMonitor(Thread.currentThread(), connectionHandle, message, this.closeObjectWatchTimeoutInMs));
+        this.closeConnectionExecutor.submit(new CloseThreadMonitor<>(Thread.currentThread(), connectionHandle, message, this.closeObjectWatchTimeoutInMs));
     }
 
     /**
@@ -553,8 +551,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      * @param partition to test for.
      */
     protected void maybeSignalForMoreObjects(ObjectPartition<T> partition) {
-
-        if (!partition.isUnableToCreateMoreTransactions() && !this.poolShuttingDown
+        if (!partition.isUnableToCreateMoreObjects() && !this.poolShuttingDown
                 && partition.getAvailableObjects() * 100 / partition.getMaxObjects() <= this.poolAvailabilityThreshold) {
             partition.getPoolWatchThreadSignalQueue().offer(new Object()); // item being pushed is not important.
         }
@@ -604,7 +601,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
                 objectHandle.internalClose();
             }
 
-            ObjectPartition connectionPartition = objectHandle.getOriginatingPartition();
+            ObjectPartition<T> connectionPartition = objectHandle.getOriginatingPartition();
             postDestroyObject(objectHandle);
             maybeSignalForMoreObjects(connectionPartition);
             return; // don't place back in queue - connection is broken or expired.
@@ -783,12 +780,12 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
     }
 
     /**
-     * Returns the dbIsDown field.
+     * Returns the down field.
      *
-     * @return dbIsDown
+     * @return down
      */
-    public AtomicBoolean getDbIsDown() {
-        return this.dbIsDown;
+    public AtomicBoolean getDown() {
+        return this.down;
     }
 
     /**

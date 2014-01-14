@@ -17,15 +17,11 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -131,7 +127,7 @@ public class TestConnectionHandle {
         CustomHook testHook = new CustomHook();
         this.config.setObjectListener(testHook);
         // make it fail the first time and succeed the second time
-        expect(this.mockPool.getDbIsDown()).andReturn(new AtomicBoolean()).anyTimes();
+        expect(this.mockPool.getDown()).andReturn(new AtomicBoolean()).anyTimes();
         expect(this.mockPool.obtainRawInternalObject()).andThrow(new SQLException()).once().andReturn(this.mockObject).once();
         replay(this.mockPool);
         // get counts on our hooks
@@ -141,7 +137,7 @@ public class TestConnectionHandle {
 
         // Test 2: Same thing but without the hooks
         reset(this.mockPool);
-        expect(this.mockPool.getDbIsDown()).andReturn(new AtomicBoolean()).anyTimes();
+        expect(this.mockPool.getDown()).andReturn(new AtomicBoolean()).anyTimes();
         expect(this.mockPool.getConfig()).andReturn(this.config).anyTimes();
         expect(this.mockPool.obtainRawInternalObject()).andThrow(new SQLException()).once().andReturn(this.mockObject).once();
         count = 1;
@@ -251,7 +247,7 @@ public class TestConnectionHandle {
         Assert.assertTrue(field.getBoolean(this.testClass));
 
         // Test that a db fatal error will lead to the pool being instructed to terminate all connections (+ log)
-        expect(this.mockPool.getDbIsDown()).andReturn(new AtomicBoolean()).anyTimes();
+        expect(this.mockPool.getDown()).andReturn(new AtomicBoolean()).anyTimes();
         this.mockPool.connectionStrategy.destroyAllObjects();
         this.mockLogger.error((String) anyObject(), anyObject());
         replay(this.mockPool);

@@ -18,9 +18,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
 import java.sql.Statement;
-import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -35,13 +33,11 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
-import javax.sql.DataSource;
+
 import com.jolbox.boneop.listener.ObjectListener;
 import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.TransferQueue;
-import junit.framework.Assert;
+
 import org.easymock.EasyMock;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -314,7 +310,7 @@ public class TestBoneCP {
         expect(mockConnection.getOriginatingPartition()).andReturn(mockPartition).anyTimes();
         mockPartition.updateCreatedObjects(-1);
         expectLastCall().once();
-        mockPartition.setUnableToCreateMoreTransactions(false);
+        mockPartition.setUnableToCreateMoreObjects(false);
         expectLastCall().once();
         ObjectListener mockConnectionHook = createNiceMock(ObjectListener.class);
         expect(mockConnection.getObjectListener()).andReturn(mockConnectionHook).anyTimes();
@@ -341,7 +337,7 @@ public class TestBoneCP {
     public void testGetConnection() throws Exception {
         // Test 1: Get connection - normal state
 
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockPartition.getAvailableObjects()).andReturn(1).anyTimes();
         expect(mockConnectionHandles.poll()).andReturn(mockConnection).once();
@@ -366,7 +362,7 @@ public class TestBoneCP {
     @Test
     public void testGetConnectionWithTimeout() throws Exception {
 
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockConnectionHandles.poll()).andReturn(null).anyTimes();
 
@@ -405,7 +401,7 @@ public class TestBoneCP {
     public void testGetConnectionUncheckedExceptionTriggeredWhileWaiting()
             throws NoSuchFieldException, IllegalAccessException {
         reset(mockPartition, mockConnectionHandles, mockConnection);
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(false).anyTimes();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(false).anyTimes();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockPartition.getMaxObjects()).andReturn(0).anyTimes(); // cause a division by zero error
         replay(mockPartition, mockConnectionHandles, mockConnection, mockLock);
@@ -427,7 +423,7 @@ public class TestBoneCP {
     public void testGetConnectionLimitsHit() throws Exception {
         reset(mockPartition, mockConnectionHandles, mockConnection);
         expect(mockConfig.getPoolAvailabilityThreshold()).andReturn(0).anyTimes();
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(false).anyTimes();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(false).anyTimes();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockPartition.getMaxObjects()).andReturn(10).anyTimes();
         expect(mockPartition.getAvailableObjects()).andReturn(1).anyTimes();
@@ -458,7 +454,7 @@ public class TestBoneCP {
     public void testGetConnectionConnectionQueueStarved()
             throws Exception {
         reset(mockPartition, mockConnectionHandles, mockConnection);
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockConnectionHandles.poll(Long.MAX_VALUE, TimeUnit.MILLISECONDS)).andReturn(mockConnection).once();
 
@@ -482,7 +478,7 @@ public class TestBoneCP {
             throws NoSuchFieldException, IllegalAccessException,
             InterruptedException {
         reset(mockPartition, mockConnectionHandles, mockConnection);
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockConnectionHandles.poll()).andReturn(null).once();
         expect(mockConnectionHandles.poll(Long.MAX_VALUE, TimeUnit.MILLISECONDS)).andThrow(new InterruptedException()).once();
@@ -509,7 +505,7 @@ public class TestBoneCP {
             throws NoSuchFieldException, IllegalAccessException,
             InterruptedException {
         reset(mockPartition, mockConnectionHandles, mockConnection);
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         testClass.nullOnObjectTimeout = true;
         expect(mockConnectionHandles.poll()).andReturn(null).once();
@@ -593,7 +589,7 @@ public class TestBoneCP {
             throws Exception {
 
         reset(mockPartition, mockConnectionHandles, mockConnection);
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockPartition.getAvailableObjects()).andReturn(1).anyTimes();
         expect(mockConnectionHandles.poll()).andReturn(null).once();
@@ -615,7 +611,7 @@ public class TestBoneCP {
      */
     @Test
     public void testGetAsyncConnection() throws InterruptedException, ExecutionException {
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockPartition.getAvailableObjects()).andReturn(1).anyTimes();
         expect(mockConnectionHandles.poll()).andReturn(mockConnection).once();
@@ -741,11 +737,11 @@ public class TestBoneCP {
         expect(mockConfig.getConnectionTestStatement()).andReturn(null).once();
         expect(mockConnection.getOriginatingPartition()).andReturn(mockPartition).anyTimes();
         // we're about to destroy this connection, so we can create new ones.
-        mockPartition.setUnableToCreateMoreTransactions(false);
+        mockPartition.setUnableToCreateMoreObjects(false);
         expectLastCall().once();
 
         // break out from the next method, we're not interested in it
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
 
         Connection mockRealConnection = createNiceMock(Connection.class);
         expect(mockConnection.getInternalObject()).andReturn(mockRealConnection).anyTimes();
@@ -772,7 +768,7 @@ public class TestBoneCP {
         // return a partition
         expect(mockConnection.getOriginatingPartition()).andReturn(mockPartition).anyTimes();
         // break out from this method, we're not interested in it
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(true).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(true).once();
 
         expect(mockConnection.isExpired()).andReturn(true).anyTimes();
         mockConnection.internalClose();
@@ -946,7 +942,7 @@ public class TestBoneCP {
      */
     @Test
     public void testMaybeSignalForMoreConnections() throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(false).once();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(false).once();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         //		expect(mockConnectionHandles.size()).andReturn(1).anyTimes();
         expect(mockPartition.getAvailableObjects()).andReturn(1).anyTimes();
@@ -984,7 +980,7 @@ public class TestBoneCP {
         // Test 2, same test but fake an exception
         reset(mockPartition, mockConnectionHandles);
         expect(mockPartition.getPoolWatchThreadSignalQueue()).andReturn(bq).anyTimes();
-        expect(mockPartition.isUnableToCreateMoreTransactions()).andReturn(false).anyTimes();
+        expect(mockPartition.isUnableToCreateMoreObjects()).andReturn(false).anyTimes();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
         expect(mockConnectionHandles.size()).andReturn(1).anyTimes();
         expect(mockPartition.getMaxObjects()).andReturn(10).anyTimes();

@@ -87,7 +87,7 @@ public class TestPoolWatchThread {
         expect(mockConfig.isLazyInit()).andReturn(false).anyTimes();
 
         mockPool = createNiceMock(BoneOP.class);
-        expect(mockPool.getDbIsDown()).andReturn(new AtomicBoolean()).anyTimes();
+        expect(mockPool.getDown()).andReturn(new AtomicBoolean()).anyTimes();
         expect(mockPool.getConfig()).andReturn(mockConfig).anyTimes();
         replay(mockPool, mockConfig);
         testClass = new PoolWatchThread(mockPartition, mockPool);
@@ -138,7 +138,7 @@ public class TestPoolWatchThread {
         expect(mockPartition.getPoolWatchThreadSignalQueue()).andReturn(bq);
         expect(mockPartition.getMaxObjects()).andReturn(5).once();
         expect(mockPartition.getCreatedObjects()).andReturn(5).once();
-        mockPartition.setUnableToCreateMoreTransactions(true);
+        mockPartition.setUnableToCreateMoreObjects(true);
         expectLastCall().once();
 
         // just to break out of the loop
@@ -194,7 +194,7 @@ public class TestPoolWatchThread {
         mockPartition.addFreeObject((ObjectHandle) anyObject());
         expectLastCall().once();
         expect(mockPool.obtainRawInternalObject()).andReturn(createNiceMock(ObjectHandle.class)).anyTimes();
-        expect(mockPool.getDbIsDown()).andReturn(new AtomicBoolean()).anyTimes();
+        expect(mockPool.getDown()).andReturn(new AtomicBoolean()).anyTimes();
         expect(mockPool.getConfig()).andReturn(mockConfig).anyTimes();
         replay(mockPool, mockPartition, mockLogger);
         testClass.run();
@@ -246,7 +246,7 @@ public class TestPoolWatchThread {
 
         mockLogger.error((String) anyObject(), anyObject());
         expectLastCall();
-        expect(mockPool.getDbIsDown()).andReturn(new AtomicBoolean()).anyTimes();
+        expect(mockPool.getDown()).andReturn(new AtomicBoolean()).anyTimes();
         replay(mockPartition, mockPool, mockLogger, mockConfig);
         testClass.run();
         verify(mockPartition);

@@ -12,18 +12,13 @@
  */
 package com.jolbox.boneop;
 
-import java.io.Serializable;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
+import com.google.common.base.FinalizableWeakReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.FinalizableWeakReference;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.TransferQueue;
+import java.io.Serializable;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Connection Partition structure
@@ -69,7 +64,7 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * If set to true, don't bother calling method to attempt to create more connections because we've hit our limit.
      */
-    private volatile boolean unableToCreateMoreTransactions = false;
+    private volatile boolean unableToCreateMoreObjects = false;
     /**
      * Scratch queue of connections awaiting to be placed back in queue.
      */
@@ -85,7 +80,7 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * Store the unit translation here to avoid recalculating it in statement handles.
      */
-    private final long queryExecuteTimeLimitInNanoSeconds;
+    private final long queryExecuteTimeLimitInNanos;
     /**
      * Cached copy of the config-specified pool name.
      */
@@ -214,14 +209,14 @@ public class ObjectPartition<T> implements Serializable {
 
         this.objectsPendingRelease = new LinkedTransferQueue<>();
         this.disableTracking = config.isDisableObjectTracking();
-        this.queryExecuteTimeLimitInNanoSeconds = TimeUnit.NANOSECONDS.convert(config.getQueryExecuteTimeLimitInMs(), TimeUnit.MILLISECONDS);
+        this.queryExecuteTimeLimitInNanos = TimeUnit.NANOSECONDS.convert(config.getQueryExecuteTimeLimitInMs(), TimeUnit.MILLISECONDS);
         /**
          * Create a number of helper threads for connection release.
          */
         int helperThreads = config.getReleaseHelperThreads();
         for (int i = 0; i < helperThreads; i++) {
             // go through pool.getReleaseHelper() rather than releaseHelper directly to aid unit testing (i.e. mocking)
-            pool.getReleaseHelper().execute(new ObjectReleaseHelperThread(this.objectsPendingRelease, pool));
+            pool.getReleaseHelper().execute(new ObjectReleaseHelperThread<>(this.objectsPendingRelease, pool));
         }
     }
 
@@ -263,17 +258,17 @@ public class ObjectPartition<T> implements Serializable {
      *
      * @return true if we have created all the connections we can
      */
-    protected boolean isUnableToCreateMoreTransactions() {
-        return this.unableToCreateMoreTransactions;
+    protected boolean isUnableToCreateMoreObjects() {
+        return this.unableToCreateMoreObjects;
     }
 
     /**
      * Sets connection creation possible status
      *
-     * @param unableToCreateMoreTransactions t/f
+     * @param unableToCreateMoreObjects t/f
      */
-    protected void setUnableToCreateMoreTransactions(boolean unableToCreateMoreTransactions) {
-        this.unableToCreateMoreTransactions = unableToCreateMoreTransactions;
+    protected void setUnableToCreateMoreObjects(boolean unableToCreateMoreObjects) {
+        this.unableToCreateMoreObjects = unableToCreateMoreObjects;
     }
 
     /**
@@ -308,7 +303,7 @@ public class ObjectPartition<T> implements Serializable {
      *
      * @return value
      */
-    protected long getQueryExecuteTimeLimitinNanoSeconds() {
-        return this.queryExecuteTimeLimitInNanoSeconds;
+    protected long getQueryExecuteTimeLimitInNanos() {
+        return this.queryExecuteTimeLimitInNanos;
     }
 }

@@ -36,11 +36,11 @@ along with BoneCP.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.jolbox.boneop;
 
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.concurrent.ThreadFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.concurrent.ThreadFactory;
 
 
 /**
@@ -51,23 +51,30 @@ import org.slf4j.LoggerFactory;
 public class CustomThreadFactory
         implements ThreadFactory, UncaughtExceptionHandler {
 
-	/** Daemon state. */
+    /**
+     * Daemon state.
+     */
     private boolean daemon;
-    /** Thread name. */
+    /**
+     * Thread name.
+     */
     private String threadName;
-    /** Logger handle. */
-    private static final Logger logger = LoggerFactory.getLogger(CustomThreadFactory.class);
+    /**
+     * Logger handle.
+     */
+    private static final Logger LOG = LoggerFactory.getLogger(CustomThreadFactory.class);
 
     /**
-     *  Default constructor.
+     * Default constructor.
      *
      * @param threadName name for thread.
-     * @param daemon set/unset daemon thread 
+     * @param daemon     set/unset daemon thread
      */
-    public CustomThreadFactory(String threadName, boolean daemon){
+    public CustomThreadFactory(String threadName, boolean daemon) {
         this.threadName = threadName;
         this.daemon = daemon;
     }
+
     /**
      * {@inheritDoc}
      *
@@ -80,13 +87,14 @@ public class CustomThreadFactory
         t.setUncaughtExceptionHandler(this);
         return t;
     }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @see java.lang.Thread.UncaughtExceptionHandler#uncaughtException(java.lang.Thread, java.lang.Throwable)
-	 */
-	public void uncaughtException(Thread thread, Throwable throwable) {
-		logger.error("Uncaught Exception in thread "+ thread.getName(), throwable);
-	}
+
+    /**
+     * {@inheritDoc}
+     *
+     * @see java.lang.Thread.UncaughtExceptionHandler#uncaughtException(java.lang.Thread, java.lang.Throwable)
+     */
+    public void uncaughtException(Thread thread, Throwable throwable) {
+        LOG.error("Uncaught Exception in thread " + thread.getName(), throwable);
+    }
 
 }

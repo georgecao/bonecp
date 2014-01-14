@@ -66,7 +66,7 @@ public class BoundedLinkedTransferQueue<E> extends LinkedTransferQueue<E> {
      */
     @Override
     public int remainingCapacity() {
-        return this.maxQueueSize - this.size.get();
+        return this.maxQueueSize - size();
     }
 
     @Override

@@ -18,9 +18,8 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Parent class for the different pool strategies.
  *
- * @author wallacew
  * @param <T>
- *
+ * @author wallacew
  */
 public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
 
@@ -70,8 +69,8 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
     /**
      * After obtaining a connection, perform additional tasks.
      *
-     * @param handle
-     * @param statsObtainTime
+     * @param handle          object handle
+     * @param statsObtainTime create time
      */
     protected void postObject(ObjectHandle<T> handle, long statsObtainTime) {
 

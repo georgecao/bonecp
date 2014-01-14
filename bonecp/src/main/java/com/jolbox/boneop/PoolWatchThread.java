@@ -18,9 +18,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Watches a partition to create new connections when required.
  *
- * @author wwadge
  * @param <T>
- *
+ * @author wwadge
  */
 public class PoolWatchThread<T> implements Runnable {
 
@@ -35,7 +34,7 @@ public class PoolWatchThread<T> implements Runnable {
     /**
      * Mostly used to break out easily in unit testing.
      */
-    private boolean signalled;
+    private boolean signalled = false;
     /**
      * How long to wait before retrying to add a connection upon failure.
      */
@@ -57,7 +56,7 @@ public class PoolWatchThread<T> implements Runnable {
      * Thread constructor
      *
      * @param partition partition to monitor
-     * @param pool Pool handle.
+     * @param pool      Pool handle.
      */
     public PoolWatchThread(ObjectPartition<T> partition, BoneOP<T> pool) {
         this.partition = partition;
@@ -78,7 +77,7 @@ public class PoolWatchThread<T> implements Runnable {
                 // loop for spurious interrupt
                 while (maxNewConnections == 0 || (this.partition.getAvailableObjects() * 100 / this.partition.getMaxObjects() > this.poolAvailabilityThreshold)) {
                     if (maxNewConnections == 0) {
-                        this.partition.setUnableToCreateMoreTransactions(true);
+                        this.partition.setUnableToCreateMoreObjects(true);
                     }
                     this.partition.getPoolWatchThreadSignalQueue().take();
                     maxNewConnections = this.partition.getMaxObjects() - this.partition.getCreatedObjects();
@@ -105,13 +104,12 @@ public class PoolWatchThread<T> implements Runnable {
     private void fillObjects(int objectsToCreate) throws InterruptedException {
         try {
             for (int i = 0; i < objectsToCreate; i++) {
-                boolean dbDown = this.pool.getDbIsDown().get();
+                boolean isDown = this.pool.getDown().get();
                 if (this.pool.poolShuttingDown) {
                     break;
                 }
-                ObjectHandle<T> handle = ObjectHandle.<T>createObjectHandle(this.pool);
-
-                if (dbDown && !this.pool.getDbIsDown().get()) { // we've just recovered
+                ObjectHandle<T> handle = ObjectHandle.createObjectHandle(this.pool);
+                if (isDown && !this.pool.getDown().get()) { // we've just recovered
                     ObjectHandle<T> maybePoison = this.partition.getFreeObjects().poll();
                     if (maybePoison != null && !maybePoison.isPoison()) {
                         // wasn't poison, push it back

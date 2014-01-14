@@ -18,9 +18,8 @@ import java.util.concurrent.TimeUnit;
  * The normal getConnection() strategy class in use. Attempts to get a connection from one or more configured
  * partitions.
  *
- * @author wallacew
  * @param <T> object type.
- *
+ * @author wallacew
  */
 public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
 
@@ -39,14 +38,14 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
                 if (i == pid) {
                     continue; // we already determined it's not here
                 }
-                result = getPartition(i).getFreeObjects().poll(); // try our luck with this partition
                 partition = getPartition(i);
+                result = partition.getFreeObjects().poll(); // try our luck with this partition
                 if (result != null) {
                     break;  // we found a connection
                 }
             }
         }
-        if (!partition.isUnableToCreateMoreTransactions()) { // unless we can't create any more connections...
+        if (!partition.isUnableToCreateMoreObjects()) { // unless we can't create any more connections...
             this.pool.maybeSignalForMoreObjects(partition);  // see if we need to create more
         }
         return result;
@@ -76,7 +75,7 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
         }
 
         if (result.isPoison()) {
-            if (this.pool.getDbIsDown().get() && partition.getFreeObjects().hasWaitingConsumer()) {
+            if (this.pool.getDown().get() && partition.getFreeObjects().hasWaitingConsumer()) {
                 // poison other waiting threads.
                 partition.getFreeObjects().offer(result);
             }
@@ -95,7 +94,7 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
             ObjectHandle<T> objectHandle;
             // close off all connections.
             for (ObjectPartition<T> partition : this.pool.partitions) {
-                partition.setUnableToCreateMoreTransactions(false); // we can create new ones now, this is an optimization
+                partition.setUnableToCreateMoreObjects(false); // we can create new ones now, this is an optimization
                 while ((objectHandle = partition.getFreeObjects().poll()) != null) {
                     this.pool.destroyObject(objectHandle);
                 }
