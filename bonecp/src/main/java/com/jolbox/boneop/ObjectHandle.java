@@ -138,7 +138,7 @@ public class ObjectHandle<T> {
      */
     private Statistics statistics;
     /**
-     * Pointer to a thread that is monitoring this connection (for the case where closeConnectionWatch) is enabled.
+     * Pointer to a thread that is monitoring this connection (for the case where closeObjectWatch) is enabled.
      */
     private volatile Thread threadWatch;
     /**

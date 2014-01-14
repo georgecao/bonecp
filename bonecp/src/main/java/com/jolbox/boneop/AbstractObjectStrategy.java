@@ -81,7 +81,7 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
             handle.getObjectListener().onCheckOut(handle);
         }
 
-        if (this.pool.closeConnectionWatch) { // a debugging tool
+        if (this.pool.closeObjectWatch) { // a debugging tool
             this.pool.watchObject(handle);
         }
 

@@ -663,7 +663,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      * Returns if BoneCP is configured to create a helper thread to watch over connection acquires that are never
      * released (or released twice). FOR DEBUG PURPOSES ONLY.
      *
-     * @return the current closeConnectionWatch setting.
+     * @return the current closeObjectWatch setting.
      */
     public boolean isCloseConnectionWatch() {
         return this.closeConnectionWatch;

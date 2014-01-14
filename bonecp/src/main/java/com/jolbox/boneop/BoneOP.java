@@ -96,7 +96,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
     /**
      * Executor for threads watching each partition to dynamically create new threads/kill off excess ones.
      */
-    private final ExecutorService connectionsScheduler;
+    private final ExecutorService objectScheduler;
     /**
      * If set to true, config has specified the use of helper threads.
      */
@@ -133,7 +133,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      * If set to true, create a new thread that monitors a connection and displays warnings if application failed to
      * close the connection.
      */
-    protected boolean closeConnectionWatch = false;
+    protected boolean closeObjectWatch = false;
     /**
      * set to true if the connection pool has been flagged as shutting down.
      */
@@ -269,10 +269,10 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
         }
         this.keepAliveScheduler = Executors.newScheduledThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-keep-alive-scheduler" + suffix, true));
         this.maxAliveScheduler = Executors.newScheduledThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-max-alive-scheduler" + suffix, true));
-        this.connectionsScheduler = Executors.newFixedThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-pool-watch-thread" + suffix, true));
+        this.objectScheduler = Executors.newFixedThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-pool-watch-thread" + suffix, true));
 
         this.partitionCount = config.getPartitionCount();
-        this.closeConnectionWatch = config.isCloseConnectionWatch();
+        this.closeObjectWatch = config.isCloseConnectionWatch();
         this.cachedPoolStrategy = config.getPoolStrategy() != null && config.getPoolStrategy().equalsIgnoreCase("CACHED");
         if (this.cachedPoolStrategy) {
             this.connectionStrategy = CachedObjectStrategy.getInstance(this, new DefaultObjectStrategy<>(this));
@@ -280,7 +280,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
             this.connectionStrategy = new DefaultObjectStrategy<>(this);
         }
         boolean queueLIFO = config.getServiceOrder() != null && config.getServiceOrder().equalsIgnoreCase("LIFO");
-        if (this.closeConnectionWatch) {
+        if (this.closeObjectWatch) {
             LOG.warn(THREAD_CLOSE_CONNECTION_WARNING);
             this.closeConnectionExecutor = Executors.newCachedThreadPool(new CustomThreadFactory("BoneOP-connection-watch-thread" + suffix, true));
         }
@@ -323,7 +323,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
                 this.maxAliveScheduler.schedule(connectionMaxAgeTester, config.getMaxObjectAgeInSeconds(), TimeUnit.SECONDS);
             }
             // watch this partition for low NO. of threads
-            this.connectionsScheduler.execute(new PoolWatchThread<>(partition, this));
+            this.objectScheduler.execute(new PoolWatchThread<>(partition, this));
         }
         if (!this.config.isDisableJMX()) {
             registerUnregisterJMX(true);
@@ -342,10 +342,10 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
             this.shutdownStackTrace = captureStackTrace(SHUTDOWN_LOCATION_TRACE);
             this.keepAliveScheduler.shutdownNow(); // stop threads from firing.
             this.maxAliveScheduler.shutdownNow(); // stop threads from firing.
-            this.connectionsScheduler.shutdownNow(); // stop threads from firing.
+            this.objectScheduler.shutdownNow(); // stop threads from firing.
 
             try {
-                this.connectionsScheduler.awaitTermination(5, TimeUnit.SECONDS);
+                this.objectScheduler.awaitTermination(5, TimeUnit.SECONDS);
 
                 this.maxAliveScheduler.awaitTermination(5, TimeUnit.SECONDS);
                 this.keepAliveScheduler.awaitTermination(5, TimeUnit.SECONDS);
