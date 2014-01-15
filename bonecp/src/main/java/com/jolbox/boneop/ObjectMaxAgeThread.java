@@ -15,17 +15,16 @@
  */
 package com.jolbox.boneop;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Periodically checks for connections to see if the connection has expired.
  *
  * @author wwadge
- *
  */
 public class ObjectMaxAgeThread<T> implements Runnable {
 
@@ -44,7 +43,7 @@ public class ObjectMaxAgeThread<T> implements Runnable {
     /**
      * Handle to connection pool.
      */
-    private BoneOP pool;
+    private BoneOP<T> pool;
     /**
      * If true, we're operating in a LIFO fashion.
      */
@@ -52,20 +51,20 @@ public class ObjectMaxAgeThread<T> implements Runnable {
     /**
      * Logger handle.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ObjectTesterThread.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectTesterThread.class);
 
     /**
      * Constructor
      *
-     * @param connectionPartition partition to work on
-     * @param scheduler Scheduler handler.
-     * @param pool pool handle
-     * @param maxAgeInMs Threads older than this are killed off
-     * @param lifoMode if true, we're running under a lifo fashion.
+     * @param objectPartition partition to work on
+     * @param scheduler       Scheduler handler.
+     * @param pool            pool handle
+     * @param maxAgeInMs      Threads older than this are killed off
+     * @param lifoMode        if true, we're running under a lifo fashion.
      */
-    protected ObjectMaxAgeThread(ObjectPartition connectionPartition, ScheduledExecutorService scheduler,
-            BoneOP pool, long maxAgeInMs, boolean lifoMode) {
-        this.partition = connectionPartition;
+    protected ObjectMaxAgeThread(ObjectPartition<T> objectPartition, ScheduledExecutorService scheduler,
+                                 BoneOP<T> pool, long maxAgeInMs, boolean lifoMode) {
+        this.partition = objectPartition;
         this.scheduler = scheduler;
         this.maxAgeInMs = maxAgeInMs;
         this.pool = pool;
@@ -76,7 +75,6 @@ public class ObjectMaxAgeThread<T> implements Runnable {
      * Invoked periodically.
      */
     public void run() {
-        ObjectHandle connection = null;
         long tmp;
         long nextCheckInMs = this.maxAgeInMs;
 
@@ -84,30 +82,25 @@ public class ObjectMaxAgeThread<T> implements Runnable {
         long currentTime = System.currentTimeMillis();
         for (int i = 0; i < partitionSize; i++) {
             try {
-                connection = this.partition.getFreeObjects().poll();
-
-                if (connection != null) {
-                    connection.setOriginatingPartition(this.partition);
-
-                    tmp = this.maxAgeInMs - (currentTime - connection.getObjectCreationTimeInMs());
-
+                ObjectHandle<T> objectHandle = this.partition.getFreeObjects().poll();
+                if (objectHandle != null) {
+                    objectHandle.setOriginatingPartition(this.partition);
+                    tmp = this.maxAgeInMs - (currentTime - objectHandle.getObjectCreationTimeInMs());
                     if (tmp < nextCheckInMs) {
                         nextCheckInMs = tmp;
                     }
-
-                    if (connection.isExpired(currentTime)) {
+                    if (objectHandle.isExpired(currentTime)) {
                         // kill off this connection
-                        closeConnection(connection);
+                        closeObject(objectHandle);
                         continue;
                     }
-
                     if (this.lifoMode) {
                         // we can't put it back normally or it will end up in front again.
-                        if (!((LIFOQueue<ObjectHandle>) connection.getOriginatingPartition().getFreeObjects()).offerLast(connection)) {
-                            connection.internalClose();
+                        if (!((LIFOQueue<ObjectHandle<T>>) objectHandle.getOriginatingPartition().getFreeObjects()).offerLast(objectHandle)) {
+                            objectHandle.internalClose();
                         }
                     } else {
-                        this.pool.putObjectBackInPartition(connection);
+                        this.pool.putObjectBackInPartition(objectHandle);
                     }
 
                     Thread.sleep(20L); // test slowly, this is not an operation that we're in a hurry to deal with (avoid CPU spikes)...
@@ -115,10 +108,10 @@ public class ObjectMaxAgeThread<T> implements Runnable {
 
             } catch (Exception e) {
                 if (this.scheduler.isShutdown()) {
-                    logger.debug("Shutting down connection max age thread.");
+                    LOG.debug("Shutting down connection max age thread.");
                     break;
                 }
-                logger.error("Connection max age thread exception.", e);
+                LOG.error("Connection max age thread exception.", e);
             }
 
         } // throw it back on the queue
@@ -132,16 +125,16 @@ public class ObjectMaxAgeThread<T> implements Runnable {
     /**
      * Closes off this connection
      *
-     * @param connection to close
+     * @param objectHandle to close
      */
-    protected void closeConnection(ObjectHandle connection) {
-        if (connection != null) {
+    protected void closeObject(ObjectHandle<T> objectHandle) {
+        if (objectHandle != null) {
             try {
-                connection.internalClose();
+                objectHandle.internalClose();
             } catch (Throwable t) {
-                logger.error("Destroy connection exception", t);
+                LOG.error("Destroy connection exception", t);
             } finally {
-                this.pool.postDestroyObject(connection);
+                this.pool.postDestroyObject(objectHandle);
             }
         }
     }

@@ -401,7 +401,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      *
      * @param idleConnectionTestPeriod to set in minutes
      * @deprecated Please use {@link #setIdleConnectionTestPeriodInMinutes(long)} or
-     *             {@link #setIdleConnectionTestPeriod(long, TimeUnit)} instead
+     * {@link #setIdleConnectionTestPeriod(long, TimeUnit)} instead
      */
     @Deprecated
     public void setIdleConnectionTestPeriod(long idleConnectionTestPeriod) {
@@ -638,25 +638,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
      */
     public void setObjectListener(ObjectListener objectListener) {
         this.objectListener = objectListener;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @see com.jolbox.bonecp.BoneCPConfigMBean#getInitSQL()
-     */
-    @Override
-    public String getInitSQL() {
-        return this.initSQL;
-    }
-
-    /**
-     * Specifies an initial SQL statement that is run only when a connection is first created.
-     *
-     * @param initSQL the initSQL to set
-     */
-    public void setInitSQL(String initSQL) {
-        this.initSQL = initSQL;
     }
 
     /**
@@ -1052,15 +1033,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     }
 
     /**
-     * Returns the currently configured driver properties.
-     *
-     * @return the driverProperties handle
-     */
-    public Properties getDriverProperties() {
-        return this.driverProperties;
-    }
-
-    /**
      * Sets properties that will be passed on to the driver.
      * <p/>
      * The properties handle should contain a list of arbitrary string tag/value pairs as connection arguments; normally
@@ -1348,8 +1320,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
     /**
      * Sets the defaultTransactionIsolationValue.
      *
-     * @param defaultTransactionIsolationValue
-     *         the defaultTransactionIsolationValue to set
+     * @param defaultTransactionIsolationValue the defaultTransactionIsolationValue to set
      */
     protected void setDefaultTransactionIsolationValue(int defaultTransactionIsolationValue) {
         this.defaultTransactionIsolationValue = defaultTransactionIsolationValue;
@@ -1408,7 +1379,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
             if (method.getParameterTypes().length == 1 && method.getParameterTypes()[0].equals(int.class)) {
                 String val = props.getProperty(tmp);
                 if (val == null) {
-                    val = props.getProperty("bonecp." + tmp); // hibernate provider style
+                    val = props.getProperty("boneop." + tmp); // hibernate provider style
                 }
                 if (val != null) {
                     try {
@@ -1420,7 +1391,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
             } else if (method.getParameterTypes().length == 1 && method.getParameterTypes()[0].equals(long.class)) {
                 String val = props.getProperty(tmp);
                 if (val == null) {
-                    val = props.getProperty("bonecp." + tmp); // hibernate provider style
+                    val = props.getProperty("boneop." + tmp); // hibernate provider style
                 }
                 if (val != null) {
                     try {
@@ -1432,7 +1403,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
             } else if (method.getParameterTypes().length == 1 && method.getParameterTypes()[0].equals(String.class)) {
                 String val = props.getProperty(tmp);
                 if (val == null) {
-                    val = props.getProperty("bonecp." + tmp); // hibernate provider style
+                    val = props.getProperty("boneop." + tmp); // hibernate provider style
                 }
                 if (val != null) {
                     method.invoke(this, val);
@@ -1441,7 +1412,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
             if (method.getParameterTypes().length == 1 && method.getParameterTypes()[0].equals(boolean.class)) {
                 String val = props.getProperty(tmp);
                 if (val == null) {
-                    val = props.getProperty("bonecp." + tmp); // hibernate provider style
+                    val = props.getProperty("boneop." + tmp); // hibernate provider style
                 }
                 if (val != null) {
                     method.invoke(this, Boolean.parseBoolean(val));
@@ -1676,7 +1647,6 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
                 && Objects.equals(this.objectTestStatement, that.getConnectionTestStatement())
                 && Objects.equals(this.idleObjectTestPeriodInSeconds, that.getIdleConnectionTestPeriod(TimeUnit.SECONDS))
                 && Objects.equals(this.idleMaxAgeInSeconds, that.getIdleMaxAge(TimeUnit.SECONDS))
-                && Objects.equals(this.initSQL, that.getInitSQL())
                 && Objects.equals(this.maxObjectsPerPartition, that.getMaxObjectsPerPartition())
                 && Objects.equals(this.minObjectsPerPartition, that.getMinObjectsPerPartition())
                 && Objects.equals(this.partitionCount, that.getPartitionCount())
@@ -1686,7 +1656,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
                 && Objects.equals(this.acquireRetryAttempts, that.getAcquireRetryAttempts())
                 && Objects.equals(this.closeObjectWatchTimeoutInMs, that.getCloseObjectWatchTimeout())
                 && Objects.equals(this.waitTimeInMs, that.getWaitTimeInMs())
-                && Objects.equals(this.getQueryExecuteTimeLimitInMs(), that.getQueryExecuteTimeLimitInMs())
+                && Objects.equals(this.queryExecuteTimeLimitInMs, that.getQueryExecuteTimeLimitInMs())
                 && Objects.equals(this.poolAvailabilityThreshold, that.getPoolAvailabilityThreshold())
                 && Objects.equals(this.poolName, that.getPoolName())
                 && Objects.equals(this.disableObjectTracking, that.isDisableObjectTracking());
@@ -1803,7 +1773,7 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
 
     /**
      * Sets the detectUnclosedStatements. If true, print out a stack trace of where a statement was opened but not
-     * closed before the connection was closed. {@link BoneCPConfig#closeOpenStatements}.
+     * closed before the connection was closed. {@link BoneOPConfig#closeOpenStatements}.
      *
      * @param detectUnclosedStatements the detectUnclosedStatements to set
      */

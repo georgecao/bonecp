@@ -126,8 +126,8 @@ public class TestBoneCPConfig {
     @Test
     public void testPropertyBasedConfig() throws Exception {
         Properties props = new Properties();
-        props.setProperty("minConnectionsPerPartition", "123");
-        props.setProperty("bonecp.maxConnectionsPerPartition", "456");
+        props.setProperty("minObjectsPerPartition", "123");
+        props.setProperty("boneop.maxObjectsPerPartition", "456");
         props.setProperty("idleConnectionTestPeriodInSeconds", "999");
         props.setProperty("username", "test");
         props.setProperty("partitionCount", "an int which is invalid");
@@ -135,6 +135,9 @@ public class TestBoneCPConfig {
         BoneOPConfig config = new BoneOPConfig(props);
         assertEquals(123, config.getMinObjectsPerPartition());
         assertEquals(456, config.getMaxObjectsPerPartition());
+        assertEquals(1, config.getPartitionCount());
+        assertEquals(999, config.getIdleConnectionTestPeriod(TimeUnit.SECONDS));
+        assertEquals(3600, config.getIdleMaxAge(TimeUnit.SECONDS));
     }
 
     /**
@@ -152,7 +155,6 @@ public class TestBoneCPConfig {
         config.setPartitionCount(1);
         config.setConnectionTestStatement("test");
         config.setAcquireIncrement(6);
-        config.setInitSQL("abc");
         config.setDefaultTransactionIsolation("foo");
         config.setDefaultTransactionIsolationValue(123);
         config.setAcquireRetryDelay(60, TimeUnit.SECONDS);
@@ -208,7 +210,6 @@ public class TestBoneCPConfig {
         config.setWaitTimeInMs(1000);
         config.setCloseObjectWatchTimeoutInMs(1000);
 
-        assertEquals("abc", config.getInitSQL());
         assertEquals(hook, config.getObjectListener());
         assertEquals(1000, config.getWaitTimeInMs());
         assertEquals(123, config.getQueryExecuteTimeLimit(TimeUnit.MILLISECONDS));
@@ -229,7 +230,6 @@ public class TestBoneCPConfig {
         assertEquals(123, config.getQueryExecuteTimeLimit());
         assertEquals(1, config.getPartitionCount());
         assertEquals("test", config.getConnectionTestStatement());
-        assertEquals(driverProperties, config.getDriverProperties());
     }
 
     /**
@@ -301,60 +301,6 @@ public class TestBoneCPConfig {
         config.sanitize();
     }
 
-    /**
-     * Tests that setting driver properties handles username/password correctly.
-     */
-    @Test
-    public void testDriverPropertiesConfigSanitize() {
-        config.setMaxObjectsPerPartition(2);
-        config.setMinObjectsPerPartition(2);
-
-        config.sanitize();
-
-        Properties props = new Properties();
-        props.setProperty("user", "something different");
-        props.setProperty("password", "something different");
-        config.setDriverProperties(props);
-        config.sanitize();
-
-        // if they don't match, the pool config wins
-        assertEquals("foo", config.getDriverProperties().getProperty("user"));
-        assertEquals("bar", config.getDriverProperties().getProperty("password"));
-
-
-        config.setDriverProperties(new Properties());
-        config.getDriverProperties().remove("user");
-        config.getDriverProperties().remove("password");
-        config.sanitize();
-
-
-        // if not found, copied over from pool config
-        assertEquals("foo", config.getDriverProperties().getProperty("user"));
-        assertEquals("bar", config.getDriverProperties().getProperty("password"));
-
-
-        config.setDriverProperties(new Properties());
-        config.sanitize();
-    }
-
-    /**
-     * Tests that setting driver properties handles username/password correctly.
-     */
-    @Test
-    public void testDriverPropertiesConfigSanitize2() {
-        config.setMaxObjectsPerPartition(2);
-        config.setMinObjectsPerPartition(2);
-
-        config.sanitize();
-
-        Properties props = new Properties();
-        config.setDriverProperties(props);
-        config.sanitize();
-
-        // if username/pass properties have been forgotten in driverProperties, set them
-        assertEquals("foo", config.getDriverProperties().getProperty("user"));
-        assertEquals("bar", config.getDriverProperties().getProperty("password"));
-    }
 
     /**
      * Tests general methods.
@@ -365,9 +311,9 @@ public class TestBoneCPConfig {
     public void testCloneEqualsConfigHashCode() throws CloneNotSupportedException {
         BoneOPConfig clone = config.clone();
         assertTrue(clone.hasSameConfiguration(config));
-
         assertFalse(clone.hasSameConfiguration(null));
         assertTrue(clone.hasSameConfiguration(clone));
+        clone.setPoolName("different pool name.");
         assertFalse(clone.hasSameConfiguration(config));
     }
 

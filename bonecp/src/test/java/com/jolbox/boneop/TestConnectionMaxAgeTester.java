@@ -214,7 +214,7 @@ public class TestConnectionMaxAgeTester {
         expect(mockConnectionException.isExpired(anyLong())).andReturn(false).anyTimes();
         expect(mockExecutor.isShutdown()).andReturn(false).anyTimes();
         mockPool.putObjectBackInPartition(mockConnectionException);
-        expectLastCall().andThrow(new SQLException()).once();
+        expectLastCall().andThrow(new PoolException()).once();
 
         // we should be able to reschedule
         expect(mockExecutor.schedule((Runnable) anyObject(), anyLong(), (TimeUnit) anyObject())).andReturn(null).once();
@@ -237,7 +237,7 @@ public class TestConnectionMaxAgeTester {
         expectLastCall().once();
 
         replay(mockConnection, mockPool);
-        testClass.closeConnection(mockConnection);
+        testClass.closeObject(mockConnection);
         verify(mockConnection, mockPool);
     }
 
@@ -251,10 +251,10 @@ public class TestConnectionMaxAgeTester {
         expectLastCall().once();
 
         mockConnection.internalClose();
-        expectLastCall().andThrow(new SQLException());
+        expectLastCall().andThrow(new PoolException());
 
         replay(mockConnection, mockPool);
-        testClass.closeConnection(mockConnection);
+        testClass.closeObject(mockConnection);
         verify(mockConnection, mockPool);
     }
 
@@ -267,14 +267,14 @@ public class TestConnectionMaxAgeTester {
         mockPool.postDestroyObject(mockConnection);
         expectLastCall().once();
         // set logger to null so that exception will be thrown in catch clause
-        Field field = ObjectMaxAgeThread.class.getDeclaredField("logger");
+        Field field = ObjectMaxAgeThread.class.getDeclaredField("LOG");
         TestUtils.setFinalStatic(field, null);
         mockConnection.internalClose();
-        expectLastCall().andThrow(new SQLException());
+        expectLastCall().andThrow(new PoolException());
 
         replay(mockConnection, mockPool);
         try {
-            testClass.closeConnection(mockConnection);
+            testClass.closeObject(mockConnection);
             fail("Expecting NPE because logger was set to null");
         } catch (Exception e) {
             // do nothing

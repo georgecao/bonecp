@@ -115,7 +115,6 @@ public class TestBoneCP {
         expect(mockConfig.getIdleConnectionTestPeriodInMinutes()).andReturn(0L).anyTimes();
         expect(mockConfig.getIdleMaxAgeInMinutes()).andReturn(1000L).anyTimes();
         expect(mockConfig.getReleaseHelperThreads()).andReturn(1).once().andReturn(0).anyTimes();
-        expect(mockConfig.getInitSQL()).andReturn(CommonTestUtils.TEST_QUERY).anyTimes();
         expect(mockConfig.isCloseConnectionWatch()).andReturn(true).anyTimes();
         expect(mockConfig.isLogStatementsEnabled()).andReturn(true).anyTimes();
         expect(mockConfig.getWaitTimeInMs()).andReturn(Long.MAX_VALUE).anyTimes();

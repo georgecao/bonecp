@@ -50,7 +50,7 @@ public class CloseThreadMonitor<T> implements Runnable {
     /**
      * Logger class.
      */
-    private static final Logger logger = LoggerFactory.getLogger(CloseThreadMonitor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CloseThreadMonitor.class);
 
     /**
      * @param threadToMonitor Thread to wait for termination
@@ -74,7 +74,7 @@ public class CloseThreadMonitor<T> implements Runnable {
             this.threadToMonitor.join(this.closeConnectionWatchTimeout);
             if (!this.connectionHandle.isClosed()
                     && this.threadToMonitor.equals(this.connectionHandle.getThreadUsingConnection())) {
-                logger.error(this.stackTrace);
+                LOG.error(this.stackTrace);
             }
         } catch (Exception e) {
             // just kill off this thread

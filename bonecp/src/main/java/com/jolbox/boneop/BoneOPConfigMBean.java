@@ -24,7 +24,6 @@ import com.jolbox.boneop.listener.ObjectListener;
  * MBean interface for config.
  *
  * @author Wallace
- *
  */
 public interface BoneOPConfigMBean {
 
@@ -53,7 +52,7 @@ public interface BoneOPConfigMBean {
 
     /**
      * Gets the acquireIncrement property.
-     *
+     * <p/>
      * Gets the current value of the number of connections to add every time the
      * number of available connections is about to run out (up to the
      * maxConnectionsPerPartition).
@@ -103,13 +102,6 @@ public interface BoneOPConfigMBean {
      * @return the connectionHook
      */
     ObjectListener getObjectListener();
-
-    /**
-     * Returns the initSQL parameter.
-     *
-     * @return the initSQL
-     */
-    String getInitSQL();
 
     /**
      * Returns the number of ms to wait before attempting to obtain a connection

@@ -278,7 +278,7 @@ public class TestConnectionHandle {
      * @throws InterruptedException
      */
     @Test
-    public void testClose() throws Exception, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, SQLException, InterruptedException {
+    public void testClose() throws Exception {
 
         Field field = this.testClass.getClass().getDeclaredField("doubleCloseCheck");
         field.setAccessible(true);
@@ -286,7 +286,7 @@ public class TestConnectionHandle {
 
         this.testClass.renewObject();
         this.mockPool.releaseObject(anyObject(TestObject.class));
-        expectLastCall().once().andThrow(new SQLException()).once();
+        expectLastCall().once().andThrow(new PoolException()).once();
         expect(this.mockPool.getConfig()).andReturn(this.config).anyTimes();
         replay(this.mockPool);
 
@@ -350,7 +350,6 @@ public class TestConnectionHandle {
         BoneOPConfig mockConfig = createNiceMock(BoneOPConfig.class);
         expect(this.mockPool.getConfig()).andReturn(mockConfig).anyTimes();
 
-        expect(mockConfig.getInitSQL()).andReturn("test").anyTimes();
         this.testClass.setInternalObject(this.mockObject);
 
         Statement mockStatement = createNiceMock(Statement.class);
@@ -369,7 +368,7 @@ public class TestConnectionHandle {
      * @throws SQLException
      */
     @Test
-    public void testDoubleClose() throws Exception, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, SQLException {
+    public void testDoubleClose() throws Exception {
         Field field = this.testClass.getClass().getDeclaredField("doubleCloseCheck");
         field.setAccessible(true);
         field.set(this.testClass, true);
@@ -385,7 +384,7 @@ public class TestConnectionHandle {
         expectLastCall().once();
 
         this.mockPool.releaseObject(anyObject(TestObject.class));
-        expectLastCall().once().andThrow(new SQLException()).once();
+        expectLastCall().once().andThrow(new PoolException()).once();
         replay(this.mockLogger, this.mockPool);
 
         this.testClass.close();
