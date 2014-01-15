@@ -14,6 +14,7 @@ package com.jolbox.boneop;
 
 import com.google.common.base.FinalizableReferenceQueue;
 import org.slf4j.Logger;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.lang.ref.Reference;
@@ -61,7 +62,7 @@ public class TestConnectionPartition {
      * @throws IllegalAccessException
      * @throws IllegalArgumentException
      */
-    @Test
+    @BeforeMethod
     public void testConstructor() throws Exception {
         mockConfig = createNiceMock(BoneOPConfig.class);
         expect(mockConfig.getAcquireIncrement()).andReturn(1).anyTimes();
@@ -70,7 +71,7 @@ public class TestConnectionPartition {
         expect(mockConfig.getReleaseHelperThreads()).andReturn(3).anyTimes();
         expect(mockConfig.getPoolName()).andReturn("Junit test").anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(false).anyTimes();
-        Map<Connection, Reference<ObjectHandle>> refs = new HashMap<Connection, Reference<ObjectHandle>>();
+        Map<Connection, Reference<ObjectHandle>> refs = new HashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
         expect(this.mockPool.getConfig()).andReturn(mockConfig).anyTimes();
         ExecutorService mockReleaseHelper = createNiceMock(ExecutorService.class);
