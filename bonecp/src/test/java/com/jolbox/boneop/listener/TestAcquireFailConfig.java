@@ -15,43 +15,45 @@
  */
 
 /**
- * 
+ *
  */
 package com.jolbox.boneop.listener;
 
-import static org.junit.Assert.assertEquals;
+
+import org.testng.annotations.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Test;
+import static org.testng.Assert.assertEquals;
 
 
-/** Test for AcquireFailConfig class.
- * @author Wallace
+/**
+ * Test for AcquireFailConfig class.
  *
+ * @author Wallace
  */
 public class TestAcquireFailConfig {
-	
-	/**
-	 * Test getters/setters for acquireFail class.
-	 */
-	@SuppressWarnings("deprecation")
-	@Test
-	public void testGettersSetters(){
-		Object obj = new Object();
-		AcquireFailConfig config = new AcquireFailConfig();
-		config.setAcquireRetryAttempts(new AtomicInteger(1));
-		config.setAcquireRetryDelayInMs(123);
-		config.setAcquireRetryDelay(123);
-		config.setLogMessage("test");
-		config.setDebugHandle(obj);
 
-		assertEquals(1, config.getAcquireRetryAttempts().get());
-		assertEquals(123, config.getAcquireRetryDelayInMs());
-		assertEquals(123, config.getAcquireRetryDelay());
-		assertEquals("test", config.getLogMessage());
-		assertEquals(obj, config.getDebugHandle());
-		
-	}
+    /**
+     * Test getters/setters for acquireFail class.
+     */
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testGettersSetters() {
+        Object obj = new Object();
+        AcquireFailConfig config = new AcquireFailConfig();
+        config.setAcquireRetryAttempts(new AtomicInteger(1));
+        config.setAcquireRetryDelayInMs(123);
+        config.setAcquireRetryDelay(123);
+        config.setLogMessage("test");
+        config.setDebugHandle(obj);
+
+        assertEquals(1, config.getAcquireRetryAttempts().get());
+        assertEquals(123, config.getAcquireRetryDelayInMs());
+        assertEquals(123, config.getAcquireRetryDelay());
+        assertEquals("test", config.getLogMessage());
+        assertEquals(obj, config.getDebugHandle());
+
+    }
 
 }

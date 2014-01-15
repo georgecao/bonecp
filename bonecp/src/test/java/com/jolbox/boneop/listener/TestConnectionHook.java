@@ -15,30 +15,25 @@
  */
 package com.jolbox.boneop.listener;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.jolbox.boneop.BoneOP;
+import com.jolbox.boneop.BoneOPConfig;
+import org.easymock.IAnswer;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.easymock.IAnswer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.jolbox.boneop.BoneOP;
-import com.jolbox.boneop.BoneOPConfig;
-import com.jolbox.boneop.CommonTestUtils;
+import static org.easymock.EasyMock.*;
+import static org.testng.Assert.*;
 
 /**
  * Tests the connection hooks.
  *
  * @author wallacew
- *
  */
 public class TestConnectionHook {
 
