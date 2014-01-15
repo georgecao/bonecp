@@ -129,11 +129,7 @@ public class TestPoolWatchThread {
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testRunFullConnections() throws InterruptedException {
-//		mockPartition.lockAlmostFullLock();
-//		expectLastCall().once();
-//		mockPartition.unlockAlmostFullLock();
-//		expectLastCall().anyTimes();
-        BlockingQueue<Object> bq = new ArrayBlockingQueue<Object>(1);
+        BlockingQueue<Object> bq = new ArrayBlockingQueue<>(1);
         bq.add(new Object());
         expect(mockPartition.getPoolWatchThreadSignalQueue()).andReturn(bq);
         expect(mockPartition.getMaxObjects()).andReturn(5).once();

@@ -402,11 +402,11 @@ public class TestConnectionThreadTester {
 
         // connection should be closed
         mockConnection.internalClose();
-        expectLastCall().andThrow(new SQLException());
+        expectLastCall().andThrow(new PoolException());
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor, mockLogger);
         this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
-        Field loggerField = this.testClass.getClass().getDeclaredField("logger");
+        Field loggerField = this.testClass.getClass().getDeclaredField("LOG");
         TestUtils.setFinalStatic(loggerField, mockLogger);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection, mockLogger);

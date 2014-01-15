@@ -89,7 +89,7 @@ public class TestConnectionHandle {
         this.config.setTransactionRecoveryEnabled(false);
         this.config.setStatisticsEnabled(true);
 
-        this.testClass = ObjectHandle.<TestObject>createTestObjectHandle(this.mockConnection.getInternalObject(), this.mockPool);
+        this.testClass = ObjectHandle.createTestObjectHandle(this.mockConnection.getInternalObject(), this.mockPool);
 
         this.mockLogger = TestUtils.mockLogger(testClass.getClass());
 

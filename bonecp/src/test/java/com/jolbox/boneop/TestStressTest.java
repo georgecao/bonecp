@@ -28,7 +28,7 @@ public class TestStressTest {
      * @throws SQLException
      * @throws InterruptedException
      */
-    @Test
+    @Test(enabled = false)
     public void testStress() throws Exception {
         BoneOPConfig config = new BoneOPConfig();
 //		config.setDisableConnectionTracking(false);
