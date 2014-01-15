@@ -12,15 +12,13 @@
  */
 package com.jolbox.boneop;
 
+import org.testng.annotations.Test;
+
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
 /**
  * @author wallacew
- *
  */
 public class TestStressTest {
 
@@ -31,7 +29,6 @@ public class TestStressTest {
      * @throws InterruptedException
      */
     @Test
-    @Ignore
     public void testStress() throws Exception {
         BoneOPConfig config = new BoneOPConfig();
 //		config.setDisableConnectionTracking(false);
@@ -53,26 +50,26 @@ public class TestStressTest {
                 Thread t
                         = new Thread(new Runnable() {
 
-//			@Override
-                            public void run() {
-                                try {
-                                    TestObject c = pool.getObject();
+                    //			@Override
+                    public void run() {
+                        try {
+                            TestObject c = pool.getObject();
 //					Thread.sleep(rand.nextInt(50));
 //					Thread.sleep(rand.nextInt(50));
-                                    factory.destroyObject(c);
-                                    c = null;
-                                    System.gc();
-                                    System.gc();
-                                    System.gc();
-                                    System.gc();
-                                    System.gc();
-                                    System.gc();
-                                    count.incrementAndGet();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
+                            factory.destroyObject(c);
+                            c = null;
+                            System.gc();
+                            System.gc();
+                            System.gc();
+                            System.gc();
+                            System.gc();
+                            System.gc();
+                            count.incrementAndGet();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
 
                 t.start();
             }
