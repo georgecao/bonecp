@@ -15,101 +15,118 @@
  */
 
 /**
- * 
+ *
  */
 package com.jolbox.boneop;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
 import org.slf4j.Logger;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import static org.easymock.EasyMock.*;
 
 
-/** Test for CloseThreadMonitor class
- * @author Wallace
+/**
+ * Test for CloseThreadMonitor class
  *
+ * @author Wallace
  */
 public class TestCloseThreadMonitor {
-	/** Mock handle. */
-	private static ObjectHandle mockConnection;
-	/** Mock handle. */
-	private static Logger mockLogger;
-	/** Mock handle. */
-	private static Thread mockThread;
-	/** Class under test. */
-	private static CloseThreadMonitor testClass;
- 
-	/**
-	 * Test setup
-	 * @throws NoSuchFieldException 
-	 * @throws SecurityException 
-	 * @throws IllegalAccessException 
-	 * @throws IllegalArgumentException 
-	 */
-	@BeforeClass
-	public static void setup() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException{
-		mockConnection = createNiceMock(ObjectHandle.class);
-		mockThread = createNiceMock(Thread.class);
-		testClass = new CloseThreadMonitor(mockThread, mockConnection, "fakeexception", 0);
-    mockLogger = TestUtils.mockLogger(testClass.getClass());
-	}
-	
-	/**
-	 * Reset mocks.
-	 */
-	@Before
-	public void before(){
-		reset(mockConnection, mockLogger, mockThread);
-	}
-	
-	/** Tests the normal case.
-	 * @throws InterruptedException
-	 */
-	@Test
-	public void testConnectionCorrectlyClosed() throws InterruptedException{
-		
-		mockThread.join();
-	//	expectLastCall().once();
-		
-		expect(mockConnection.isClosed()).andReturn(true).once();
-		replay(mockConnection, mockLogger, mockThread);
-		testClass.run();
-		verify(mockConnection, mockLogger, mockThread);
-	}
-	
-	/** Test case where the connection is not closed.
-	 * @throws SecurityException
-	 * @throws NoSuchFieldException
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 */
-	@Test
-	public void testConnectionNotClosed() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException{
-		mockLogger.error((String)anyObject());
-		expectLastCall().once();
-		expect(mockConnection.isClosed()).andReturn(false).once();
-		expect(mockConnection.getThreadUsingConnection()).andReturn(mockThread).once();
-		replay(mockConnection, mockLogger);
-		testClass.run();
-		verify(mockConnection, mockLogger);
-	}
+    /**
+     * Mock handle.
+     */
+    private static ObjectHandle mockConnection;
+    /**
+     * Mock handle.
+     */
+    private static Logger mockLogger;
+    /**
+     * Mock handle.
+     */
+    private static Thread mockThread;
+    /**
+     * Class under test.
+     */
+    private static CloseThreadMonitor testClass;
 
-	/** Code coverage.
-	 * @throws SecurityException
-	 * @throws NoSuchFieldException
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InterruptedException
-	 */
-	@Test
-	public void testConnectionInterrupted() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, InterruptedException{
-		
-		expect(mockConnection.isClosed()).andThrow(new RuntimeException()).once();
-		replay(mockConnection, mockLogger);
-		testClass.run();
-		verify(mockConnection, mockLogger);
-	}
+    /**
+     * Test setup
+     *
+     * @throws NoSuchFieldException
+     * @throws SecurityException
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     */
+    @BeforeClass
+    public static void setup() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        mockConnection = createNiceMock(ObjectHandle.class);
+        mockThread = createNiceMock(Thread.class);
+        testClass = new CloseThreadMonitor(mockThread, mockConnection, "fakeexception", 0);
+        mockLogger = TestUtils.mockLogger(testClass.getClass());
+    }
+
+    /**
+     * Reset mocks.
+     */
+    @BeforeMethod
+    public void before() {
+        reset(mockConnection, mockLogger, mockThread);
+    }
+
+    /**
+     * Tests the normal case.
+     *
+     * @throws InterruptedException
+     */
+    @Test
+    public void testConnectionCorrectlyClosed() throws InterruptedException {
+
+        mockThread.join();
+        //	expectLastCall().once();
+
+        expect(mockConnection.isClosed()).andReturn(true).once();
+        replay(mockConnection, mockLogger, mockThread);
+        testClass.run();
+        verify(mockConnection, mockLogger, mockThread);
+    }
+
+    /**
+     * Test case where the connection is not closed.
+     *
+     * @throws SecurityException
+     * @throws NoSuchFieldException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     */
+    @Test
+    public void testConnectionNotClosed() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+        mockLogger.error((String) anyObject());
+        expectLastCall().once();
+        expect(mockConnection.isClosed()).andReturn(false).once();
+        expect(mockConnection.getThreadUsingConnection()).andReturn(mockThread).once();
+        replay(mockConnection, mockLogger);
+        testClass.run();
+        verify(mockConnection, mockLogger);
+    }
+
+    /**
+     * Code coverage.
+     *
+     * @throws SecurityException
+     * @throws NoSuchFieldException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     * @throws InterruptedException
+     */
+    @Test
+    public void testConnectionInterrupted() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, InterruptedException {
+
+        expect(mockConnection.isClosed()).andThrow(new RuntimeException()).once();
+        replay(mockConnection, mockLogger);
+        testClass.run();
+        verify(mockConnection, mockLogger);
+    }
 
 }

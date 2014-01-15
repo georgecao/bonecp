@@ -15,19 +15,20 @@
  */
 package com.jolbox.boneop;
 
+import com.jolbox.boneop.listener.CoverageHook;
+import org.easymock.IAnswer;
+import org.slf4j.Logger;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import com.jolbox.boneop.listener.CoverageHook;
-import org.easymock.IAnswer;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
 
 import static org.easymock.EasyMock.*;
 
@@ -35,7 +36,6 @@ import static org.easymock.EasyMock.*;
  * Tests the functionality of the pool watch thread.
  *
  * @author wwadge
- *
  */
 public class TestPoolWatchThread {
 
@@ -116,7 +116,7 @@ public class TestPoolWatchThread {
     /**
      * Rest the mocks.
      */
-    @Before
+    @BeforeMethod
     public void doReset() {
         reset(mockPartition, mockPool, mockLogger);
     }

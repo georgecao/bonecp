@@ -12,43 +12,30 @@
  */
 package com.jolbox.boneop;
 
-import java.lang.reflect.Array;
+import com.jolbox.boneop.listener.ObjectListener;
+import org.easymock.EasyMock;
+import org.slf4j.Logger;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import javax.management.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Statement;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-
-import com.jolbox.boneop.listener.ObjectListener;
-import java.util.concurrent.LinkedTransferQueue;
-
-import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.testng.Assert.*;
+
 
 /**
  * @author wwadge
- *
  */
 public class TestBoneCP {
 
@@ -119,7 +106,7 @@ public class TestBoneCP {
      * @throws SecurityException
      */
     @SuppressWarnings("unchecked")
-    @Before
+    @BeforeMethod
     public void before() throws Exception {
         mockConfig = createNiceMock(BoneOPConfig.class);
         expect(mockConfig.getPartitionCount()).andReturn(2).anyTimes();
@@ -141,26 +128,26 @@ public class TestBoneCP {
         replay(mockConfig);
 
         // once for no {statement, connection} release threads, once with release threads....
-        testClass = new BoneOP(mockConfig, null);
-        testClass = new BoneOP(mockConfig, null);
+        testClass = new BoneOP(mockConfig, new TestObjectFactory());
+        testClass = new BoneOP(mockConfig, new TestObjectFactory());
 
         Field field = testClass.getClass().getDeclaredField("partitions");
         field.setAccessible(true);
-        ObjectPartition[] partitions = (ObjectPartition[]) field.get(testClass);
+        List<ObjectPartition> partitions = (List<ObjectPartition>) field.get(testClass);
 
         // if all ok 
-        assertEquals(2, partitions.length);
+        assertEquals(2, partitions.size());
         // switch to our mock version now
         mockPartition = createNiceMock(ObjectPartition.class);
-        Array.set(field.get(testClass), 0, mockPartition);
-        Array.set(field.get(testClass), 1, mockPartition);
+        partitions.add(0, mockPartition);
+        partitions.add(1, mockPartition);
 
         mockKeepAliveScheduler = createNiceMock(ScheduledExecutorService.class);
         field = testClass.getClass().getDeclaredField("keepAliveScheduler");
         field.setAccessible(true);
         field.set(testClass, mockKeepAliveScheduler);
 
-        field = testClass.getClass().getDeclaredField("connectionsScheduler");
+        field = testClass.getClass().getDeclaredField("objectScheduler");
         field.setAccessible(true);
         mockConnectionsScheduler = createNiceMock(ExecutorService.class);
         field.set(testClass, mockConnectionsScheduler);
@@ -179,7 +166,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#shutdown()}.
+     * Test method for {@link com.jolbox.boneop.BoneOP#shutdown()}.
      *
      * @throws IllegalAccessException
      * @throws NoSuchFieldException
@@ -212,10 +199,6 @@ public class TestBoneCP {
         field.setAccessible(true);
         field.setBoolean(testClass, true);
 
-        field = BoneOP.class.getDeclaredField("statementReleaseHelperThreadsConfigured");
-        field.setAccessible(true);
-        field.set(testClass, true);
-
         ExecutorService mockReleaseHelper = createNiceMock(ExecutorService.class);
         testClass.setReleaseHelper(mockReleaseHelper);
         expect(mockReleaseHelper.shutdownNow()).andReturn(null).once();
@@ -236,7 +219,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#close()}.
+     * Test method for {@link com.jolbox.boneop.BoneOP#close()}.
      *
      * @throws IllegalAccessException
      * @throws NoSuchFieldException
@@ -324,7 +307,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#getConnection()}.
+     * Test method for {@link BoneOP#getObject()}.
      *
      * @throws Exception
      * @throws InterruptedException
@@ -350,7 +333,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#getConnection()}.
+     * Test method for {@link BoneOP#getObject()} .
      *
      * @throws Exception
      * @throws InterruptedException
@@ -625,7 +608,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#releaseConnection(java.sql.Connection)}.
+     * Test method for {@link com.jolbox.boneop.BoneOP#releaseObject(Object)} .
      *
      * @throws Exception
      * @throws IllegalAccessException
@@ -647,7 +630,7 @@ public class TestBoneCP {
         expect(mockPartition.getAvailableObjects()).andReturn(1).anyTimes();
 
         expect(mockConnectionHandles.offer(mockConnection)).andReturn(false).anyTimes();
-		//		expect(mockConnectionHandles.offer(mockConnection)).andReturn(true).once();
+        //		expect(mockConnectionHandles.offer(mockConnection)).andReturn(true).once();
 
         // should reset last connection use
         mockConnection.setObjectLastUsedInMs(anyLong());
@@ -698,7 +681,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#internalReleaseConnection(ConnectionHandle)}.
+     * Test method for {@link com.jolbox.boneop.BoneOP#internalReleaseObject(ObjectHandle)} .
      *
      * @throws InterruptedException
      * @throws Exception
@@ -724,7 +707,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#internalReleaseConnection(ConnectionHandle)}.
+     * Test method for {@link com.jolbox.boneop.BoneOP#internalReleaseObject(ObjectHandle)} .
      *
      * @throws InterruptedException
      * @throws Exception
@@ -752,7 +735,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#internalReleaseConnection(ConnectionHandle)}.
+     * Test method for {@link com.jolbox.boneop.BoneOP#internalReleaseObject(ObjectHandle)} .
      *
      * @throws InterruptedException
      * @throws Exception
@@ -781,7 +764,7 @@ public class TestBoneCP {
 
     /**
      * Test method for
-     * {@link com.jolbox.bonecp.BoneCP#putConnectionBackInPartition(com.jolbox.bonecp.ConnectionHandle)}.
+     * {@link com.jolbox.boneop.BoneOP#putObjectBackInPartition(ObjectHandle)} .
      *
      * @throws InterruptedException
      * @throws Exception
@@ -806,7 +789,7 @@ public class TestBoneCP {
 
     /**
      * Test method for
-     * {@link com.jolbox.bonecp.BoneCP#putConnectionBackInPartition(com.jolbox.bonecp.ConnectionHandle)}.
+     * {@link com.jolbox.boneop.BoneOP#putObjectBackInPartition(ObjectHandle)} .
      *
      * @throws InterruptedException
      * @throws Exception
@@ -1002,7 +985,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#getTotalLeased()}.
+     * Test method for {@link BoneOP#getTotalLeased()} .
      */
     @Test
     public void testGetTotalLeased() {
@@ -1016,7 +999,7 @@ public class TestBoneCP {
     }
 
     /**
-     * Test method for {@link com.jolbox.bonecp.BoneCP#getTotalFree()}.
+     * Test method for {@link BoneOP#getTotalFree()} .
      */
     @Test
     public void testGetTotalFree() {

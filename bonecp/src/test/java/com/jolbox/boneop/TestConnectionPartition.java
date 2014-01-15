@@ -12,6 +12,10 @@
  */
 package com.jolbox.boneop;
 
+import com.google.common.base.FinalizableReferenceQueue;
+import org.slf4j.Logger;
+import org.testng.annotations.Test;
+
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -22,18 +26,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
-import com.google.common.base.FinalizableReferenceQueue;
-import com.jolbox.boneop.proxy.ConnectionProxy;
-import org.junit.Test;
-import org.slf4j.Logger;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 /**
  * @author wwadge
- *
  */
 public class TestConnectionPartition {
 
@@ -298,7 +297,7 @@ public class TestConnectionPartition {
                 verify(mockConnection);
                 break; // we succeeded
             } catch (Throwable t) {
-					//				t.printStackTrace();
+                //				t.printStackTrace();
                 // do nothing, try again
                 Thread.sleep(20);
             }

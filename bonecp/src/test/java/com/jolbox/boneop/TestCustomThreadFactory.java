@@ -17,47 +17,51 @@
 
 package com.jolbox.boneop;
 
+import org.slf4j.Logger;
+import org.testng.annotations.Test;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.Test;
-import org.slf4j.Logger;
 
 import static org.easymock.EasyMock.*;
 
 
 /**
  * @author wwadge
- *
  */
 public class TestCustomThreadFactory {
-	/** Thread signalling. */
-	static volatile boolean signalled = false;
+    /**
+     * Thread signalling.
+     */
+    static volatile boolean signalled = false;
 
-	/** Tests the uncaught exception handler. 
-	 * @throws SecurityException
-	 * @throws NoSuchFieldException
-	 * @throws IllegalArgumentException
-	 * @throws IllegalAccessException
-	 * @throws InterruptedException
-	 */
-	@Test
-	public void testUncaughtException() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, InterruptedException{
-		CustomThreadFactory testClass = new CustomThreadFactory("test", false);
-		Logger mockLogger = TestUtils.mockLogger(testClass.getClass());
-		makeThreadSafe(mockLogger, true);
+    /**
+     * Tests the uncaught exception handler.
+     *
+     * @throws SecurityException
+     * @throws NoSuchFieldException
+     * @throws IllegalArgumentException
+     * @throws IllegalAccessException
+     * @throws InterruptedException
+     */
+    @Test
+    public void testUncaughtException() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, InterruptedException {
+        CustomThreadFactory testClass = new CustomThreadFactory("test", false);
+        Logger mockLogger = TestUtils.mockLogger(testClass.getClass());
+        makeThreadSafe(mockLogger, true);
 
-		ExecutorService executor = Executors.newSingleThreadExecutor(testClass);
-		mockLogger.error((String)anyObject(), (Throwable)anyObject());
-		expectLastCall().once();
-		replay(mockLogger);
-		executor.execute(new MockThread());
-		
-		for (int i=0; i < 5; i++) {
-				signalled = true;
-			Thread.sleep(100);
-		}
-		verify(mockLogger);
+        ExecutorService executor = Executors.newSingleThreadExecutor(testClass);
+        mockLogger.error((String) anyObject(), (Throwable) anyObject());
+        expectLastCall().once();
+        replay(mockLogger);
+        executor.execute(new MockThread());
+
+        for (int i = 0; i < 5; i++) {
+            signalled = true;
+            Thread.sleep(100);
+        }
+        verify(mockLogger);
 
 
-	}
+    }
 }

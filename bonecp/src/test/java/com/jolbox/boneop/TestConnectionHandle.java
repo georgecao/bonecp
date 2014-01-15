@@ -12,6 +12,16 @@
  */
 package com.jolbox.boneop;
 
+import com.google.common.base.FinalizableReferenceQueue;
+import com.jolbox.boneop.listener.AcquireFailConfig;
+import com.jolbox.boneop.listener.CoverageHook;
+import com.jolbox.boneop.listener.CustomHook;
+import com.jolbox.boneop.listener.ObjectListener;
+import org.slf4j.Logger;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.lang.Thread.State;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
@@ -25,24 +35,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import com.google.common.base.FinalizableReferenceQueue;
-import com.jolbox.boneop.listener.AcquireFailConfig;
-import com.jolbox.boneop.listener.ObjectListener;
-import com.jolbox.boneop.listener.CoverageHook;
-import com.jolbox.boneop.listener.CustomHook;
-import junit.framework.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.testng.Assert.*;
 
 /**
  * Mock unit testing for Connection Handle class.
  *
  * @author wwadge
- *
  */
 public class TestConnectionHandle {
 
@@ -76,7 +76,7 @@ public class TestConnectionHandle {
      * @throws IllegalArgumentException
      * @throws IllegalAccessException
      */
-    @Before
+    @BeforeMethod
     public void before() throws Exception {
         this.config = CommonTestUtils.getConfigClone();
         this.mockPool.connectionStrategy = new DefaultObjectStrategy(this.mockPool);
@@ -166,7 +166,7 @@ public class TestConnectionHandle {
         try {
             new Thread(new Runnable() {
 
-//				@Override
+                //				@Override
                 public void run() {
                     while (!currentThread.getState().equals(State.TIMED_WAITING)) {
                         try {
@@ -294,7 +294,7 @@ public class TestConnectionHandle {
 //		final Thread thisThread = Thread.currentThread();
         Thread testThread = new Thread(new Runnable() {
 
-//			@Override
+            //			@Override
             public void run() {
                 try {
                     TestConnectionHandle.this.started = true;

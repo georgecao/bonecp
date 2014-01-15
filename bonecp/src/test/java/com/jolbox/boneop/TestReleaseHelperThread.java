@@ -18,98 +18,108 @@
 package com.jolbox.boneop;
 
 
-import static org.easymock.EasyMock.*;
+import org.easymock.IAnswer;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 
-import org.easymock.IAnswer;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.jolbox.boneop.BoneOP;
-import com.jolbox.boneop.ObjectHandle;
-import com.jolbox.boneop.ObjectReleaseHelperThread;
+import static org.easymock.EasyMock.*;
 
 /**
  * Mock tester for release helper thread
- * @author wwadge
  *
+ * @author wwadge
  */
 public class TestReleaseHelperThread {
-	/** Mock handle. */
-	private static BoneOP mockPool;
-	/** Mock handle. */
-	private static BlockingQueue<ObjectHandle> mockQueue;
-	/** Mock handle. */
-	static ObjectHandle mockConnection;
-	/** temp. */
-	static boolean first = true;
+    /**
+     * Mock handle.
+     */
+    private static BoneOP mockPool;
+    /**
+     * Mock handle.
+     */
+    private static BlockingQueue<ObjectHandle> mockQueue;
+    /**
+     * Mock handle.
+     */
+    static ObjectHandle mockConnection;
+    /**
+     * temp.
+     */
+    static boolean first = true;
 
-	/** Mock setup
-	 * @throws ClassNotFoundException
-	 */
-	@SuppressWarnings("unchecked")
-	@BeforeClass
-	public static void setup() throws ClassNotFoundException{
-		mockPool = createNiceMock(BoneOP.class);
-		mockConnection = createNiceMock(ObjectHandle.class);
-		mockQueue = createNiceMock(BlockingQueue.class);
-		
-	}
-	
-	/** Normal case test
-	 * @throws InterruptedException
-	 * @throws SQLException 
-	 */
-	@Test
-	public void testNormalCycle() throws Exception {
-		expect(mockQueue.take()).andAnswer(new IAnswer<ObjectHandle>() {
+    /**
+     * Mock setup
+     *
+     * @throws ClassNotFoundException
+     */
+    @SuppressWarnings("unchecked")
+    @BeforeClass
+    public static void setup() throws ClassNotFoundException {
+        mockPool = createNiceMock(BoneOP.class);
+        mockConnection = createNiceMock(ObjectHandle.class);
+        mockQueue = createNiceMock(BlockingQueue.class);
 
-			// @Override
-			public ObjectHandle answer() throws Throwable {
-				if (first){
-					first = false;
-					return mockConnection;
-				} 
-					throw new InterruptedException();
-				
-			}
-		}).times(2);
+    }
 
-		mockPool.internalReleaseObject(mockConnection);
-		expectLastCall().times(1).andThrow(new SQLException()).once();
-		expect(mockQueue.poll()).andReturn(mockConnection).times(2).andReturn(null).once();
-		mockPool.poolShuttingDown = true;
-			
-		
-		replay(mockPool, mockQueue);
-		ObjectReleaseHelperThread clazz = new ObjectReleaseHelperThread(mockQueue, mockPool);
-		clazz.run();
-		verify(mockPool, mockQueue);
-		reset(mockPool, mockQueue);
-		
-	
-	}
-	
-	/** Normal case test
-	 * @throws InterruptedException
-	 * @throws SQLException 
-	 */
-	@Test
-	public void testSQLExceptionCycle() throws Exception {
-		first = true;
-		expect(mockQueue.take()).andReturn(mockConnection);
-		mockPool.internalReleaseObject(mockConnection);
-		expectLastCall().andThrow(new SQLException());
-		
-		
-		replay(mockPool, mockQueue);
-		ObjectReleaseHelperThread clazz = new ObjectReleaseHelperThread(mockQueue, mockPool);
-		clazz.run();
-		verify(mockPool, mockQueue);
-		reset(mockPool, mockQueue);
-		
-	
-	}
+    /**
+     * Normal case test
+     *
+     * @throws InterruptedException
+     * @throws SQLException
+     */
+    @Test
+    public void testNormalCycle() throws Exception {
+        expect(mockQueue.take()).andAnswer(new IAnswer<ObjectHandle>() {
+
+            // @Override
+            public ObjectHandle answer() throws Throwable {
+                if (first) {
+                    first = false;
+                    return mockConnection;
+                }
+                throw new InterruptedException();
+
+            }
+        }).times(2);
+
+        mockPool.internalReleaseObject(mockConnection);
+        expectLastCall().times(1).andThrow(new SQLException()).once();
+        expect(mockQueue.poll()).andReturn(mockConnection).times(2).andReturn(null).once();
+        mockPool.poolShuttingDown = true;
+
+
+        replay(mockPool, mockQueue);
+        ObjectReleaseHelperThread clazz = new ObjectReleaseHelperThread(mockQueue, mockPool);
+        clazz.run();
+        verify(mockPool, mockQueue);
+        reset(mockPool, mockQueue);
+
+
+    }
+
+    /**
+     * Normal case test
+     *
+     * @throws InterruptedException
+     * @throws SQLException
+     */
+    @Test
+    public void testSQLExceptionCycle() throws Exception {
+        first = true;
+        expect(mockQueue.take()).andReturn(mockConnection);
+        mockPool.internalReleaseObject(mockConnection);
+        expectLastCall().andThrow(new SQLException());
+
+
+        replay(mockPool, mockQueue);
+        ObjectReleaseHelperThread clazz = new ObjectReleaseHelperThread(mockQueue, mockPool);
+        clazz.run();
+        verify(mockPool, mockQueue);
+        reset(mockPool, mockQueue);
+
+
+    }
 }

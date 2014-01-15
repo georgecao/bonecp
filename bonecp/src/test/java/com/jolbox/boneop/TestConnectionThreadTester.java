@@ -12,13 +12,14 @@
  */
 package com.jolbox.boneop;
 
+import org.slf4j.Logger;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.concurrent.ScheduledExecutorService;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
 
 import static org.easymock.EasyMock.*;
 
@@ -26,7 +27,6 @@ import static org.easymock.EasyMock.*;
  * Test for connection thread tester
  *
  * @author wwadge
- *
  */
 public class TestConnectionThreadTester {
 
@@ -82,7 +82,7 @@ public class TestConnectionThreadTester {
     /**
      * Reset all mocks.
      */
-    @Before
+    @BeforeMethod
     public void resetMocks() {
         reset(mockPool, mockConnectionPartition, mockExecutor, mockConnection, mockLogger);
     }
@@ -265,7 +265,7 @@ public class TestConnectionThreadTester {
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
         expect(mockConnection.getObjectLastUsedInMs()).andReturn(Long.MAX_VALUE);
         expect(mockPool.isObjectHandleAlive((ObjectHandle) anyObject())).andReturn(true).anyTimes();
-		//mockPool.putConnectionBackInPartition((ConnectionHandle)anyObject());
+        //mockPool.putConnectionBackInPartition((ConnectionHandle)anyObject());
 
         replay(mockPool, mockFreeConnections, mockConnection, mockConnectionPartition, mockExecutor);
         this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), true);
@@ -367,7 +367,7 @@ public class TestConnectionThreadTester {
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor, mockLogger);
         this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
-        Field loggerField = this.testClass.getClass().getDeclaredField("logger");
+        Field loggerField = this.testClass.getClass().getDeclaredField("LOG");
         TestUtils.setFinalStatic(loggerField, mockLogger);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection, mockLogger);

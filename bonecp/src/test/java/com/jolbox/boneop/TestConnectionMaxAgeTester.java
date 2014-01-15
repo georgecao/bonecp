@@ -12,25 +12,25 @@
  */
 package com.jolbox.boneop;
 
+import org.slf4j.Logger;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TransferQueue;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.fail;
+import static org.testng.Assert.fail;
 
 /**
  * Test for connection thread tester
  *
  * @author wwadge
- *
  */
 public class TestConnectionMaxAgeTester {
 
@@ -82,7 +82,7 @@ public class TestConnectionMaxAgeTester {
     /**
      * Reset all mocks.
      */
-    @Before
+    @BeforeMethod
     public void resetMocks() {
         reset(mockPool, mockConnectionPartition, mockExecutor, mockLogger);
     }
