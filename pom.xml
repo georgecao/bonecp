@@ -79,7 +79,7 @@ under the License. -->
     </contributors>
 
     <modules>
-        <module>bonecp</module>
+        <module>boneop</module>
         <!-- <module>bonecp-benchmark</module> -->
     </modules>
 
