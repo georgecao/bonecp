@@ -63,7 +63,7 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
     }
 
     public int selectPartition() {
-        return (int) (Thread.currentThread().getId() % this.pool.partitionCount);
+        return (int) (Thread.currentThread().getId() & this.pool.mask);
     }
 
     /**

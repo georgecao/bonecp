@@ -124,7 +124,8 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
     /**
      * Number of partitions passed in constructor. *
      */
-    protected int partitionCount;
+    protected final int partitionCount;
+    protected final int mask;
     /**
      * Partitions handle.
      */
@@ -211,6 +212,10 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
         this(ConfigAdapter.create(config), factory);
     }
 
+    public static int findNextPositivePowerOfTwo(final int value) {
+        return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
+    }
+
     /**
      * Constructor.
      *
@@ -271,7 +276,8 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
         this.maxAliveScheduler = Executors.newScheduledThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-max-alive-scheduler" + suffix, true));
         this.objectScheduler = Executors.newFixedThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-pool-watch-thread" + suffix, true));
 
-        this.partitionCount = config.getPartitionCount();
+        this.partitionCount = findNextPositivePowerOfTwo(config.getPartitionCount());
+        this.mask = this.partitionCount - 1;
         this.closeObjectWatch = config.isCloseConnectionWatch();
         this.cachedPoolStrategy = config.getPoolStrategy() != null && config.getPoolStrategy().equalsIgnoreCase("CACHED");
         if (this.cachedPoolStrategy) {
