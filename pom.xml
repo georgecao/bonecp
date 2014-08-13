@@ -80,7 +80,8 @@ under the License. -->
 
     <modules>
         <module>boneop</module>
-        <!-- <module>bonecp-benchmark</module> -->
+        <module>boneop-benchmark</module>
+        <module>boneop-test-commons</module>
     </modules>
 
     <dependencyManagement>

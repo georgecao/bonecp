@@ -101,12 +101,6 @@
             <version>6.8.7</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>1.6</version>
-            <type>jar</type>
-        </dependency>
     </dependencies>
 
 </project>

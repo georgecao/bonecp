@@ -18,10 +18,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.jolbox.boneop.listener.AcquireFailConfig;
-import com.jolbox.boneop.util.ConfigAdapter;
-import org.apache.commons.pool.BaseObjectPool;
-import org.apache.commons.pool.PoolableObjectFactory;
-import org.apache.commons.pool.impl.GenericObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @param <T>
  * @author wwadge
  */
-public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closeable {
+public class BoneOP<T> implements Serializable, Closeable {
 
     /**
      * JMX constant.
@@ -208,14 +204,6 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
      */
     private FinalizableReferenceQueue finalizableRefQueue;
 
-    public BoneOP(GenericObjectPool.Config config, PoolableObjectFactory<T> factory) throws PoolException {
-        this(ConfigAdapter.create(config), factory);
-    }
-
-    public static int findNextPositivePowerOfTwo(final int value) {
-        return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
-    }
-
     /**
      * Constructor.
      *
@@ -276,7 +264,7 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
         this.maxAliveScheduler = Executors.newScheduledThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-max-alive-scheduler" + suffix, true));
         this.objectScheduler = Executors.newFixedThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-pool-watch-thread" + suffix, true));
 
-        this.partitionCount = findNextPositivePowerOfTwo(config.getPartitionCount());
+        this.partitionCount = config.getPartitionCount();
         this.mask = this.partitionCount - 1;
         this.closeObjectWatch = config.isCloseConnectionWatch();
         this.cachedPoolStrategy = config.getPoolStrategy() != null && config.getPoolStrategy().equalsIgnoreCase("CACHED");
@@ -325,7 +313,9 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
             }
 
             if (config.getMaxObjectAgeInSeconds() > 0) {
-                final Runnable connectionMaxAgeTester = new ObjectMaxAgeThread(partition, this.maxAliveScheduler, this, config.getMaxConnectionAge(TimeUnit.MILLISECONDS), queueLIFO);
+                final ObjectMaxAgeThread<T> connectionMaxAgeTester
+                        = new ObjectMaxAgeThread<>(partition, this.maxAliveScheduler,
+                        this, config.getMaxConnectionAge(TimeUnit.MILLISECONDS), queueLIFO);
                 this.maxAliveScheduler.schedule(connectionMaxAgeTester, config.getMaxObjectAgeInSeconds(), TimeUnit.SECONDS);
             }
             // watch this partition for low NO. of threads
@@ -502,11 +492,11 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
     /**
      * Starts off a new thread to monitor this connection attempt.
      *
-     * @param connectionHandle to monitor
+     * @param objectHandle to monitor
      */
-    protected void watchObject(ObjectHandle<T> connectionHandle) {
+    protected void watchObject(ObjectHandle<T> objectHandle) {
         String message = captureStackTrace(UNCLOSED_EXCEPTION_MESSAGE);
-        this.closeConnectionExecutor.submit(new CloseThreadMonitor<>(Thread.currentThread(), connectionHandle, message, this.closeObjectWatchTimeoutInMs));
+        this.closeConnectionExecutor.submit(new CloseThreadMonitor<>(Thread.currentThread(), objectHandle, message, this.closeObjectWatchTimeoutInMs));
     }
 
     /**
@@ -669,9 +659,9 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
     }
 
     /**
-     * Return total number of connections currently in use by an application
+     * Return total number of objects currently in use by an application
      *
-     * @return no of leased connections
+     * @return NO. of leased objects
      */
     public int getTotalLeased() {
         int total = 0;
@@ -820,21 +810,6 @@ public class BoneOP<T> extends BaseObjectPool<T> implements Serializable, Closea
         } catch (Exception e) {
             LOG.error("Unable to unregister JMX", e);
         }
-    }
-
-    @Override
-    public T borrowObject() throws Exception {
-        return getObject();
-    }
-
-    @Override
-    public void returnObject(T obj) throws Exception {
-        releaseObject(obj);
-    }
-
-    @Override
-    public void invalidateObject(T obj) throws Exception {
-        destroyObject(getObjectHandle(obj));
     }
 
     private ObjectHandle<T> getObjectHandle(T object) {

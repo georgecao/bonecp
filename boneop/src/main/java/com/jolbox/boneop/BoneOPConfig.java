@@ -1547,6 +1547,8 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
         if (this.partitionCount < 1) {
             LOG.warn("partitions < 1! Setting to 1");
             this.partitionCount = 1;
+        } else {
+            this.partitionCount = findNextPositivePowerOfTwo(this.partitionCount);
         }
 
         if (this.releaseHelperThreads < 0) {
@@ -1564,6 +1566,10 @@ public class BoneOPConfig implements BoneOPConfigMBean, Cloneable, Serializable 
             this.serviceOrder = "FIFO";
         }
 
+    }
+
+    public static int findNextPositivePowerOfTwo(final int value) {
+        return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
     }
 
     /**
