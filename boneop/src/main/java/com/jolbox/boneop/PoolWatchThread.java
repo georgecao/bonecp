@@ -62,7 +62,7 @@ public class PoolWatchThread<T> implements Runnable {
         this.partition = partition;
         this.pool = pool;
         this.lazyInit = this.pool.getConfig().isLazyInit();
-        this.acquireRetryDelayInMs = this.pool.getConfig().getAcquireRetryDelayInMs();
+        this.acquireRetryDelayInMs = this.pool.getConfig().getAcquireRetryDelayInMillis();
         this.poolAvailabilityThreshold = this.pool.getConfig().getPoolAvailabilityThreshold();
     }
 

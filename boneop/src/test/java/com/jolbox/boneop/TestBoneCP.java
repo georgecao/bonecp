@@ -112,15 +112,14 @@ public class TestBoneCP {
         expect(mockConfig.getPartitionCount()).andReturn(2).anyTimes();
         expect(mockConfig.getMaxObjectsPerPartition()).andReturn(1).anyTimes();
         expect(mockConfig.getMinObjectsPerPartition()).andReturn(1).anyTimes();
-        expect(mockConfig.getIdleConnectionTestPeriodInMinutes()).andReturn(0L).anyTimes();
+        expect(mockConfig.getIdleObjectTestPeriodInMinutes()).andReturn(0L).anyTimes();
         expect(mockConfig.getIdleMaxAgeInMinutes()).andReturn(1000L).anyTimes();
         expect(mockConfig.getReleaseHelperThreads()).andReturn(1).once().andReturn(0).anyTimes();
-        expect(mockConfig.isCloseConnectionWatch()).andReturn(true).anyTimes();
-        expect(mockConfig.isLogStatementsEnabled()).andReturn(true).anyTimes();
-        expect(mockConfig.getWaitTimeInMs()).andReturn(Long.MAX_VALUE).anyTimes();
+        expect(mockConfig.isCloseObjectWatch()).andReturn(true).anyTimes();
+        expect(mockConfig.getWaitTimeInMillis()).andReturn(Long.MAX_VALUE).anyTimes();
         expect(mockConfig.getServiceOrder()).andReturn("LIFO").anyTimes();
 
-        expect(mockConfig.getAcquireRetryDelayInMs()).andReturn(1000L).anyTimes();
+        expect(mockConfig.getAcquireRetryDelayInMillis()).andReturn(1000L).anyTimes();
         expect(mockConfig.getPoolName()).andReturn("poolName").anyTimes();
         expect(mockConfig.getPoolAvailabilityThreshold()).andReturn(20).anyTimes();
 
@@ -187,8 +186,6 @@ public class TestBoneCP {
      * @throws IllegalArgumentException
      */
     private void testShutdownClose(boolean doShutdown) throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-        expect(mockConfig.isDeregisterDriverOnClose()).andReturn(false).anyTimes();
-
         expect(mockKeepAliveScheduler.shutdownNow()).andReturn(null).once();
         expect(mockConnectionsScheduler.shutdownNow()).andReturn(null).once();
 
@@ -248,7 +245,7 @@ public class TestBoneCP {
         replay(mockRealConnection, mockConnectionsScheduler, mockKeepAliveScheduler, mockPartition, mockConnectionHandles, mockConnection);
 
         // test.
-        testClass.connectionStrategy.destroyAllObjects();
+        testClass.objectStrategy.destroy();
         verify(mockConnectionsScheduler, mockKeepAliveScheduler, mockPartition, mockConnectionHandles, mockConnection);
     }
 
@@ -273,7 +270,7 @@ public class TestBoneCP {
 
         // test.
         try {
-            testClass.connectionStrategy.destroyAllObjects();
+            testClass.objectStrategy.destroy();
             fail("Should throw exception");
         } catch (RuntimeException e) {
             // do nothing
@@ -629,10 +626,10 @@ public class TestBoneCP {
         expect(mockPartition.getAvailableObjects()).andReturn(1).anyTimes();
 
         expect(mockConnectionHandles.offer(mockConnection)).andReturn(false).anyTimes();
-        //		expect(mockConnectionHandles.offer(mockConnection)).andReturn(true).once();
+        //		expect(mockConnectionHandles.offer(mockObject)).andReturn(true).once();
 
         // should reset last connection use
-        mockConnection.setObjectLastUsedInMs(anyLong());
+        mockConnection.setObjectLastUsedInMillis(anyLong());
         expectLastCall().once();
         Connection mockRealConnection = createNiceMock(Connection.class);
         expect(mockConnection.getInternalObject()).andReturn(mockRealConnection).anyTimes();
@@ -689,7 +686,7 @@ public class TestBoneCP {
     public void testInternalReleaseConnection() throws InterruptedException, Exception {
         // Test #1: Test normal case where connection is considered to be not broken
         // should reset last connection use
-        mockConnection.setObjectLastUsedInMs(anyLong());
+        mockConnection.setObjectLastUsedInMillis(anyLong());
         expectLastCall().once();
         expect(mockConnection.getOriginatingPartition()).andReturn(mockPartition).anyTimes();
         expect(mockPartition.getFreeObjects()).andReturn(mockConnectionHandles).anyTimes();
@@ -697,7 +694,7 @@ public class TestBoneCP {
         Connection mockRealConnection = createNiceMock(Connection.class);
         expect(mockConnection.getInternalObject()).andReturn(mockRealConnection).anyTimes();
 
-        //		expect(mockConnectionHandles.offer(mockConnection)).andReturn(false).anyTimes();
+        //		expect(mockConnectionHandles.offer(mockObject)).andReturn(false).anyTimes();
         expect(mockConnectionHandles.offer(mockConnection)).andReturn(true).once();
 
         replay(mockRealConnection, mockConnection, mockPartition, mockConnectionHandles);
@@ -716,7 +713,6 @@ public class TestBoneCP {
         // Test case where connection is broken
         reset(mockConnection, mockPartition, mockConnectionHandles);
         expect(mockConnection.isPossiblyBroken()).andReturn(true).once();
-        expect(mockConfig.getConnectionTestStatement()).andReturn(null).once();
         expect(mockConnection.getOriginatingPartition()).andReturn(mockPartition).anyTimes();
         // we're about to destroy this connection, so we can create new ones.
         mockPartition.setUnableToCreateMoreObjects(false);
@@ -801,7 +797,6 @@ public class TestBoneCP {
         expect(mockConnection.getOriginatingPartition()).andReturn(mockPartition).anyTimes();
         expect(mockConnectionHandles.tryTransfer(mockConnection)).andReturn(false).anyTimes();
         expect(mockConnectionHandles.offer(mockConnection)).andReturn(true).once();
-        expect(mockConnection.isTxResolved()).andReturn(false).once();
         Connection mockInternalConnection = createNiceMock(Connection.class);
         expect(mockInternalConnection.getAutoCommit()).andReturn(false).once();
         expect(mockConnection.getInternalObject()).andReturn(mockInternalConnection).anyTimes();
@@ -821,26 +816,8 @@ public class TestBoneCP {
      */
     @Test
     public void testIsConnectionHandleAlive() throws Exception {
-        // Test 1: Normal case (+ without connection test statement)
-        expect(mockConfig.getConnectionTestStatement()).andReturn(null).once();
-
         expectLastCall().once();
         assertTrue(testClass.isObjectHandleAlive(mockConnection));
-    }
-
-    /**
-     * Test method for com.jolbox.bonecp.BoneCP isConnectionHandleAlive.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testIsConnectionHandleAliveTriggerException() throws Exception {
-
-        // Test 2: Same test as testIsConnectionHandleAlive but triggers an exception
-        expect(mockConfig.getConnectionTestStatement()).andReturn(null).once();
-
-        assertFalse(testClass.isObjectHandleAlive(mockConnection));
-
     }
 
     /**
@@ -853,7 +830,6 @@ public class TestBoneCP {
 
         // Test 3: Normal case (+ with connection test statement)
         Statement mockStatement = createNiceMock(Statement.class);
-        expect(mockConfig.getConnectionTestStatement()).andReturn("whatever").once();
         expect(mockStatement.execute((String) anyObject())).andReturn(true).once();
         //		mockResultSet.close();
         //		expectLastCall().once();
@@ -873,12 +849,11 @@ public class TestBoneCP {
         Statement mockStatement = createNiceMock(Statement.class);
         // Test 4: Same like test testIsConnectionHandleAliveNormalCaseWithConnectionTestStatement but triggers exception
 
-        expect(mockConfig.getConnectionTestStatement()).andReturn("whatever").once();
         expect(mockStatement.execute((String) anyObject())).andThrow(new RuntimeException()).once();
         mockStatement.close();
         expectLastCall().once();
 
-        //		assertFalse(testClass.isConnectionHandleAlive(mockConnection));
+        //		assertFalse(testClass.isConnectionHandleAlive(mockObject));
         try {
             mockConnection.logicallyClosed = true;// (code coverage)
             testClass.isObjectHandleAlive(mockConnection);
@@ -899,7 +874,6 @@ public class TestBoneCP {
 
         // Test 5: Same like test testIsConnectionHandleAliveNormalCaseWithConnectionTestTriggerException
         // but triggers exception in finally block
-        expect(mockConfig.getConnectionTestStatement()).andReturn("whatever").once();
         expect(mockStatement.execute((String) anyObject())).andThrow(new RuntimeException()).once();
         mockStatement.close();
         expectLastCall().andThrow(new Exception()).once();

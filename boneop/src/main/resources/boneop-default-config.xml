@@ -111,7 +111,7 @@
 		     that are never released (or released twice).  This is for debugging purposes 
 		     only and will create a new thread for each call to getConnection().  
 		     Enabling this option will have a big negative impact on pool performance. -->
-		<property name="closeConnectionWatch">false</property>
+		<property name="closeObjectWatch">false</property>
 
 		<!-- If enabled, log SQL statements being executed. -->
 		<property name="logStatementsEnabled">false</property>

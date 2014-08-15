@@ -105,7 +105,7 @@ public class TestCloseThreadMonitor {
         mockLogger.error((String) anyObject());
         expectLastCall().once();
         expect(mockConnection.isClosed()).andReturn(false).once();
-        expect(mockConnection.getThreadUsingConnection()).andReturn(mockThread).once();
+        expect(mockConnection.getThreadUsingObject()).andReturn(mockThread).once();
         replay(mockConnection, mockLogger);
         testClass.run();
         verify(mockConnection, mockLogger);

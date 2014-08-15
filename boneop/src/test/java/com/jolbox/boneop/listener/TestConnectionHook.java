@@ -58,7 +58,7 @@ public class TestConnectionHook {
      */
     @BeforeClass
     public static void setup() throws Exception, ClassNotFoundException {
-        ConnectionState.valueOf(ConnectionState.NOP.toString()); // coverage BS.
+        ObjectState.valueOf(ObjectState.NOP.toString()); // coverage BS.
 
         hookClass = new CustomHook();
         Class.forName("com.jolbox.bonecp.MockJDBCDriver");
@@ -67,7 +67,7 @@ public class TestConnectionHook {
         expect(mockConfig.getMaxObjectsPerPartition()).andReturn(5).anyTimes();
         expect(mockConfig.getAcquireIncrement()).andReturn(0).anyTimes();
         expect(mockConfig.getMinObjectsPerPartition()).andReturn(5).anyTimes();
-        expect(mockConfig.getIdleConnectionTestPeriodInMinutes()).andReturn(10000L).anyTimes();
+        expect(mockConfig.getIdleObjectTestPeriodInMinutes()).andReturn(10000L).anyTimes();
         expect(mockConfig.getReleaseHelperThreads()).andReturn(0).anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(true).anyTimes();
         expect(mockConfig.getObjectListener()).andReturn(hookClass).anyTimes();
@@ -92,7 +92,7 @@ public class TestConnectionHook {
 
     /**
      * Test method for
-     * {@link com.jolbox.bonecp.hooks.AbstractConnectionHook#onAcquire(com.jolbox.bonecp.ConnectionHandle)}.
+     * {@link AbstractObjectListener#onAcquire(com.jolbox.boneop.ObjectHandle)}
      */
     @Test
     public void testOnAcquire() {
@@ -101,20 +101,17 @@ public class TestConnectionHook {
 
     /**
      * Test method for
-     * {@link com.jolbox.bonecp.hooks.AbstractConnectionHook#onCheckOut(com.jolbox.bonecp.ConnectionHandle)}.
      *
      * @throws SQLException
      */
     @Test
     public void testOnCheckOutAndOnCheckin() throws Exception {
-        poolClass.returnObject(poolClass.getObject());
         assertEquals(1, hookClass.checkout);
         assertEquals(1, hookClass.checkin);
     }
 
     /**
      * Test method for
-     * {@link com.jolbox.bonecp.hooks.AbstractConnectionHook#onDestroy(com.jolbox.bonecp.ConnectionHandle)}.
      */
     @Test
     public void testOnDestroy() {
@@ -129,7 +126,7 @@ public class TestConnectionHook {
      */
     @Test
     public void dummyCoverage() throws Exception {
-        CoverageHook hook = new CoverageHook();
+        CoverageListener hook = new CoverageListener();
         reset(mockConfig);
         mockConfig.sanitize();
         expectLastCall().anyTimes();
@@ -137,22 +134,19 @@ public class TestConnectionHook {
         expect(mockConfig.getPartitionCount()).andReturn(1).anyTimes();
         expect(mockConfig.getMaxObjectsPerPartition()).andReturn(5).anyTimes();
         expect(mockConfig.getMinObjectsPerPartition()).andReturn(5).anyTimes();
-        expect(mockConfig.getIdleConnectionTestPeriodInMinutes()).andReturn(10000L).anyTimes();
+        expect(mockConfig.getIdleObjectTestPeriodInMinutes()).andReturn(10000L).anyTimes();
         expect(mockConfig.getReleaseHelperThreads()).andReturn(0).anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(true).anyTimes();
         expect(mockConfig.getObjectListener()).andReturn(hook).anyTimes();
         replay(mockConfig);
 
         poolClass = new BoneOP(mockConfig, null);
-
-        poolClass.returnObject(poolClass.getObject());
         poolClass.close();
-
         reset(mockConfig);
         expect(mockConfig.getPartitionCount()).andReturn(1).anyTimes();
         expect(mockConfig.getMaxObjectsPerPartition()).andReturn(5).anyTimes();
         expect(mockConfig.getMinObjectsPerPartition()).andReturn(5).anyTimes();
-        expect(mockConfig.getIdleConnectionTestPeriodInMinutes()).andReturn(10000L).anyTimes();
+        expect(mockConfig.getIdleObjectTestPeriodInMinutes()).andReturn(10000L).anyTimes();
         expect(mockConfig.getReleaseHelperThreads()).andReturn(0).anyTimes();
         expect(mockConfig.getObjectListener()).andReturn(hook).anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(true).anyTimes();
@@ -169,7 +163,6 @@ public class TestConnectionHook {
 
     /**
      * Test method for
-     * {@link com.jolbox.bonecp.hooks.AbstractConnectionHook#onDestroy(com.jolbox.bonecp.ConnectionHandle)}.
      *
      * @throws SQLException
      */
@@ -183,7 +176,7 @@ public class TestConnectionHook {
         expect(mockConfig.getPartitionCount()).andReturn(1).anyTimes();
         expect(mockConfig.getMaxObjectsPerPartition()).andReturn(5).anyTimes();
         expect(mockConfig.getMinObjectsPerPartition()).andReturn(5).anyTimes();
-        expect(mockConfig.getIdleConnectionTestPeriodInMinutes()).andReturn(10000L).anyTimes();
+        expect(mockConfig.getIdleObjectTestPeriodInMinutes()).andReturn(10000L).anyTimes();
         expect(mockConfig.getReleaseHelperThreads()).andReturn(0).anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(true).anyTimes();
         expect(mockConfig.getObjectListener()).andReturn(hookClass).anyTimes();
@@ -208,7 +201,7 @@ public class TestConnectionHook {
             // do nothing
         };
         AcquireFailConfig fail = createNiceMock(AcquireFailConfig.class);
-        expect(fail.getAcquireRetryDelayInMs()).andReturn(0L).times(5).andThrow(new RuntimeException()).once();
+        expect(fail.getAcquireRetryDelayInMillis()).andReturn(0L).times(5).andThrow(new RuntimeException()).once();
         expect(fail.getAcquireRetryAttempts()).andReturn(new AtomicInteger(2)).times(3).andReturn(new AtomicInteger(1)).times(3);
         replay(fail);
         assertTrue(hook.onAcquireFail(new SQLException(), fail));
@@ -228,13 +221,12 @@ public class TestConnectionHook {
         expect(mockConfig.getPartitionCount()).andReturn(1).anyTimes();
         expect(mockConfig.getMaxObjectsPerPartition()).andReturn(5).anyTimes();
         expect(mockConfig.getMinObjectsPerPartition()).andReturn(5).anyTimes();
-        expect(mockConfig.getIdleConnectionTestPeriodInMinutes()).andReturn(10000L).anyTimes();
+        expect(mockConfig.getIdleObjectTestPeriodInMinutes()).andReturn(10000L).anyTimes();
         expect(mockConfig.getReleaseHelperThreads()).andReturn(0).anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(true).anyTimes();
         expect(mockConfig.getObjectListener()).andReturn(hookClass).anyTimes();
-        expect(mockConfig.getQueryExecuteTimeLimitInMs()).andReturn(200L).anyTimes();
-        expect(mockConfig.getWaitTimeInMs()).andReturn(Long.MAX_VALUE).anyTimes();
-        expect(mockConfig.isDeregisterDriverOnClose()).andReturn(false).anyTimes();
+        expect(mockConfig.getObjectOccupyTimeLimitInMillis()).andReturn(200L).anyTimes();
+        expect(mockConfig.getWaitTimeInMillis()).andReturn(Long.MAX_VALUE).anyTimes();
 
         PreparedStatement mockPreparedStatement = createNiceMock(PreparedStatement.class);
         Connection mockConnection = createNiceMock(Connection.class);
@@ -268,11 +260,11 @@ public class TestConnectionHook {
         expect(mockConfig.getPartitionCount()).andReturn(1).anyTimes();
         expect(mockConfig.getMaxObjectsPerPartition()).andReturn(5).anyTimes();
         expect(mockConfig.getMinObjectsPerPartition()).andReturn(5).anyTimes();
-        expect(mockConfig.getIdleConnectionTestPeriodInMinutes()).andReturn(10000L).anyTimes();
+        expect(mockConfig.getIdleObjectTestPeriodInMinutes()).andReturn(10000L).anyTimes();
         expect(mockConfig.getReleaseHelperThreads()).andReturn(0).anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(true).anyTimes();
-        expect(mockConfig.getObjectListener()).andReturn(new CoverageHook()).anyTimes();
-        expect(mockConfig.getQueryExecuteTimeLimitInMs()).andReturn(200L).anyTimes();
+        expect(mockConfig.getObjectListener()).andReturn(new CoverageListener()).anyTimes();
+        expect(mockConfig.getObjectOccupyTimeLimitInMillis()).andReturn(200L).anyTimes();
 
         PreparedStatement mockPreparedStatement = createNiceMock(PreparedStatement.class);
         expect(mockConnection.prepareStatement("")).andReturn(mockPreparedStatement).anyTimes();

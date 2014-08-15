@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
@@ -35,7 +36,7 @@ import static org.testng.Assert.fail;
 /**
  * @author wwadge
  */
-public class TestConnectionPartition {
+public class TestObjectPartition {
 
     /**
      * mock handle.
@@ -71,7 +72,7 @@ public class TestConnectionPartition {
         expect(mockConfig.getReleaseHelperThreads()).andReturn(3).anyTimes();
         expect(mockConfig.getPoolName()).andReturn("Junit test").anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(false).anyTimes();
-        Map<Connection, Reference<ObjectHandle>> refs = new HashMap<>();
+        Map<Object, Reference<ObjectHandle>> refs = new ConcurrentHashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
         expect(this.mockPool.getConfig()).andReturn(mockConfig).anyTimes();
         ExecutorService mockReleaseHelper = createNiceMock(ExecutorService.class);
@@ -268,34 +269,33 @@ public class TestConnectionPartition {
      */
     @Test
     public void testFinalizer() throws SQLException, InterruptedException {
-        ObjectHandle mockConnectionHandle = createNiceMock(ObjectHandle.class);
-        Connection mockConnection = createNiceMock(Connection.class);
-        expect(mockConnectionHandle.getInternalObject()).andReturn(mockConnection).anyTimes();
-        mockConnection.close();
-        expectLastCall().once();
+        ObjectHandle objectHandle = createNiceMock(ObjectHandle.class);
+        TestObject niceMock = createNiceMock(TestObject.class);
+        expect(objectHandle.getInternalObject()).andReturn(niceMock).anyTimes();
+        //expectLastCall().once();
         reset(this.mockPool);
-        Map<Connection, Reference<ObjectHandle>> refs = new HashMap<Connection, Reference<ObjectHandle>>();
+        Map<TestObject, Reference<ObjectHandle>> refs = new HashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
         FinalizableReferenceQueue finalizableRefQueue = new FinalizableReferenceQueue();
         expect(this.mockPool.getFinalizableRefQueue()).andReturn(finalizableRefQueue).anyTimes();
-        expect(mockConnectionHandle.getPool()).andReturn(this.mockPool).anyTimes();
+        expect(objectHandle.getPool()).andReturn(this.mockPool).anyTimes();
         expect(this.mockPool.getConfig()).andReturn(mockConfig).anyTimes();
         expect(mockConfig.getPoolName()).andReturn("foo").once();
         makeThreadSafe(this.mockPool, true);
 
-        replay(mockConnection, mockConnectionHandle, this.mockPool, mockConfig);
+        replay(niceMock, objectHandle, this.mockPool, mockConfig);
 
-        testClass.trackObjectFinalizer(mockConnectionHandle);
-        reset(mockConnectionHandle);
+        testClass.trackObjectFinalizer(objectHandle);
+        reset(objectHandle);
 
-        mockConnectionHandle = null; // prompt GC to kick in
+        objectHandle = null; // prompt GC to kick in
         for (int i = 0; i < 500; i++) {
             System.gc();
             System.gc();
             System.gc();
             Thread.sleep(20);
             try {
-                verify(mockConnection);
+                verify(niceMock);
                 break; // we succeeded
             } catch (Throwable t) {
                 //				t.printStackTrace();
@@ -327,7 +327,6 @@ public class TestConnectionPartition {
 
         replay(mockConnectionHandle, mockConnection, this.mockPool);
         testClass.trackObjectFinalizer(mockConnectionHandle);
-        testClass.statsLock = null; // this makes it blow up.
         reset(mockLogger);
         mockLogger.error((String) anyObject());
         expectLastCall().anyTimes();

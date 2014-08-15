@@ -17,58 +17,61 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.lang.ref.Reference;
+import java.util.Map;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Connection Partition structure
+ * Object Partition structure.
  *
- * @author wwadge
  * @param <T>
- *
+ * @author wwadge
  */
 public class ObjectPartition<T> implements Serializable {
 
-    /**
-     * Serialization UID
-     */
-    private static final long serialVersionUID = -7864443421028454573L;
     /**
      * Logger class.
      */
     private static final Logger LOG = LoggerFactory.getLogger(ObjectPartition.class);
     /**
-     * Connections available to be taken
+     * Serialization UID
+     */
+    private static final long serialVersionUID = -7864443421028454573L;
+    /**
+     * Objects available to be taken
      */
     private TransferQueue<ObjectHandle<T>> freeObjects;
     /**
-     * When connections start running out, add these number of new connections.
+     * When objects start running out, add these number of new objects.
      */
     private final int acquireIncrement;
     /**
-     * Minimum number of connections to start off with.
+     * Minimum number of objects to start off with.
      */
     private final int minObjects;
     /**
-     * Maximum number of connections that will ever be created.
+     * Maximum number of objects that will ever be created.
      */
     private final int maxObjects;
     /**
-     * Statistics lock.
+     * Number of objects that have been created.
      */
-    protected ReentrantReadWriteLock statsLock = new ReentrantReadWriteLock();
+    private AtomicInteger createdObjects = new AtomicInteger(0);
     /**
-     * Number of connections that have been created.
-     */
-    private int createdObjects = 0;
-    /**
-     * If set to true, don't bother calling method to attempt to create more connections because we've hit our limit.
+     * If set to true, don't bother calling method to attempt to create more objects because we've hit our limit.
      */
     private volatile boolean unableToCreateMoreObjects = false;
     /**
-     * Scratch queue of connections awaiting to be placed back in queue.
+     * Scratch queue of objects awaiting to be placed back in queue.
      */
-    private final LinkedTransferQueue<ObjectHandle<T>> objectsPendingRelease;
+    private final TransferQueue<ObjectHandle<T>> objectsPendingRelease;
+    /**
+     * Reference of objects that are to be watched.
+     * Each partition has it's own object reference map.
+     * TODO finish this feature later.
+     */
+    private final Map<T, Reference<ObjectHandle<T>>> finalizableRefs = new ConcurrentHashMap<>();
     /**
      * Config setting.
      */
@@ -80,7 +83,7 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * Store the unit translation here to avoid recalculating it in statement handles.
      */
-    private final long queryExecuteTimeLimitInNanos;
+    private final long objectOccupyTimeLimitInNanos;
     /**
      * Cached copy of the config-specified pool name.
      */
@@ -100,23 +103,19 @@ public class ObjectPartition<T> implements Serializable {
     }
 
     /**
-     * Updates leased connections statistics
+     * Updates leased connections statistics.
      *
      * @param increment value to add/subtract
+     * @return value after this incrementation.
      */
-    protected void updateCreatedObjects(int increment) {
-        try {
-            this.statsLock.writeLock().lock();
-            this.createdObjects += increment;
-        } finally {
-            this.statsLock.writeLock().unlock();
-        }
+    protected int updateCreatedObjects(int increment) {
+        return this.createdObjects.addAndGet(increment);
     }
 
     /**
-     * Adds a free connection.
+     * Adds a free object.
      *
-     * @param handle
+     * @param handle object handle.
      * @throws PoolException on error
      */
     protected void addFreeObject(ObjectHandle<T> handle) throws PoolException {
@@ -128,11 +127,11 @@ public class ObjectPartition<T> implements Serializable {
             trackObjectFinalizer(handle);
         }
 
-        // the instant the following line is executed, consumers can start making use of this 
+        // the instant the following line is executed, consumers can start making use of this
         // connection.
         if (!this.freeObjects.offer(handle)) {
             // we failed. rollback.
-            updateCreatedObjects(-1); // compensate our createdConnection count.
+            updateCreatedObjects(-1); // compensate our createdObject count.
 
             if (!this.disableTracking) {
                 this.pool.getFinalizableRefs().remove(handle.getInternalObject());
@@ -144,7 +143,6 @@ public class ObjectPartition<T> implements Serializable {
 
     /**
      * This method is a replacement for finalize() but avoids all its pitfalls (see Joshua Bloch et. all).
-     *
      * Keeps a handle on the connection. If the application called closed, then it means that the handle gets pushed
      * back to the connection pool and thus we get a strong reference again. If the application forgot to call close()
      * and subsequently lost the strong reference to it, the handle becomes eligible to garbage connection and thus the
@@ -157,8 +155,7 @@ public class ObjectPartition<T> implements Serializable {
     protected void trackObjectFinalizer(ObjectHandle<T> handle) {
         if (!this.disableTracking) {
             //	assert !connectionHandle.getPool().getFinalizableRefs().containsKey(connectionHandle) : "Already tracking this handle";
-            T con = handle.getInternalObject();
-            final T obj = con;
+            final T obj = handle.getInternalObject();
             final BoneOP<T> associatedPool = handle.getPool();
             handle.getPool().getFinalizableRefs().put(obj, new FinalizableWeakReference<ObjectHandle<T>>(handle, handle.getPool().getFinalizableRefQueue()) {
                 @Override
@@ -188,7 +185,7 @@ public class ObjectPartition<T> implements Serializable {
     }
 
     /**
-     * @param freeObjects the freeConnections to set
+     * @param freeObjects the freeObjects to set
      */
     protected void setFreeObjects(TransferQueue<ObjectHandle<T>> freeObjects) {
         this.freeObjects = freeObjects;
@@ -197,7 +194,7 @@ public class ObjectPartition<T> implements Serializable {
     /**
      * Partition constructor
      *
-     * @param pool handle to connection pool
+     * @param pool handle to object pool
      */
     public ObjectPartition(BoneOP<T> pool) {
         BoneOPConfig config = pool.getConfig();
@@ -209,7 +206,7 @@ public class ObjectPartition<T> implements Serializable {
 
         this.objectsPendingRelease = new LinkedTransferQueue<>();
         this.disableTracking = config.isDisableObjectTracking();
-        this.queryExecuteTimeLimitInNanos = TimeUnit.NANOSECONDS.convert(config.getQueryExecuteTimeLimitInMs(), TimeUnit.MILLISECONDS);
+        this.objectOccupyTimeLimitInNanos = TimeUnit.MILLISECONDS.toNanos(config.getObjectOccupyTimeLimitInMillis());
         /**
          * Create a number of helper threads for connection release.
          */
@@ -245,12 +242,7 @@ public class ObjectPartition<T> implements Serializable {
      * @return the leasedConnections
      */
     protected int getCreatedObjects() {
-        try {
-            this.statsLock.readLock().lock();
-            return this.createdObjects;
-        } finally {
-            this.statsLock.readLock().unlock();
-        }
+        return this.createdObjects.get();
     }
 
     /**
@@ -272,18 +264,32 @@ public class ObjectPartition<T> implements Serializable {
     }
 
     /**
+     * Disable create more objects.
+     */
+    protected void disableCreateMoreObjects() {
+        setUnableToCreateMoreObjects(true);
+    }
+
+    /**
+     * Allow to create more objects.
+     */
+    protected void enableCreateMoreObjects() {
+        setUnableToCreateMoreObjects(false);
+    }
+
+    /**
      * Gets handle to a release connection handle queue.
      *
-     * @return release connection handle queue
+     * @return release object handle queue
      */
-    protected LinkedTransferQueue<ObjectHandle<T>> getObjectsPendingRelease() {
+    protected TransferQueue<ObjectHandle<T>> getObjectsPendingRelease() {
         return this.objectsPendingRelease;
     }
 
     /**
      * Returns the number of avail connections
      *
-     * @return avail connections.
+     * @return avail objects.
      */
     protected int getAvailableObjects() {
         return this.freeObjects.size();
@@ -303,7 +309,11 @@ public class ObjectPartition<T> implements Serializable {
      *
      * @return value
      */
-    protected long getQueryExecuteTimeLimitInNanos() {
-        return this.queryExecuteTimeLimitInNanos;
+    protected long getObjectOccupyTimeLimitInNanos() {
+        return this.objectOccupyTimeLimitInNanos;
+    }
+
+    protected boolean hasWaitingConsumer() {
+        return freeObjects.hasWaitingConsumer();
     }
 }

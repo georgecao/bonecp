@@ -12,8 +12,6 @@
  */
 package com.jolbox.boneop;
 
-import org.apache.commons.pool.PoolableObjectFactory;
-
 /**
  * @author george
  */

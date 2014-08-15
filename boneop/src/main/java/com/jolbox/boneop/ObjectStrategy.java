@@ -18,29 +18,29 @@ package com.jolbox.boneop;
 /**
  * Marker interface.
  *
- * @author wallacew
  * @param <T> Object type.
- *
+ * @author wallacew
  */
 public interface ObjectStrategy<T> {
 
     /**
-     * Obtains a connection using the configured strategy. Main entry point.
+     * Obtains a connection using the configured strategy.
+     * Main entry point of blocking mode.
      *
      * @return pooled object.
      * @throws com.jolbox.boneop.PoolException
      */
-    ObjectHandle<T> getObject() throws PoolException;
+    ObjectHandle<T> take() throws PoolException;
 
     /**
      * Obtains a object using the configured strategy without blocking.
      *
      * @return object instance
      */
-    ObjectHandle<T> pollObject();
+    ObjectHandle<T> poll();
 
     /**
      * Destroys all objects using this strategy.
      */
-    void destroyAllObjects();
+    void destroy();
 }

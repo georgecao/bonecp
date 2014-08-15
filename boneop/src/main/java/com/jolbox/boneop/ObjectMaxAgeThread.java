@@ -31,7 +31,7 @@ public class ObjectMaxAgeThread<T> implements Runnable {
     /**
      * Max no of ms to wait before a connection that isn't used is killed off.
      */
-    private long maxAgeInMs;
+    private long maxAgeInMillis;
     /**
      * Partition being handled.
      */
@@ -59,14 +59,14 @@ public class ObjectMaxAgeThread<T> implements Runnable {
      * @param objectPartition partition to work on
      * @param scheduler       Scheduler handler.
      * @param pool            pool handle
-     * @param maxAgeInMs      Threads older than this are killed off
+     * @param maxAgeInMillis  Threads older than this are killed off
      * @param lifoMode        if true, we're running under a lifo fashion.
      */
     protected ObjectMaxAgeThread(ObjectPartition<T> objectPartition, ScheduledExecutorService scheduler,
-                                 BoneOP<T> pool, long maxAgeInMs, boolean lifoMode) {
+                                 BoneOP<T> pool, long maxAgeInMillis, boolean lifoMode) {
         this.partition = objectPartition;
         this.scheduler = scheduler;
-        this.maxAgeInMs = maxAgeInMs;
+        this.maxAgeInMillis = maxAgeInMillis;
         this.pool = pool;
         this.lifoMode = lifoMode;
     }
@@ -76,7 +76,7 @@ public class ObjectMaxAgeThread<T> implements Runnable {
      */
     public void run() {
         long tmp;
-        long nextCheckInMs = this.maxAgeInMs;
+        long nextCheckInMs = this.maxAgeInMillis;
 
         int partitionSize = this.partition.getAvailableObjects();
         long currentTime = System.currentTimeMillis();
@@ -85,7 +85,7 @@ public class ObjectMaxAgeThread<T> implements Runnable {
                 ObjectHandle<T> objectHandle = this.partition.getFreeObjects().poll();
                 if (objectHandle != null) {
                     objectHandle.setOriginatingPartition(this.partition);
-                    tmp = this.maxAgeInMs - (currentTime - objectHandle.getObjectCreationTimeInMs());
+                    tmp = this.maxAgeInMillis - (currentTime - objectHandle.getObjectCreationTimeInMillis());
                     if (tmp < nextCheckInMs) {
                         nextCheckInMs = tmp;
                     }

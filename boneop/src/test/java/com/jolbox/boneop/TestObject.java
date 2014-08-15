@@ -13,9 +13,10 @@
 package com.jolbox.boneop;
 
 /**
+ * An simple test object.
  *
  * @author george
  */
 public class TestObject {
-    
+
 }

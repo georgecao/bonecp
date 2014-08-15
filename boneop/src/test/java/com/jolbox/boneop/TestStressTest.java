@@ -35,10 +35,10 @@ public class TestStressTest {
         config.setMinObjectsPerPartition(40);
         config.setMaxObjectsPerPartition(100);
         config.setPartitionCount(1);
-//		config.setMaxConnectionAge(1000, TimeUnit.MICROSECONDS);
+//		config.setMaxObjectAge(1000, TimeUnit.MICROSECONDS);
 //		config.setIdleMaxAgeInSeconds(1);
         config.setReleaseHelperThreads(1);
-        config.setCloseConnectionWatch(true);
+        config.setCloseObjectWatch(true);
         config.setServiceOrder("LIFO");
         final TestObjectFactory factory = new TestObjectFactory();
         final BoneOP<TestObject> pool = new BoneOP(config, factory);

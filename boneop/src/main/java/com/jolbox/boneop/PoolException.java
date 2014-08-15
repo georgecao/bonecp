@@ -26,7 +26,7 @@ public class PoolException extends Exception {
     }
 
     public PoolException(String message, String code) {
-        super(message);
+        super(message + ", code " + code);
     }
 
     public PoolException(Throwable cause) {

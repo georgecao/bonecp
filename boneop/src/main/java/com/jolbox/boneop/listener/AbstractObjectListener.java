@@ -15,7 +15,6 @@
  */
 package com.jolbox.boneop.listener;
 
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 
@@ -78,10 +77,10 @@ public abstract class AbstractObjectListener implements ObjectListener {
     public boolean onAcquireFail(Throwable t, AcquireFailConfig acquireConfig) {
         boolean tryAgain = false;
         String log = acquireConfig.getLogMessage();
-        logger.error(log + " Sleeping for " + acquireConfig.getAcquireRetryDelayInMs() + "ms and trying again. Attempts left: " + acquireConfig.getAcquireRetryAttempts() + ". Exception: " + t.getCause());
+        logger.error(log + " Sleeping for " + acquireConfig.getAcquireRetryDelayInMillis() + "ms and trying again. Attempts left: " + acquireConfig.getAcquireRetryAttempts() + ". Exception: " + t.getCause());
 
         try {
-            Thread.sleep(acquireConfig.getAcquireRetryDelayInMs());
+            Thread.sleep(acquireConfig.getAcquireRetryDelayInMillis());
             if (acquireConfig.getAcquireRetryAttempts().get() > 0) {
                 tryAgain = (acquireConfig.getAcquireRetryAttempts().decrementAndGet()) > 0;
             }
@@ -92,7 +91,7 @@ public abstract class AbstractObjectListener implements ObjectListener {
         return tryAgain;
     }
 
-    public void onQueryExecuteTimeLimitExceeded(ObjectHandle handle, Statement statement, String sql, Map<Object, Object> logParams, long timeElapsedInNs) {
+    public void onObjectOccupyTimeLimitExceeded(ObjectHandle handle, Statement statement, String sql, Map<Object, Object> logParams, long timeElapsedInNs) {
         onQueryExecuteTimeLimitExceeded(handle, statement, sql, logParams);
     }
 
@@ -114,12 +113,12 @@ public abstract class AbstractObjectListener implements ObjectListener {
         logger.warn(sb.toString());
     }
 
-    public boolean onConnectionException(ObjectHandle connection, String state, Throwable t) {
+    public boolean onConnectionException(ObjectHandle objectHandle, String state, Throwable t) {
         return true; // keep the default behaviour
     }
 
     @Override
-    public ConnectionState onMarkPossiblyBroken(ObjectHandle connection, String state, PoolException e) {
-        return ConnectionState.NOP;
+    public ObjectState onMarkPossiblyBroken(ObjectHandle objectHandle, String state, PoolException e) {
+        return ObjectState.NOP;
     }
 }

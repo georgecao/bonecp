@@ -20,13 +20,13 @@
     <parent>
         <groupId>com.jolbox</groupId>
         <artifactId>boneop-parent</artifactId>
-        <version>0.8.0-alpha2-SNAPSHOT</version>
+        <version>0.9-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>boneop</artifactId>
     <packaging>bundle</packaging>
-    <name>BoneOP :: Core Library</name>
+    <name>BoneOP Core Library</name>
     <description>Lightweight object pool.</description>
 
     <build>

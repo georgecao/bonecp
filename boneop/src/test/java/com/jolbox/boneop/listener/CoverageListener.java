@@ -15,14 +15,15 @@
  */
 
 /**
- * 
+ *
  */
 package com.jolbox.boneop.listener;
 
-/** Just a dummy class for code coverage.
- * @author wallacew
+/**
+ * Just a dummy class for code coverage.
  *
+ * @author wallacew
  */
-public class CoverageHook extends AbstractObjectListener{
-  // do nothing - call the abstract methods
+public class CoverageListener extends AbstractObjectListener {
+    // do nothing - call the abstract methods
 }

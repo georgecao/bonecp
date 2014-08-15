@@ -30,7 +30,10 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class CloseThreadMonitor<T> implements Runnable {
-
+    /**
+     * Logger class.
+     */
+    private static final Logger LOG = LoggerFactory.getLogger(CloseThreadMonitor.class);
     /**
      * Handle to the connection we are monitoring.
      */
@@ -47,10 +50,7 @@ public class CloseThreadMonitor<T> implements Runnable {
      * ms to wait for thread.join()
      */
     private long closeConnectionWatchTimeout;
-    /**
-     * Logger class.
-     */
-    private static final Logger LOG = LoggerFactory.getLogger(CloseThreadMonitor.class);
+
 
     /**
      * @param threadToMonitor Thread to wait for termination
@@ -73,7 +73,7 @@ public class CloseThreadMonitor<T> implements Runnable {
             // wait for the thread we're monitoring to die off.
             this.threadToMonitor.join(this.closeConnectionWatchTimeout);
             if (!this.connectionHandle.isClosed()
-                    && this.threadToMonitor.equals(this.connectionHandle.getThreadUsingConnection())) {
+                    && this.threadToMonitor.equals(this.connectionHandle.getThreadUsingObject())) {
                 LOG.error(this.stackTrace);
             }
         } catch (Exception e) {

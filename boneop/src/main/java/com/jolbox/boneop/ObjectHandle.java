@@ -12,10 +12,9 @@
  */
 package com.jolbox.boneop;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.jolbox.boneop.listener.AcquireFailConfig;
-import com.jolbox.boneop.listener.ConnectionState;
 import com.jolbox.boneop.listener.ObjectListener;
+import com.jolbox.boneop.listener.ObjectState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,21 +31,20 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author wwadge
  */
 public class ObjectHandle<T> {
-
-    /**
-     * Exception message.
-     */
-    private static final String LOG_ERROR_MESSAGE = "Connection closed twice exception detected.\n%s\n%s\n";
-    /**
-     * Exception message.
-     */
-    private static final String CLOSED_TWICE_EXCEPTION_MESSAGE = "Connection closed from thread [%s] was closed again.\nStack trace of location where connection was first closed follows:\n";
     /**
      * Logger handle.
      */
     private static final Logger LOG = LoggerFactory.getLogger(ObjectHandle.class);
     /**
-     * If true, this connection might have failed communicating with the database. We assume that exceptions should be
+     * Exception message.
+     */
+    private static final String LOG_ERROR_MESSAGE = "Object closed twice exception detected.\n%s\n%s\n";
+    /**
+     * Exception message.
+     */
+    private static final String CLOSED_TWICE_EXCEPTION_MESSAGE = "Connection closed from thread [%s] was closed again.\nStack trace of location where connection was first closed follows:\n";
+    /**
+     * If true, this object might have failed communicating with the database. We assume that exceptions should be
      * rare here i.e. the normal case is assumed to succeed.
      */
     protected boolean possiblyBroken;
@@ -58,41 +56,27 @@ public class ObjectHandle<T> {
     /**
      * Keep track of the thread.
      */
-    protected Thread threadUsingConnection;
-    /**
-     * If true, transaction has been marked as COMMITed or ROLLBACKed.
-     */
-    @VisibleForTesting
-    protected boolean txResolved = true;
-    /**
-     * Config setting.
-     */
-    @VisibleForTesting
-    protected boolean detectUnresolvedTransactions;
-    /**
-     * Stack track dump.
-     */
-    protected String autoCommitStackTrace;
+    protected Thread threadUsingObject;
     /**
      * If true, this connection is in use in a thread-local context.
      */
     protected AtomicBoolean inUseInThreadLocalContext = new AtomicBoolean();
     /**
-     * Connection handle.
+     * Object handle.
      */
     private T object = null;
     /**
      * Last time this connection was used by an application.
      */
-    private long objectLastUsedInMs = System.currentTimeMillis();
+    private long objectLastUsedInMillis = System.currentTimeMillis();
     /**
      * Last time we sent a reset to this connection.
      */
-    private long objectLastResetInMs = System.currentTimeMillis();
+    private long objectLastResetInMillis = System.currentTimeMillis();
     /**
      * Time when this connection was created.
      */
-    private long objectCreationTimeInMs = System.currentTimeMillis();
+    private long objectCreationTimeInMillis = System.currentTimeMillis();
     /**
      * Pool handle.
      */
@@ -110,7 +94,7 @@ public class ObjectHandle<T> {
      */
     private Object debugHandle;
     /**
-     * Handle to the connection hook as defined in the config.
+     * Handle to the object hook as defined in the config.
      */
     private ObjectListener objectListener;
     /**
@@ -122,13 +106,9 @@ public class ObjectHandle<T> {
      */
     private volatile String doubleCloseException = null;
     /**
-     * If true, log sql statements.
-     */
-    private boolean logStatementsEnabled;
-    /**
      * Configured max connection age.
      */
-    private long maxObjectAgeInMs;
+    private long maxObjectAgeInMillis;
     /**
      * if true, we care about statistics.
      */
@@ -142,7 +122,7 @@ public class ObjectHandle<T> {
      */
     private volatile Thread threadWatch;
     /**
-     * Handle to pool.finalizationRefs.
+     * Handle to pool finalizationRefs.
      */
     private Map<T, Reference<ObjectHandle<T>>> finalizableRefs;
     /**
@@ -150,21 +130,14 @@ public class ObjectHandle<T> {
      */
     private boolean objectTrackingDisabled;
     /**
-     * If true, this is a poison dummy connection used to unblock threads that are currently waiting on getConnection()
+     * If true, this is a poison dummy connection used to unblock threads that are currently waiting on {@link BoneOP#getObject()}
      * for nothing while the pool is trying to revive itself.
      */
     private boolean poison;
-    /**
-     * Config setting.
-     */
-    private boolean detectUnclosedStatements;
-    /**
-     * Config setting.
-     */
-    private boolean closeOpenStatements;
+
 
     /**
-     * Connection wrapper constructor
+     * Object wrapper constructor
      *
      * @param pool pool handle.
      * @throws PoolException on error
@@ -179,7 +152,6 @@ public class ObjectHandle<T> {
      * Create a dummy handle.
      */
     private ObjectHandle() {
-        // for static factory.
     }
 
     /**
@@ -208,8 +180,8 @@ public class ObjectHandle<T> {
      * Private -- used solely for unit testing.
      *
      * @param <T>    Object type.
-     * @param object
-     * @param pool
+     * @param object object associated with created handle.
+     * @param pool   the pool this handle belongs to.
      * @return Object Handle
      */
     protected static <T> ObjectHandle<T> createTestObjectHandle(T object, BoneOP<T> pool) {
@@ -220,11 +192,13 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Creates the connection handle again. We use this method to create a brand new connection handle. That way if the
-     * application (wrongly) tries to do something else with the connection that has already been "closed", it will
+     * Creates the object handle again. We use this method to create a brand new object handle. That way if the
+     * application (wrongly) tries to do something else with the object that has already been "closed", it will
      * fail.
+     * <p/>
+     * Copy the handle's other properties except the object.
      *
-     * @return ConnectionHandle
+     * @return ObjectHandle
      * @throws PoolException
      */
     public ObjectHandle<T> recreateObjectHandle() throws PoolException {
@@ -232,30 +206,24 @@ public class ObjectHandle<T> {
         handle.pool = this.pool;
         handle.object = this.object;
         handle.originatingPartition = this.originatingPartition;
-        handle.objectCreationTimeInMs = this.objectCreationTimeInMs;
-        handle.objectLastResetInMs = this.objectLastResetInMs;
-        handle.objectLastUsedInMs = this.objectLastUsedInMs;
+        handle.objectCreationTimeInMillis = this.objectCreationTimeInMillis;
+        handle.objectLastResetInMillis = this.objectLastResetInMillis;
+        handle.objectLastUsedInMillis = this.objectLastUsedInMillis;
         handle.possiblyBroken = this.possiblyBroken;
 
         handle.debugHandle = this.debugHandle;
         handle.objectListener = this.objectListener;
         handle.doubleCloseCheck = this.doubleCloseCheck;
         handle.doubleCloseException = this.doubleCloseException;
-        handle.logStatementsEnabled = this.logStatementsEnabled;
-        handle.threadUsingConnection = this.threadUsingConnection;
-        handle.maxObjectAgeInMs = this.maxObjectAgeInMs;
+        handle.threadUsingObject = this.threadUsingObject;
+        handle.maxObjectAgeInMillis = this.maxObjectAgeInMillis;
         handle.statisticsEnabled = this.statisticsEnabled;
         handle.statistics = this.statistics;
         handle.threadWatch = this.threadWatch;
         handle.finalizableRefs = this.finalizableRefs;
         handle.objectTrackingDisabled = this.objectTrackingDisabled;
-        handle.txResolved = this.txResolved;
-        handle.detectUnresolvedTransactions = this.detectUnresolvedTransactions;
-        handle.autoCommitStackTrace = this.autoCommitStackTrace;
         handle.inUseInThreadLocalContext = this.inUseInThreadLocalContext;
         handle.poison = this.poison;
-        handle.detectUnclosedStatements = this.detectUnclosedStatements;
-        handle.closeOpenStatements = this.closeOpenStatements;
         this.object = null;
         return handle;
     }
@@ -273,17 +241,15 @@ public class ObjectHandle<T> {
         this.objectTrackingDisabled = pool.getConfig().isDisableObjectTracking();
         this.statisticsEnabled = pool.getConfig().isStatisticsEnabled();
         this.statistics = pool.getStatistics();
-        this.detectUnclosedStatements = pool.getConfig().isDetectUnclosedStatements();
-        this.threadUsingConnection = null;
+        this.threadUsingObject = null;
         this.objectListener = this.pool.getConfig().getObjectListener();
 
-        this.maxObjectAgeInMs = pool.getConfig().getMaxConnectionAge(TimeUnit.MILLISECONDS);
-        this.doubleCloseCheck = pool.getConfig().isCloseConnectionWatch();
-        this.logStatementsEnabled = pool.getConfig().isLogStatementsEnabled();
+        this.maxObjectAgeInMillis = pool.getConfig().getMaxObjectAge(TimeUnit.MILLISECONDS);
+        this.doubleCloseCheck = pool.getConfig().isCloseObjectWatch();
     }
 
     /**
-     * Obtains a database connection, retrying if necessary.
+     * Obtains a object, retrying if necessary.
      *
      * @param pool pool handle
      * @return A DB connection.
@@ -293,10 +259,10 @@ public class ObjectHandle<T> {
         boolean tryAgain = false;
         T result = null;
         int acquireRetryAttempts = pool.getConfig().getAcquireRetryAttempts();
-        long acquireRetryDelayInMs = pool.getConfig().getAcquireRetryDelayInMs();
+        long acquireRetryDelayInMillis = pool.getConfig().getAcquireRetryDelayInMillis();
         AcquireFailConfig acquireConfig = new AcquireFailConfig();
         acquireConfig.setAcquireRetryAttempts(new AtomicInteger(acquireRetryAttempts));
-        acquireConfig.setAcquireRetryDelayInMs(acquireRetryDelayInMs);
+        acquireConfig.setAcquireRetryDelayInMillis(acquireRetryDelayInMillis);
         acquireConfig.setLogMessage("Failed to acquire connection to ");
         this.objectListener = pool.getConfig().getObjectListener();
         do {
@@ -306,7 +272,7 @@ public class ObjectHandle<T> {
                 tryAgain = false;
 
                 if (acquireRetryAttempts != pool.getConfig().getAcquireRetryAttempts()) {
-                    LOG.info("Successfully re-established connection to ");
+                    LOG.info("Successfully re-established object");
                 }
 
                 pool.getDown().set(false);
@@ -321,10 +287,10 @@ public class ObjectHandle<T> {
                 if (this.objectListener != null) {
                     tryAgain = this.objectListener.onAcquireFail(e, acquireConfig);
                 } else {
-                    LOG.error("Failed to acquire object. Sleeping for {} ms. Attempts left: {}", acquireRetryDelayInMs, acquireRetryAttempts, e);
+                    LOG.error("Failed to acquire object. Sleeping for {} ms. Attempts left: {}", acquireRetryDelayInMillis, acquireRetryAttempts, e);
 
                     try {
-                        Thread.sleep(acquireRetryDelayInMs);
+                        Thread.sleep(acquireRetryDelayInMillis);
                         if (acquireRetryAttempts > -1) {
                             tryAgain = (acquireRetryAttempts--) != 0;
                         }
@@ -343,7 +309,7 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Given an exception, flag the connection (or database) as being potentially broken. If the exception is a
+     * Given an exception, flag the object (or database) as being potentially broken. If the exception is a
      * data-specific exception, do nothing except throw it back to the application.
      *
      * @param e PoolException e
@@ -351,14 +317,14 @@ public class ObjectHandle<T> {
      */
     protected PoolException markPossiblyBroken(PoolException e) {
         String state = "";
-        ConnectionState connectionState = this.getObjectListener() != null ? this.getObjectListener().onMarkPossiblyBroken(this, state, e) : ConnectionState.NOP;
+        ObjectState objectState = this.getObjectListener() != null ? this.getObjectListener().onMarkPossiblyBroken(this, state, e) : ObjectState.NOP;
         if (state == null) { // safety;
             state = "08999";
         }
 
-        if (((connectionState.equals(ConnectionState.TERMINATE_ALL_CONNECTIONS)) && this.pool != null) && this.pool.getDown().compareAndSet(false, true)) {
+        if (((objectState.equals(ObjectState.TERMINATE_ALL_OBJECTS)) && this.pool != null) && this.pool.getDown().compareAndSet(false, true)) {
             LOG.error("Database access problem. Killing off all remaining connections in the connection pool. SQL State = " + state);
-            this.pool.connectionStrategy.destroyAllObjects();
+            this.pool.objectStrategy.destroy();
             this.pool.poisonAndRepopulatePartitions();
         }
 
@@ -374,7 +340,7 @@ public class ObjectHandle<T> {
         // if it's a communication exception, a mysql deadlock or an implementation-specific error code, flag this connection as being potentially broken.
         // state == 40001 is mysql specific triggered when a deadlock is detected
         char firstChar = '0';
-        if (connectionState.equals(ConnectionState.CONNECTION_POSSIBLY_BROKEN) || state.equals("40001")
+        if (objectState.equals(ObjectState.OBJECT_POSSIBLY_BROKEN) || state.equals("40001")
                 || state.startsWith("08") || (firstChar >= '5' && firstChar <= '9') /*|| (firstChar >='I' && firstChar <= 'Z')*/) {
             this.possiblyBroken = true;
         }
@@ -388,7 +354,7 @@ public class ObjectHandle<T> {
     }
 
     /**
-     * Checks if the connection is (logically) closed and throws an exception if it is.
+     * Checks if the object is (logically) closed and throws an exception if it is.
      *
      * @throws PoolException on error
      */
@@ -404,15 +370,6 @@ public class ObjectHandle<T> {
     public void close() throws PoolException {
         try {
             if (!this.logicallyClosed) {
-
-                if (this.resetObjectOnClose /*FIXME: && !getAutoCommit() && !isTxResolved() */) {
-                    /*if (this.autoCommitStackTrace != null){
-                     logger.debug(this.autoCommitStackTrace);
-                     this.autoCommitStackTrace = null; 
-                     } else {
-                     logger.debug(DISABLED_AUTO_COMMIT_WARNING);
-                     }*/
-                }
                 if (this.threadWatch != null) {
                     this.threadWatch.interrupt(); // if we returned the connection to the pool, terminate thread watch thread if it's
                     // running even if thread is still alive (eg thread has been recycled for use in some
@@ -470,51 +427,29 @@ public class ObjectHandle<T> {
     /**
      * @return the connectionLastUsed
      */
-    public long getObjectLastUsedInMs() {
-        return this.objectLastUsedInMs;
+    public long getObjectLastUsedInMillis() {
+        return this.objectLastUsedInMillis;
     }
 
     /**
      * @param connectionLastUsed the connectionLastUsed to set
      */
-    protected void setObjectLastUsedInMs(long connectionLastUsed) {
-        this.objectLastUsedInMs = connectionLastUsed;
-    }
-
-    /**
-     * Deprecated. Use {@link #getObjectLastUsedInMs()} instead.
-     *
-     * @return the connectionLastUsed
-     * @deprecated Use {@link #getObjectLastUsedInMs()} instead.
-     */
-    @Deprecated
-    public long getObjectLastUsed() {
-        return getObjectLastUsedInMs();
+    protected void setObjectLastUsedInMillis(long connectionLastUsed) {
+        this.objectLastUsedInMillis = connectionLastUsed;
     }
 
     /**
      * @return the connectionLastReset
      */
-    public long getObjectLastResetInMs() {
-        return this.objectLastResetInMs;
+    public long getObjectLastResetInMillis() {
+        return this.objectLastResetInMillis;
     }
 
     /**
      * @param connectionLastReset the connectionLastReset to set
      */
-    protected void setObjectLastResetInMs(long connectionLastReset) {
-        this.objectLastResetInMs = connectionLastReset;
-    }
-
-    /**
-     * Deprecated. Use {@link #getObjectLastResetInMs()} instead.
-     *
-     * @return the connectionLastReset
-     * @deprecated Please use {@link #getObjectLastResetInMs()} instead
-     */
-    @Deprecated
-    public long getObjectLastReset() {
-        return getObjectLastResetInMs();
+    protected void setObjectLastResetInMillis(long connectionLastReset) {
+        this.objectLastResetInMillis = connectionLastReset;
     }
 
     /**
@@ -550,7 +485,7 @@ public class ObjectHandle<T> {
      */
     protected void renewObject() {
         this.logicallyClosed = false;
-        this.threadUsingConnection = Thread.currentThread();
+        this.threadUsingObject = Thread.currentThread();
         if (this.doubleCloseCheck) {
             this.doubleCloseException = null;
         }
@@ -573,16 +508,6 @@ public class ObjectHandle<T> {
      */
     public void setDebugHandle(Object debugHandle) {
         this.debugHandle = debugHandle;
-    }
-
-    /**
-     * Deprecated. Please use getInternalConnection() instead.
-     *
-     * @return the raw connection
-     */
-    @Deprecated
-    public T getRawObject() {
-        return getInternalObject();
     }
 
     /**
@@ -647,10 +572,10 @@ public class ObjectHandle<T> {
     /**
      * Returns the thread that is currently utilizing this connection.
      *
-     * @return the threadUsingConnection
+     * @return the threadUsingObject
      */
-    public Thread getThreadUsingConnection() {
-        return this.threadUsingConnection;
+    public Thread getThreadUsingObject() {
+        return this.threadUsingObject;
     }
 
     /**
@@ -658,8 +583,8 @@ public class ObjectHandle<T> {
      *
      * @return connectionCreationTime
      */
-    public long getObjectCreationTimeInMs() {
-        return this.objectCreationTimeInMs;
+    public long getObjectCreationTimeInMillis() {
+        return this.objectCreationTimeInMillis;
     }
 
     /**
@@ -668,7 +593,7 @@ public class ObjectHandle<T> {
      * @return true if the connection has expired.
      */
     public boolean isExpired() {
-        return this.maxObjectAgeInMs > 0 && isExpired(System.currentTimeMillis());
+        return this.maxObjectAgeInMillis > 0 && isExpired(System.currentTimeMillis());
     }
 
     /**
@@ -678,7 +603,7 @@ public class ObjectHandle<T> {
      * @return true if the connection has expired.
      */
     protected boolean isExpired(long currentTime) {
-        return this.maxObjectAgeInMs > 0 && (currentTime - this.objectCreationTimeInMs) > this.maxObjectAgeInMs;
+        return this.maxObjectAgeInMillis > 0 && (currentTime - this.objectCreationTimeInMillis) > this.maxObjectAgeInMillis;
     }
 
     /**
@@ -697,33 +622,6 @@ public class ObjectHandle<T> {
      */
     protected void setThreadWatch(Thread threadWatch) {
         this.threadWatch = threadWatch;
-    }
-
-    /**
-     * If true, autocommit is set to true or else commit/rollback has been called.
-     *
-     * @return true/false
-     */
-    protected boolean isTxResolved() {
-        return this.txResolved;
-    }
-
-    /**
-     * Returns the autoCommitStackTrace field.
-     *
-     * @return autoCommitStackTrace
-     */
-    protected String getAutoCommitStackTrace() {
-        return this.autoCommitStackTrace;
-    }
-
-    /**
-     * Sets the autoCommitStackTrace.
-     *
-     * @param autoCommitStackTrace the autoCommitStackTrace to set
-     */
-    protected void setAutoCommitStackTrace(String autoCommitStackTrace) {
-        this.autoCommitStackTrace = autoCommitStackTrace;
     }
 
     /**

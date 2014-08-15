@@ -75,7 +75,7 @@ public class TestConnectionThreadTester {
         makeThreadSafe(mockLogger, true);
         config = new BoneOPConfig();
         config.setIdleMaxAgeInMinutes(100);
-        config.setIdleConnectionTestPeriodInMinutes(100);
+        config.setIdleObjectTestPeriodInMinutes(100);
 
     }
 
@@ -111,7 +111,7 @@ public class TestConnectionThreadTester {
         mockPool.postDestroyObject(mockConnection);
         expectLastCall().once();
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection);
     }
@@ -134,7 +134,7 @@ public class TestConnectionThreadTester {
 
         expect(mockConnectionPartition.getMinObjects()).andReturn(0).once();
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(0L);
 
         // connection should be closed
         mockConnection.internalClose();
@@ -142,7 +142,7 @@ public class TestConnectionThreadTester {
         expectLastCall().once();
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection);
     }
@@ -166,7 +166,7 @@ public class TestConnectionThreadTester {
 
         expect(mockConnectionPartition.getMinObjects()).andReturn(0).once();
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(0L);
 
         // connection should be closed
         mockConnection.internalClose();
@@ -175,7 +175,7 @@ public class TestConnectionThreadTester {
         expectLastCall().once();
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection);
     }
@@ -192,7 +192,7 @@ public class TestConnectionThreadTester {
         BoundedLinkedTransferQueue<ObjectHandle> fakeFreeConnections = new BoundedLinkedTransferQueue<ObjectHandle>(100);
         fakeFreeConnections.add(mockConnection);
         BoneOPConfig localconfig = config.clone();
-        localconfig.setIdleConnectionTestPeriodInMinutes(1);
+        localconfig.setIdleObjectTestPeriodInMinutes(1);
         localconfig.setIdleMaxAgeInMinutes(0);
         expect(mockPool.getConfig()).andReturn(localconfig).anyTimes();
         expect(mockConnectionPartition.getFreeObjects()).andReturn(fakeFreeConnections).anyTimes();
@@ -200,12 +200,12 @@ public class TestConnectionThreadTester {
         expect(mockConnectionPartition.getAvailableObjects()).andReturn(2).anyTimes();
 
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(0L);
         expect(mockPool.isObjectHandleAlive((ObjectHandle) anyObject())).andReturn(true).anyTimes();
         mockPool.putObjectBackInPartition((ObjectHandle) anyObject());
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection);
     }
@@ -222,7 +222,7 @@ public class TestConnectionThreadTester {
         BoundedLinkedTransferQueue<ObjectHandle> fakeFreeConnections = new BoundedLinkedTransferQueue<ObjectHandle>(100);
         fakeFreeConnections.add(mockConnection);
         BoneOPConfig localconfig = config.clone();
-        localconfig.setIdleConnectionTestPeriodInMinutes(0);
+        localconfig.setIdleObjectTestPeriodInMinutes(0);
         localconfig.setIdleMaxAgeInMinutes(1);
         expect(mockPool.getConfig()).andReturn(localconfig).anyTimes();
         expect(mockConnectionPartition.getFreeObjects()).andReturn(fakeFreeConnections).anyTimes();
@@ -230,12 +230,12 @@ public class TestConnectionThreadTester {
         expect(mockConnectionPartition.getAvailableObjects()).andReturn(2).anyTimes();
 
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(Long.MAX_VALUE);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(Long.MAX_VALUE);
         expect(mockPool.isObjectHandleAlive((ObjectHandle) anyObject())).andReturn(true).anyTimes();
         mockPool.putObjectBackInPartition((ObjectHandle) anyObject());
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection);
     }
@@ -253,7 +253,7 @@ public class TestConnectionThreadTester {
         LIFOQueue<ObjectHandle> mockFreeConnections = createNiceMock(LIFOQueue.class);
         expect(mockFreeConnections.poll()).andReturn(mockConnection).once();
         BoneOPConfig localconfig = config.clone();
-        localconfig.setIdleConnectionTestPeriodInMinutes(0);
+        localconfig.setIdleObjectTestPeriodInMinutes(0);
         localconfig.setIdleMaxAgeInMinutes(1);
         expect(mockPool.getConfig()).andReturn(localconfig).anyTimes();
         expect(mockConnectionPartition.getFreeObjects()).andReturn(mockFreeConnections).anyTimes();
@@ -263,12 +263,12 @@ public class TestConnectionThreadTester {
         mockConnection.internalClose();
         expectLastCall().once();
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(Long.MAX_VALUE);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(Long.MAX_VALUE);
         expect(mockPool.isObjectHandleAlive((ObjectHandle) anyObject())).andReturn(true).anyTimes();
         //mockPool.putConnectionBackInPartition((ConnectionHandle)anyObject());
 
         replay(mockPool, mockFreeConnections, mockConnection, mockConnectionPartition, mockExecutor);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), true);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), true);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection);
     }
@@ -285,13 +285,13 @@ public class TestConnectionThreadTester {
         BoundedLinkedTransferQueue<ObjectHandle> fakeFreeConnections = new BoundedLinkedTransferQueue<ObjectHandle>(100);
         fakeFreeConnections.add(mockConnection);
         BoneOPConfig localconfig = config.clone();
-        localconfig.setIdleConnectionTestPeriodInMinutes(1);
+        localconfig.setIdleObjectTestPeriodInMinutes(1);
         expect(mockPool.getConfig()).andReturn(localconfig).anyTimes();
         expect(mockConnectionPartition.getFreeObjects()).andReturn(fakeFreeConnections).anyTimes();
         expect(mockConnectionPartition.getMinObjects()).andReturn(10).once();
         expect(mockConnectionPartition.getAvailableObjects()).andReturn(1).anyTimes();
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(0L);
         expect(mockPool.isObjectHandleAlive((ObjectHandle) anyObject())).andReturn(false).anyTimes();
 
         // connection should be closed
@@ -300,7 +300,7 @@ public class TestConnectionThreadTester {
         expectLastCall().once();
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection);
     }
@@ -317,20 +317,20 @@ public class TestConnectionThreadTester {
         BoundedLinkedTransferQueue<ObjectHandle> fakeFreeConnections = new BoundedLinkedTransferQueue<ObjectHandle>(100);
         fakeFreeConnections.add(mockConnection);
         BoneOPConfig localconfig = config.clone();
-        localconfig.setIdleConnectionTestPeriodInMinutes(1);
+        localconfig.setIdleObjectTestPeriodInMinutes(1);
         expect(mockPool.getConfig()).andReturn(localconfig).anyTimes();
         expect(mockConnectionPartition.getFreeObjects()).andReturn(fakeFreeConnections).anyTimes();
         expect(mockConnectionPartition.getMinObjects()).andReturn(10).once();
         expect(mockConnectionPartition.getAvailableObjects()).andReturn(1).anyTimes();
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(0L);
         expect(mockPool.isObjectHandleAlive((ObjectHandle) anyObject())).andReturn(true).anyTimes();
         expect(mockExecutor.isShutdown()).andReturn(true);
         mockPool.putObjectBackInPartition((ObjectHandle) anyObject());
         expectLastCall().andThrow(new RuntimeException());
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         this.testClass.run();
         verify(mockPool, mockConnectionPartition, mockExecutor, mockConnection);
     }
@@ -352,13 +352,13 @@ public class TestConnectionThreadTester {
         BoundedLinkedTransferQueue<ObjectHandle> fakeFreeConnections = new BoundedLinkedTransferQueue<ObjectHandle>(10);
         fakeFreeConnections.add(mockConnection);
         BoneOPConfig localconfig = config.clone();
-        localconfig.setIdleConnectionTestPeriodInMinutes(1);
+        localconfig.setIdleObjectTestPeriodInMinutes(1);
         expect(mockPool.getConfig()).andReturn(localconfig).anyTimes();
         expect(mockConnectionPartition.getFreeObjects()).andReturn(fakeFreeConnections).anyTimes();
         expect(mockConnectionPartition.getMinObjects()).andReturn(10).once();
         expect(mockConnectionPartition.getAvailableObjects()).andReturn(1).anyTimes();
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(0L);
         expect(mockPool.isObjectHandleAlive((ObjectHandle) anyObject())).andReturn(true).anyTimes();
         expect(mockExecutor.isShutdown()).andReturn(false);
         mockPool.putObjectBackInPartition((ObjectHandle) anyObject());
@@ -366,7 +366,7 @@ public class TestConnectionThreadTester {
         mockLogger.error((String) anyObject(), (Exception) anyObject());
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor, mockLogger);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         Field loggerField = this.testClass.getClass().getDeclaredField("LOG");
         TestUtils.setFinalStatic(loggerField, mockLogger);
         this.testClass.run();
@@ -391,13 +391,13 @@ public class TestConnectionThreadTester {
         fakeFreeConnections.add(mockConnection);
 
         BoneOPConfig localconfig = config.clone();
-        localconfig.setIdleConnectionTestPeriodInMinutes(1);
+        localconfig.setIdleObjectTestPeriodInMinutes(1);
         expect(mockPool.getConfig()).andReturn(localconfig).anyTimes();
         expect(mockConnectionPartition.getFreeObjects()).andReturn(fakeFreeConnections).anyTimes();
         expect(mockConnectionPartition.getMinObjects()).andReturn(10).once();
         expect(mockConnectionPartition.getAvailableObjects()).andReturn(1).anyTimes();
         expect(mockConnection.isPossiblyBroken()).andReturn(false);
-        expect(mockConnection.getObjectLastUsedInMs()).andReturn(0L);
+        expect(mockConnection.getObjectLastUsedInMillis()).andReturn(0L);
         expect(mockPool.isObjectHandleAlive((ObjectHandle) anyObject())).andReturn(false).anyTimes();
 
         // connection should be closed
@@ -405,7 +405,7 @@ public class TestConnectionThreadTester {
         expectLastCall().andThrow(new PoolException());
 
         replay(mockPool, mockConnection, mockConnectionPartition, mockExecutor, mockLogger);
-        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleConnectionTestPeriodInMinutes(), false);
+        this.testClass = new ObjectTesterThread(mockConnectionPartition, mockExecutor, mockPool, localconfig.getIdleMaxAgeInMinutes(), localconfig.getIdleObjectTestPeriodInMinutes(), false);
         Field loggerField = this.testClass.getClass().getDeclaredField("LOG");
         TestUtils.setFinalStatic(loggerField, mockLogger);
         this.testClass.run();

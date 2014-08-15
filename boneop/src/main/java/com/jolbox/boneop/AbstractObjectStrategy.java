@@ -62,8 +62,16 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
         return this.pool.partitions.get(index);
     }
 
+    protected int nextPartition(int currentPartition) {
+        return mod(currentPartition + 1);
+    }
+
     public int selectPartition() {
-        return (int) (Thread.currentThread().getId() & this.pool.mask);
+        return mod(Thread.currentThread().getId());
+    }
+
+    private int mod(long n) {
+        return (int) (n & (this.pool.partitionCount - 1));
     }
 
     /**
@@ -91,7 +99,7 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
     }
 
     @Override
-    public ObjectHandle<T> getObject() throws PoolException {
+    public ObjectHandle<T> take() throws PoolException {
         long statsObtainTime = preObject();
         ObjectHandle<T> result = getObjectInternal();
         if (result != null) {
@@ -109,7 +117,7 @@ public abstract class AbstractObjectStrategy<T> implements ObjectStrategy<T> {
     protected abstract ObjectHandle<T> getObjectInternal() throws PoolException;
 
     @Override
-    public ObjectHandle<T> pollObject() {
+    public ObjectHandle<T> poll() {
         throw new UnsupportedOperationException();
     }
 }

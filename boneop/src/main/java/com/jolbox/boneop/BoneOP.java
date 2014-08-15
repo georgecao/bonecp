@@ -30,7 +30,6 @@ import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,7 +120,6 @@ public class BoneOP<T> implements Serializable, Closeable {
      * Number of partitions passed in constructor. *
      */
     protected final int partitionCount;
-    protected final int mask;
     /**
      * Partitions handle.
      */
@@ -140,9 +138,9 @@ public class BoneOP<T> implements Serializable, Closeable {
      */
     protected String shutdownStackTrace;
     /**
-     * Time to wait before timing out the connection. Default in config is Long.MAX_VALUE milliseconds.
+     * Time to wait before timing out the object. Default in config is Long.MAX_VALUE milliseconds.
      */
-    protected long waitTimeInMs;
+    protected final long waitTimeInMillis;
     /**
      * if true, we care about statistics.
      */
@@ -151,11 +149,7 @@ public class BoneOP<T> implements Serializable, Closeable {
      * statistics handle.
      */
     protected Statistics statistics = new Statistics(this);
-    /**
-     * Config setting.
-     */
-    @VisibleForTesting
-    protected boolean externalAuth;
+
     /**
      * Config setting.
      */
@@ -171,14 +165,9 @@ public class BoneOP<T> implements Serializable, Closeable {
      */
     protected volatile boolean cachedPoolStrategy;
     /**
-     * Currently active get connection strategy class to use.
+     * Currently active get object strategy class to use.
      */
-    protected volatile ObjectStrategy<T> connectionStrategy;
-    /**
-     * Config setting.
-     */
-    @VisibleForTesting
-    protected Properties clientInfo;
+    protected volatile ObjectStrategy<T> objectStrategy;
     /**
      * Configuration object used in constructor.
      */
@@ -217,18 +206,14 @@ public class BoneOP<T> implements Serializable, Closeable {
         config.sanitize();
 
         this.statisticsEnabled = config.isStatisticsEnabled();
-        this.closeObjectWatchTimeoutInMs = config.getCloseObjectWatchTimeoutInMs();
+        this.closeObjectWatchTimeoutInMs = config.getCloseObjectWatchTimeoutInMillis();
         this.poolAvailabilityThreshold = config.getPoolAvailabilityThreshold();
-        this.waitTimeInMs = config.getWaitTimeInMs();
-
-        if (this.waitTimeInMs == 0) {
-            this.waitTimeInMs = Long.MAX_VALUE;
-        }
+        this.waitTimeInMillis = config.getWaitTimeInMillis();
         this.nullOnObjectTimeout = config.isNullOnObjectTimeout();
         this.resetObjectOnClose = config.isResetObjectOnClose();
         AcquireFailConfig acquireConfig = new AcquireFailConfig();
         acquireConfig.setAcquireRetryAttempts(new AtomicInteger(0));
-        acquireConfig.setAcquireRetryDelayInMs(0);
+        acquireConfig.setAcquireRetryDelayInMillis(0);
         acquireConfig.setLogMessage("Failed to obtain initial connection");
 
         if (!config.isLazyInit()) {
@@ -265,13 +250,12 @@ public class BoneOP<T> implements Serializable, Closeable {
         this.objectScheduler = Executors.newFixedThreadPool(config.getPartitionCount(), new CustomThreadFactory("BoneOP-pool-watch-thread" + suffix, true));
 
         this.partitionCount = config.getPartitionCount();
-        this.mask = this.partitionCount - 1;
-        this.closeObjectWatch = config.isCloseConnectionWatch();
+        this.closeObjectWatch = config.isCloseObjectWatch();
         this.cachedPoolStrategy = config.getPoolStrategy() != null && config.getPoolStrategy().equalsIgnoreCase("CACHED");
         if (this.cachedPoolStrategy) {
-            this.connectionStrategy = CachedObjectStrategy.getInstance(this, new DefaultObjectStrategy<>(this));
+            this.objectStrategy = CachedObjectStrategy.getInstance(this, new DefaultObjectStrategy<>(this));
         } else {
-            this.connectionStrategy = new DefaultObjectStrategy<>(this);
+            this.objectStrategy = new DefaultObjectStrategy<>(this);
         }
         boolean queueLIFO = config.getServiceOrder() != null && config.getServiceOrder().equalsIgnoreCase("LIFO");
         if (this.closeObjectWatch) {
@@ -299,14 +283,14 @@ public class BoneOP<T> implements Serializable, Closeable {
                     partition.addFreeObject(handle);
                 }
             }
-            if (config.getIdleConnectionTestPeriod(TimeUnit.SECONDS) > 0 || config.getIdleMaxAge(TimeUnit.SECONDS) > 0) {
+            if (config.getIdleObjectTestPeriod(TimeUnit.SECONDS) > 0 || config.getIdleMaxAge(TimeUnit.SECONDS) > 0) {
 
-                final Runnable connectionTester = new ObjectTesterThread<>(partition, this.keepAliveScheduler, this, config.getIdleMaxAge(TimeUnit.MILLISECONDS), config.getIdleConnectionTestPeriod(TimeUnit.MILLISECONDS), queueLIFO);
-                long delayInSeconds = config.getIdleConnectionTestPeriod(TimeUnit.SECONDS);
+                final Runnable connectionTester = new ObjectTesterThread<>(partition, this.keepAliveScheduler, this, config.getIdleMaxAge(TimeUnit.MILLISECONDS), config.getIdleObjectTestPeriod(TimeUnit.MILLISECONDS), queueLIFO);
+                long delayInSeconds = config.getIdleObjectTestPeriod(TimeUnit.SECONDS);
                 if (delayInSeconds == 0L) {
                     delayInSeconds = config.getIdleMaxAge(TimeUnit.SECONDS);
                 }
-                if (config.getIdleMaxAge(TimeUnit.SECONDS) != 0 && config.getIdleConnectionTestPeriod(TimeUnit.SECONDS) != 0 && config.getIdleMaxAge(TimeUnit.SECONDS) < delayInSeconds) {
+                if (config.getIdleMaxAge(TimeUnit.SECONDS) != 0 && config.getIdleObjectTestPeriod(TimeUnit.SECONDS) != 0 && config.getIdleMaxAge(TimeUnit.SECONDS) < delayInSeconds) {
                     delayInSeconds = config.getIdleMaxAge(TimeUnit.SECONDS);
                 }
                 this.keepAliveScheduler.schedule(connectionTester, delayInSeconds, TimeUnit.SECONDS);
@@ -315,7 +299,7 @@ public class BoneOP<T> implements Serializable, Closeable {
             if (config.getMaxObjectAgeInSeconds() > 0) {
                 final ObjectMaxAgeThread<T> connectionMaxAgeTester
                         = new ObjectMaxAgeThread<>(partition, this.maxAliveScheduler,
-                        this, config.getMaxConnectionAge(TimeUnit.MILLISECONDS), queueLIFO);
+                        this, config.getMaxObjectAge(TimeUnit.MILLISECONDS), queueLIFO);
                 this.maxAliveScheduler.schedule(connectionMaxAgeTester, config.getMaxObjectAgeInSeconds(), TimeUnit.SECONDS);
             }
             // watch this partition for low NO. of threads
@@ -365,7 +349,7 @@ public class BoneOP<T> implements Serializable, Closeable {
             } catch (InterruptedException e) {
                 // do nothing
             }
-            this.connectionStrategy.destroyAllObjects();
+            this.objectStrategy.destroy();
             registerUnregisterJMX(false);
             LOG.info("Connection pool has been shutdown.");
         }
@@ -426,10 +410,10 @@ public class BoneOP<T> implements Serializable, Closeable {
     }
 
     /**
-     * Returns a database connection by using Driver.getConnection() or DataSource.getConnection()
+     * Create an object by using {@link PoolableObjectFactory#makeObject()}.
      *
-     * @return Connection handle
-     * @throws PoolException on error
+     * @return brand-new object just created. Must not return null ever.
+     * @throws PoolException on error.
      */
     protected T obtainRawInternalObject() throws PoolException {
         try {
@@ -485,7 +469,7 @@ public class BoneOP<T> implements Serializable, Closeable {
      * @throws PoolException
      */
     public T getObject() throws PoolException {
-        ObjectHandle<T> handle = this.connectionStrategy.getObject();
+        ObjectHandle<T> handle = this.objectStrategy.take();
         return handle.getInternalObject();
     }
 
@@ -574,8 +558,12 @@ public class BoneOP<T> implements Serializable, Closeable {
         // release immediately or place it in a queue so that another thread will eventually close it. If we're shutting down,
         // close off the connection right away because the helper threads have gone away.
         if (!this.poolShuttingDown && this.releaseHelperThreadsConfigured && !this.cachedPoolStrategy) {
-            if (!handle.getOriginatingPartition().getObjectsPendingRelease().tryTransfer(handle)) {
-                handle.getOriginatingPartition().getObjectsPendingRelease().put(handle);
+            if (!handle.getOriginatingPartition().getObjectsPendingRelease().tryTransfer(handle) && !handle.getOriginatingPartition().getObjectsPendingRelease().offer(handle)) {
+                try {
+                    handle.getOriginatingPartition().getObjectsPendingRelease().put(handle);
+                } catch (InterruptedException e) {
+                    LOG.error("Cannot release object {}", handle, e);
+                }
             }
         } else {
             internalReleaseObject(handle);
@@ -602,8 +590,7 @@ public class BoneOP<T> implements Serializable, Closeable {
             maybeSignalForMoreObjects(connectionPartition);
             return; // don't place back in queue - connection is broken or expired.
         }
-
-        objectHandle.setObjectLastUsedInMs(System.currentTimeMillis());
+        objectHandle.setObjectLastUsedInMillis(System.currentTimeMillis());
         if (!this.poolShuttingDown) {
             putObjectBackInPartition(objectHandle);
         } else {
@@ -653,7 +640,7 @@ public class BoneOP<T> implements Serializable, Closeable {
             result = false;
         } finally {
             handle.logicallyClosed = logicallyClosed;
-            handle.setObjectLastResetInMs(System.currentTimeMillis());
+            handle.setObjectLastResetInMillis(System.currentTimeMillis());
         }
         return result;
     }

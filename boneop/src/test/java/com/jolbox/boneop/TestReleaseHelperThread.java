@@ -44,7 +44,7 @@ public class TestReleaseHelperThread {
     /**
      * Mock handle.
      */
-    static ObjectHandle mockConnection;
+    static ObjectHandle mockObject;
     /**
      * temp.
      */
@@ -59,7 +59,7 @@ public class TestReleaseHelperThread {
     @BeforeClass
     public static void setup() throws ClassNotFoundException {
         mockPool = createNiceMock(BoneOP.class);
-        mockConnection = createNiceMock(ObjectHandle.class);
+        mockObject = createNiceMock(ObjectHandle.class);
         mockQueue = createNiceMock(BlockingQueue.class);
 
     }
@@ -78,16 +78,16 @@ public class TestReleaseHelperThread {
             public ObjectHandle answer() throws Throwable {
                 if (first) {
                     first = false;
-                    return mockConnection;
+                    return mockObject;
                 }
                 throw new InterruptedException();
 
             }
         }).times(2);
 
-        mockPool.internalReleaseObject(mockConnection);
+        mockPool.internalReleaseObject(mockObject);
         expectLastCall().times(1).andThrow(new SQLException()).once();
-        expect(mockQueue.poll()).andReturn(mockConnection).times(2).andReturn(null).once();
+        expect(mockQueue.poll()).andReturn(mockObject).times(2).andReturn(null).once();
         mockPool.poolShuttingDown = true;
 
 
@@ -109,8 +109,8 @@ public class TestReleaseHelperThread {
     @Test
     public void testSQLExceptionCycle() throws Exception {
         first = true;
-        expect(mockQueue.take()).andReturn(mockConnection);
-        mockPool.internalReleaseObject(mockConnection);
+        expect(mockQueue.take()).andReturn(mockObject);
+        mockPool.internalReleaseObject(mockObject);
         expectLastCall().andThrow(new SQLException());
 
 

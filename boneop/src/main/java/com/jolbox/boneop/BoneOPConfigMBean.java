@@ -73,7 +73,7 @@ public interface BoneOPConfigMBean {
      *
      * @return idleConnectionTestPeriod
      */
-    long getIdleConnectionTestPeriodInMinutes();
+    long getIdleObjectTestPeriodInMinutes();
 
     /**
      * Gets idleMaxAge (time in min).
@@ -81,13 +81,6 @@ public interface BoneOPConfigMBean {
      * @return idleMaxAge
      */
     long getIdleMaxAgeInMinutes();
-
-    /**
-     * Gets connectionTestStatement
-     *
-     * @return connectionTestStatement
-     */
-    String getConnectionTestStatement();
 
     /**
      * Gets number of release-connection helper threads to create per partition.
@@ -109,7 +102,7 @@ public interface BoneOPConfigMBean {
      *
      * @return the acquireRetryDelay
      */
-    long getAcquireRetryDelayInMs();
+    long getAcquireRetryDelayInMillis();
 
     /**
      * Returns true if connection pool is to be initialized lazily.
@@ -117,14 +110,6 @@ public interface BoneOPConfigMBean {
      * @return lazyInit setting
      */
     boolean isLazyInit();
-
-    /**
-     * Returns true if the pool is configured to record all transaction activity
-     * and replay the transaction automatically in case of connection failures.
-     *
-     * @return the transactionRecoveryEnabled status
-     */
-    boolean isTransactionRecoveryEnabled();
 
     /**
      * After attempting to acquire a connection and failing, try to connect
@@ -139,7 +124,7 @@ public interface BoneOPConfigMBean {
      *
      * @return the connectionHookClassName.
      */
-    String getConnectionHookClassName();
+    String getObjectListenerClassName();
 
     /**
      * Return true if JMX is disabled.
@@ -153,7 +138,7 @@ public interface BoneOPConfigMBean {
      *
      * @return the queryTimeLimit
      */
-    long getQueryExecuteTimeLimitInMs();
+    long getObjectOccupyTimeLimitInMillis();
 
     /**
      * Returns the pool watch connection threshold value.
@@ -175,7 +160,7 @@ public interface BoneOPConfigMBean {
      *
      * @return the connectionTimeout
      */
-    long getWaitTimeInMs();
+    long getWaitTimeInMillis();
 
     /**
      * Returns the no of ms to wait when close connection watch threads are
@@ -183,7 +168,7 @@ public interface BoneOPConfigMBean {
      *
      * @return the watchTimeout currently set.
      */
-    long getCloseObjectWatchTimeoutInMs();
+    long getCloseObjectWatchTimeoutInMillis();
 
     /**
      * Returns the maxConnectionAge field.

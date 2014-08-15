@@ -15,96 +15,104 @@
  */
 
 /**
- * 
+ *
  */
 package com.jolbox.boneop.listener;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** Parameter class passed to onAcquireFail hook.
- * @author Wallace
+/**
+ * Parameter class passed to onAcquireFail hook.
  *
+ * @author Wallace
  */
 public class AcquireFailConfig {
-	/** Delay to use between one acquire retry attempt and the next. */
-	private long acquireRetryDelayInMs;
-	/** Number of attempts left before giving up. */
-	private AtomicInteger acquireRetryAttempts = new AtomicInteger();
-	/** Message that shows the origin of the problem. */ 
-	private String logMessage = "";
-	/** An opaque handle to be used by your application if necessary. */
-	private Object debugHandle;
+    /**
+     * Delay to use between one acquire retry attempt and the next.
+     */
+    private long acquireRetryDelayInMillis;
+    /**
+     * Number of attempts left before giving up.
+     */
+    private AtomicInteger acquireRetryAttempts = new AtomicInteger();
+    /**
+     * Message that shows the origin of the problem.
+     */
+    private String logMessage = "";
+    /**
+     * An opaque handle to be used by your application if necessary.
+     */
+    private Object debugHandle;
 
-	/** Deprecated. Use {@link #getAcquireRetryDelayInMs()} instead.
-	 * @return the acquireRetryDelay value
-	 * @deprecated Use {@link #getAcquireRetryDelayInMs()} instead.
-	 */
-	@Deprecated
-	public long getAcquireRetryDelay() {
-		return getAcquireRetryDelayInMs();
-	}
-	
-	/** Getter for acquireRetryDelay. By default starts off with whatever is set in the config.
-	 * @return the acquireRetryDelay value
-	 */
-	public long getAcquireRetryDelayInMs() {
-		return this.acquireRetryDelayInMs;
-	}
-	/** Deprecated. Use {@link #setAcquireRetryDelayInMs(long)} instead.
-	 * @param acquireRetryDelayInMs the acquireRetryDelay to set
-	 * @deprecated Use {@link #setAcquireRetryDelayInMs(long)} instead.
-	 */
-	@Deprecated
-	public void setAcquireRetryDelay(long acquireRetryDelayInMs) {
-		setAcquireRetryDelayInMs(acquireRetryDelayInMs);
-	}
+    /**
+     * Getter for acquireRetryDelay. By default starts off with whatever is set in the config.
+     *
+     * @return the acquireRetryDelay value
+     */
+    public long getAcquireRetryDelayInMillis() {
+        return this.acquireRetryDelayInMillis;
+    }
 
-	/** Sets the new acquireRetryDelay. Does not affect the global config.
-	 * @param acquireRetryDelayInMs the acquireRetryDelay to set
-	 */
-	public void setAcquireRetryDelayInMs(long acquireRetryDelayInMs) {
-		this.acquireRetryDelayInMs = acquireRetryDelayInMs;
-	}
+    /**
+     * Sets the new acquireRetryDelay. Does not affect the global config.
+     *
+     * @param acquireRetryDelayInMillis the acquireRetryDelay to set
+     */
+    public void setAcquireRetryDelayInMillis(long acquireRetryDelayInMillis) {
+        this.acquireRetryDelayInMillis = acquireRetryDelayInMillis;
+    }
 
-	/** Returns the acquireRetryAttemps. By default starts off with whatever is set in the config.
-	 * @return the acquireRetryAttempts value.
-	 */
-	public AtomicInteger getAcquireRetryAttempts() {
-		return this.acquireRetryAttempts;
-	}
-	
-	/** Sets the new acquireRetyAttemps. 
-	 * @param acquireRetryAttempts the acquireRetryAttempts to set
-	 */
-	public void setAcquireRetryAttempts(AtomicInteger acquireRetryAttempts) {
-		this.acquireRetryAttempts = acquireRetryAttempts;
-	}
+    /**
+     * Returns the acquireRetryAttemps. By default starts off with whatever is set in the config.
+     *
+     * @return the acquireRetryAttempts value.
+     */
+    public AtomicInteger getAcquireRetryAttempts() {
+        return this.acquireRetryAttempts;
+    }
 
-	/** Returns a message that shows the origin of the problem. 
-	 * @return the logMessage to display
-	 */
-	public String getLogMessage() {
-		return this.logMessage;
-	}
+    /**
+     * Sets the new acquireRetryAttempts.
+     *
+     * @param acquireRetryAttempts the acquireRetryAttempts to set
+     */
+    public void setAcquireRetryAttempts(AtomicInteger acquireRetryAttempts) {
+        this.acquireRetryAttempts = acquireRetryAttempts;
+    }
 
-	/** Sets a log message.
-	 * @param logMessage the logMessage to set
-	 */
-	public void setLogMessage(String logMessage) {
-		this.logMessage = logMessage;
-	}
+    /**
+     * Returns a message that shows the origin of the problem.
+     *
+     * @return the logMessage to display
+     */
+    public String getLogMessage() {
+        return this.logMessage;
+    }
 
-	/** Returns a reference to an opaque debug handle.
-	 * @return the debugHandle.
-	 */
-	public Object getDebugHandle() {
-		return this.debugHandle;
-	}
+    /**
+     * Sets a log message.
+     *
+     * @param logMessage the logMessage to set
+     */
+    public void setLogMessage(String logMessage) {
+        this.logMessage = logMessage;
+    }
 
-	/** Sets a reference to an opaque debug reference.
-	 * @param debugHandle the debugHandle to set
-	 */
-	public void setDebugHandle(Object debugHandle) {
-		this.debugHandle = debugHandle;
-	}
+    /**
+     * Returns a reference to an opaque debug handle.
+     *
+     * @return the debugHandle.
+     */
+    public Object getDebugHandle() {
+        return this.debugHandle;
+    }
+
+    /**
+     * Sets a reference to an opaque debug reference.
+     *
+     * @param debugHandle the debugHandle to set
+     */
+    public void setDebugHandle(Object debugHandle) {
+        this.debugHandle = debugHandle;
+    }
 }

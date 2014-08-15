@@ -13,7 +13,7 @@ under the License. -->
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.jolbox</groupId>
     <artifactId>boneop-parent</artifactId>
-    <version>0.8.0-alpha2-SNAPSHOT</version>
+    <version>0.9-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>BoneOP</name>
     <description>The fast Java Object pool</description>
@@ -81,7 +81,6 @@ under the License. -->
     <modules>
         <module>boneop</module>
         <module>boneop-benchmark</module>
-        <module>boneop-test-commons</module>
     </modules>
 
     <dependencyManagement>
@@ -97,25 +96,11 @@ under the License. -->
                 <artifactId>spring</artifactId>
                 <version>2.5.6.SEC02</version>
             </dependency>
-
-            <dependency>
-                <groupId>com.jolbox</groupId>
-                <artifactId>bonecp-test-commons</artifactId>
-                <version>0.8.0-alpha2-SNAPSHOT</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.jolbox</groupId>
-                <artifactId>bonecp</artifactId>
-                <version>0.8.0-alpha2-SNAPSHOT</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.7.5</version>
             </dependency>
-
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
@@ -151,7 +136,7 @@ under the License. -->
             <dependency>
                 <groupId>org.easymock</groupId>
                 <artifactId>easymock</artifactId>
-                <version>3.0</version>
+                <version>3.2</version>
                 <scope>test</scope>
             </dependency>
 
@@ -175,8 +160,6 @@ under the License. -->
                 <version>1.12</version>
                 <scope>test</scope>
             </dependency>
-            <!-- <dependency> <groupId>hsqldb</groupId> <artifactId>hsqldb</artifactId> 
-            <version>1.8.0.7</version> <scope>compile</scope> </dependency> -->
         </dependencies>
     </dependencyManagement>
 

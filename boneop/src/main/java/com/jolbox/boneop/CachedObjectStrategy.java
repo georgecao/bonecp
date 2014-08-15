@@ -133,7 +133,7 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
      * @throws SQLException
      */
     ObjectHandle<T> pollFallbackObject() throws PoolException {
-        ObjectHandle<T> result = this.fallbackStrategy.pollObject();
+        ObjectHandle<T> result = this.fallbackStrategy.poll();
         // if we were successfull remember this connection to be able to shutdown cleanly.
         if (result != null) {
             threadWatch(result);
@@ -198,21 +198,21 @@ public class CachedObjectStrategy<T> extends AbstractObjectStrategy<T> {
         // back our strategy.
         if (result == null) {
             this.pool.cachedPoolStrategy = false;
-            this.pool.connectionStrategy = this.fallbackStrategy;
+            this.pool.objectStrategy = this.fallbackStrategy;
             stealExistingAllocations();
             // get a connection as if under our fallback strategy now.
-            result = this.pool.connectionStrategy.getObject();
+            result = this.pool.objectStrategy.take();
         }
         return result;
     }
 
     @Override
-    public void destroyAllObjects() {
+    public void destroy() {
         for (ObjectHandle<T> handle : this.finalizableRefs.keySet()) {
             this.pool.destroyObject(handle);
         }
         this.finalizableRefs.clear();
-        this.fallbackStrategy.destroyAllObjects();
+        this.fallbackStrategy.destroy();
     }
 
 }

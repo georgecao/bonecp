@@ -15,29 +15,28 @@
  */
 package com.jolbox.boneop;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Periodically sends a keep-alive statement to idle threads and kills off any
  * connections that have been unused for a long time (or broken).
  *
  * @author wwadge
- *
  */
 public class ObjectTesterThread<T> implements Runnable {
 
     /**
      * Connections used less than this time ago are not keep-alive tested.
      */
-    private final long idleConnectionTestPeriodInMs;
+    private final long idleObjectTestPeriodInMillis;
     /**
      * Max no of ms to wait before a connection that isn't used is killed off.
      */
-    private final long idleMaxAgeInMs;
+    private final long idleMaxAgeInMillis;
     /**
      * Partition being handled.
      */
@@ -62,20 +61,20 @@ public class ObjectTesterThread<T> implements Runnable {
     /**
      * Constructor
      *
-     * @param connectionPartition partition to work on
-     * @param scheduler Scheduler handler.
-     * @param pool pool handle
-     * @param idleMaxAgeInMs Threads older than this are killed off
-     * @param idleConnectionTestPeriodInMs Threads that are idle for more than
-     * this time are sent a keep-alive.
-     * @param lifoMode if true, we're running under a lifo fashion.
+     * @param connectionPartition          partition to work on
+     * @param scheduler                    Scheduler handler.
+     * @param pool                         pool handle
+     * @param idleMaxAgeInMillis           Threads older than this are killed off
+     * @param idleObjectTestPeriodInMillis Threads that are idle for more than
+     *                                     this time are sent a keep-alive.
+     * @param lifoMode                     if true, we're running under a lifo fashion.
      */
     protected ObjectTesterThread(ObjectPartition<T> connectionPartition, ScheduledExecutorService scheduler,
-            BoneOP pool, long idleMaxAgeInMs, long idleConnectionTestPeriodInMs, boolean lifoMode) {
+                                 BoneOP<T> pool, long idleMaxAgeInMillis, long idleObjectTestPeriodInMillis, boolean lifoMode) {
         this.partition = connectionPartition;
         this.scheduler = scheduler;
-        this.idleMaxAgeInMs = idleMaxAgeInMs;
-        this.idleConnectionTestPeriodInMs = idleConnectionTestPeriodInMs;
+        this.idleMaxAgeInMillis = idleMaxAgeInMillis;
+        this.idleObjectTestPeriodInMillis = idleObjectTestPeriodInMillis;
         this.pool = pool;
         this.lifoMode = lifoMode;
     }
@@ -84,15 +83,15 @@ public class ObjectTesterThread<T> implements Runnable {
      * Invoked periodically.
      */
     public void run() {
-        ObjectHandle<T> connection = null;
+        ObjectHandle<T> objectHandle;
         long tmp;
         try {
-            long nextCheckInMs = this.idleConnectionTestPeriodInMs;
-            if (this.idleMaxAgeInMs > 0) {
-                if (this.idleConnectionTestPeriodInMs == 0) {
-                    nextCheckInMs = this.idleMaxAgeInMs;
+            long nextCheckInMs = this.idleObjectTestPeriodInMillis;
+            if (this.idleMaxAgeInMillis > 0) {
+                if (this.idleObjectTestPeriodInMillis == 0) {
+                    nextCheckInMs = this.idleMaxAgeInMillis;
                 } else {
-                    nextCheckInMs = Math.min(nextCheckInMs, this.idleMaxAgeInMs);
+                    nextCheckInMs = Math.min(nextCheckInMs, this.idleMaxAgeInMillis);
                 }
             }
 
@@ -101,39 +100,38 @@ public class ObjectTesterThread<T> implements Runnable {
             // go thru all partitions
             for (int i = 0; i < partitionSize; i++) {
                 // grab connections one by one.
-                connection = this.partition.getFreeObjects().poll();
-                if (connection != null) {
-                    connection.setOriginatingPartition(this.partition);
+                objectHandle = this.partition.getFreeObjects().poll();
+                if (objectHandle != null) {
+                    objectHandle.setOriginatingPartition(this.partition);
 
                     // check if connection has been idle for too long (or is marked as broken)
-                    if (!connection.isPoison() && connection.isPossiblyBroken()
-                            || ((this.idleMaxAgeInMs > 0) && (this.partition.getAvailableObjects() >= this.partition.getMinObjects() && System.currentTimeMillis() - connection.getObjectLastUsedInMs() > this.idleMaxAgeInMs))) {
+                    if (!objectHandle.isPoison() && objectHandle.isPossiblyBroken()
+                            || ((this.idleMaxAgeInMillis > 0) && (this.partition.getAvailableObjects() >= this.partition.getMinObjects() && System.currentTimeMillis() - objectHandle.getObjectLastUsedInMillis() > this.idleMaxAgeInMillis))) {
                         // kill off this connection - it's broken or it has been idle for too long
-                        closeConnection(connection);
+                        closeObject(objectHandle);
                         continue;
                     }
 
                     // check if it's time to send a new keep-alive test statement.
-                    if (!connection.isPoison() && this.idleConnectionTestPeriodInMs > 0 && (currentTimeInMs - connection.getObjectLastUsedInMs() > this.idleConnectionTestPeriodInMs)
-                            && (currentTimeInMs - connection.getObjectLastResetInMs() >= this.idleConnectionTestPeriodInMs)) {
+                    if (!objectHandle.isPoison() && this.idleObjectTestPeriodInMillis > 0 && (currentTimeInMs - objectHandle.getObjectLastUsedInMillis() > this.idleObjectTestPeriodInMillis)
+                            && (currentTimeInMs - objectHandle.getObjectLastResetInMillis() >= this.idleObjectTestPeriodInMillis)) {
                         // send a keep-alive, close off connection if we fail.
-                        if (!this.pool.isObjectHandleAlive(connection)) {
-                            closeConnection(connection);
+                        if (!this.pool.isObjectHandleAlive(objectHandle)) {
+                            closeObject(objectHandle);
                             continue;
                         }
                         // calculate the next time to wake up
-                        tmp = this.idleConnectionTestPeriodInMs;
-                        if (this.idleMaxAgeInMs > 0) { // wake up earlier for the idleMaxAge test?
-                            tmp = Math.min(tmp, this.idleMaxAgeInMs);
+                        tmp = this.idleObjectTestPeriodInMillis;
+                        if (this.idleMaxAgeInMillis > 0) { // wake up earlier for the idleMaxAge test?
+                            tmp = Math.min(tmp, this.idleMaxAgeInMillis);
                         }
                     } else {
                         // determine the next time to wake up (connection test time or idle Max age?) 
-                        tmp = Math.abs(this.idleConnectionTestPeriodInMs - (currentTimeInMs - connection.getObjectLastResetInMs()));
-                        long tmp2 = Math.abs(this.idleMaxAgeInMs - (currentTimeInMs - connection.getObjectLastUsedInMs()));
-                        if (this.idleMaxAgeInMs > 0) {
+                        tmp = Math.abs(this.idleObjectTestPeriodInMillis - (currentTimeInMs - objectHandle.getObjectLastResetInMillis()));
+                        long tmp2 = Math.abs(this.idleMaxAgeInMillis - (currentTimeInMs - objectHandle.getObjectLastUsedInMillis()));
+                        if (this.idleMaxAgeInMillis > 0) {
                             tmp = Math.min(tmp, tmp2);
                         }
-
                     }
                     if (tmp < nextCheckInMs) {
                         nextCheckInMs = tmp;
@@ -141,11 +139,11 @@ public class ObjectTesterThread<T> implements Runnable {
 
                     if (this.lifoMode) {
                         // we can't put it back normally or it will end up in front again.
-                        if (!((LIFOQueue<ObjectHandle<T>>) connection.getOriginatingPartition().getFreeObjects()).offerLast(connection)) {
-                            connection.internalClose();
+                        if (!((LIFOQueue<ObjectHandle<T>>) objectHandle.getOriginatingPartition().getFreeObjects()).offerLast(objectHandle)) {
+                            objectHandle.internalClose();
                         }
                     } else {
-                        this.pool.putObjectBackInPartition(connection);
+                        this.pool.putObjectBackInPartition(objectHandle);
                     }
 
                     Thread.sleep(20L); // test slowly, this is not an operation that we're in a hurry to deal with (avoid CPU spikes)...
@@ -167,18 +165,18 @@ public class ObjectTesterThread<T> implements Runnable {
     /**
      * Closes off this connection
      *
-     * @param connection to close
+     * @param objectHandle to close
      */
-    private void closeConnection(ObjectHandle connection) {
-        if (connection != null) {
+    private void closeObject(ObjectHandle<T> objectHandle) {
+        if (objectHandle != null) {
             try {
                 try {
-                    connection.internalClose();
+                    objectHandle.internalClose();
                 } catch (PoolException ex) {
                     LOG.error("", ex);
                 }
             } finally {
-                this.pool.postDestroyObject(connection);
+                this.pool.postDestroyObject(objectHandle);
             }
         }
     }

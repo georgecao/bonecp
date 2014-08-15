@@ -34,6 +34,7 @@ along with BoneCP.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.jolbox.benchmark;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -42,88 +43,90 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.sql.DataSource;
-
-/** For unit testing only
- * @author wwadge
+/**
+ * For unit testing only
  *
+ * @author wwadge
  */
 
 @SuppressWarnings("all")
-public class ThreadTesterUtil implements Callable<Long>{
-	/** A dummy query for HSQLDB. */
-	public static final String TEST_QUERY = "SELECT 1 FROM INFORMATION_SCHEMA.SYSTEM_USERS";
+public class ThreadTesterUtil implements Callable<Long> {
+    /**
+     * A dummy query for HSQLDB.
+     */
+    public static final String TEST_QUERY = "SELECT 1 FROM INFORMATION_SCHEMA.SYSTEM_USERS";
 
-	private CountDownLatch startSignal;
-	private CountDownLatch doneSignal;
-	private Random rand = new Random();
-	private int workDelay;
-	private DataSource ds;
-	private boolean doPreparedStatement;
-	static AtomicInteger c = new AtomicInteger(0);
+    private CountDownLatch startSignal;
+    private CountDownLatch doneSignal;
+    private Random rand = new Random();
+    private int workDelay;
+    private DataSource ds;
+    private boolean doPreparedStatement;
+    static AtomicInteger c = new AtomicInteger(0);
 
-	public ThreadTesterUtil(CountDownLatch startSignal, CountDownLatch doneSignal, DataSource ds, int workDelay, boolean doPreparedStatement) {
-		this.ds=ds;
-		this.startSignal = startSignal;
-		this.doneSignal = doneSignal;
-		this.workDelay = workDelay;
-		this.doPreparedStatement = doPreparedStatement;
+    public ThreadTesterUtil(CountDownLatch startSignal, CountDownLatch doneSignal, DataSource ds, int workDelay, boolean doPreparedStatement) {
+        this.ds = ds;
+        this.startSignal = startSignal;
+        this.doneSignal = doneSignal;
+        this.workDelay = workDelay;
+        this.doPreparedStatement = doPreparedStatement;
 
-	}
+    }
 
-	/** {@inheritDoc}
-	 * @see java.util.concurrent.Callable#call()
-	 */
-	public Long call() throws Exception {
-		long time = 0;
-		try {
-			this.startSignal.await();
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
+    /**
+     * {@inheritDoc}
+     *
+     * @see java.util.concurrent.Callable#call()
+     */
+    public Long call() throws Exception {
+        long time = 0;
+        try {
+            this.startSignal.await();
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
 
-		Connection con = null;
-		boolean success = false;
-		boolean error;
-		long start = System.nanoTime();
-		do{
-			try {
-				con = this.ds.getConnection();
+        Connection con = null;
+        boolean success = false;
+        boolean error;
+        long start = System.nanoTime();
+        do {
+            try {
+                con = this.ds.getConnection();
 //				System.out.println(con);
-				time = time + (System.nanoTime() - start);
-				success = true;
-			} catch (Throwable e1) {
-				//e1.printStackTrace();
-				success = false;
-			}
-		} while (!success);
+                time = time + (System.nanoTime() - start);
+                success = true;
+            } catch (Throwable e1) {
+                //e1.printStackTrace();
+                success = false;
+            }
+        } while (!success);
 
-		try{
-			if (this.doPreparedStatement){
-				start = System.nanoTime();
-				Statement s = con.prepareStatement(TEST_QUERY);
-				s.close();
-				time = time + (System.nanoTime() - start);
-			}
+        try {
+            if (this.doPreparedStatement) {
+                start = System.nanoTime();
+                Statement s = con.prepareStatement(TEST_QUERY);
+                s.close();
+                time = time + (System.nanoTime() - start);
+            }
 
-			if (this.workDelay > 0){
-				Thread.sleep(this.workDelay);
-			}
-			start = System.nanoTime();
-			con.close();
-			time = time + (System.nanoTime() - start);
+            if (this.workDelay > 0) {
+                Thread.sleep(this.workDelay);
+            }
+            start = System.nanoTime();
+            con.close();
+            time = time + (System.nanoTime() - start);
 
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (Throwable t){
-			t.printStackTrace();
-		}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
 
-		this.doneSignal.countDown();
-		return time;
-	}
+        this.doneSignal.countDown();
+        return time;
+    }
 
 }

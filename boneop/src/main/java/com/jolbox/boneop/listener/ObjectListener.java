@@ -15,12 +15,11 @@
  */
 package com.jolbox.boneop.listener;
 
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Map;
-
 import com.jolbox.boneop.ObjectHandle;
 import com.jolbox.boneop.PoolException;
+
+import java.sql.Statement;
+import java.util.Map;
 
 /**
  * Interface to the hooking mechanism of a connection lifecycle. Applications
@@ -29,16 +28,15 @@ import com.jolbox.boneop.PoolException;
  * default implementation. Applications might also want to make use of
  * connection.setDebugHandle(...) to keep track of additional information on
  * each connection.
- *
+ * <p/>
  * Since the class is eventually loaded via reflection, the implementation must
  * provide a public, no argument constructor.
- *
+ * <p/>
  * Warning: Be careful to make sure that the hook methods are re-entrant and
  * thread-safe; do not rely on external state without appropriate locking, use
  * appropriate synchronization!
  *
  * @author wallacew
- *
  */
 public interface ObjectListener {
 
@@ -83,7 +81,7 @@ public interface ObjectListener {
      * implementing this means that acquireRetry/delay logic will be overridden
      * by this code.
      *
-     * @param t Exception that occurred.
+     * @param t             Exception that occurred.
      * @param acquireConfig handle containing retry delay, retry attempts etc.
      * @return Return true to attempt the connection again.
      */
@@ -93,100 +91,77 @@ public interface ObjectListener {
      * Called when a query execute time limit has been set and an executing
      * query took longer to than the limit to return control to the application.
      *
-     * @param conn handle to the connection
-     * @param statement statement handle.
-     * @param sql SQL statement that was used.
-     * @param logParams Parameters used in this statement.
+     * @param conn            handle to the connection
+     * @param statement       statement handle.
+     * @param sql             SQL statement that was used.
+     * @param logParams       Parameters used in this statement.
      * @param timeElapsedInNs actual time the query took (in nanoseconds)
      */
-    void onQueryExecuteTimeLimitExceeded(ObjectHandle conn, Statement statement, String sql, Map<Object, Object> logParams, long timeElapsedInNs);
-
-    /**
-     * Deprecated. Use the similarly named hook having more parameters instead.
-     *
-     * @param conn handle to the connection
-     * @param statement statement handle.
-     * @param sql SQL statement that was used.
-     * @param logParams Parameters used in this statement.
-     */
-    @Deprecated
-    void onQueryExecuteTimeLimitExceeded(ObjectHandle conn, Statement statement, String sql, Map<Object, Object> logParams);
-
-    /**
-     * Deprecated. Use the similarly named hook having more parameters instead.
-     *
-     * Called when a query execute time limit has been set and an executing
-     * query took longer to than the limit to return control to the application.
-     *
-     * @param sql SQL statement that was used.
-     * @param logParams Parameters used in this statement.
-     */
-    @Deprecated
-    void onQueryExecuteTimeLimitExceeded(String sql, Map<Object, Object> logParams);
+    void onObjectOccupyTimeLimitExceeded(ObjectHandle conn, Statement statement, String sql, Map<Object, Object> logParams, long timeElapsedInNs);
 
     /**
      * Called whenever an exception on a connection occurs. This exception may
      * be a connection failure, a DB failure or a non-fatal logical failure (eg
      * Duplicate key exception).
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * SQLSTATE Value
-     * <p>
+     * <p/>
      * Value	Meaning
-     * <p>
+     * <p/>
      * 08001	The application requester is unable to establish the connection.
-     * <p>
+     * <p/>
      * 08002	The connection already exists.
-     * <p>
+     * <p/>
      * 08003	The connection does not exist.
-     * <p>
+     * <p/>
      * 08004	The application server rejected establishment of the connection.
-     * <p>
+     * <p/>
      * 08007	Transaction resolution unknown.
-     * <p>
+     * <p/>
      * 08502	The CONNECT statement issued by an application process running with
      * a SYNCPOINT of TWOPHASE has failed, because no transaction manager is
      * available.
-     * <p>
+     * <p/>
      * 08504	An error was encountered while processing the specified path rename
      * configuration file.
-     * <p>
+     * <p/>
      * SQL Failure codes 08001, 08007 & 57P01 indicate that the database is
      * broken/died (and thus all remaining connections are killed off).
-     * <p>
+     * <p/>
      * Anything else will be taken as the connection (not the db) being broken.
-     * <p>
-     *
+     * <p/>
+     * <p/>
      * Note: You may use pool.isConnectionHandleAlive(connection) to verify if
      * the connection is in a usable state again. Note 2: As in all interceptor
      * hooks, this method may be called concurrently so any implementation must
      * be thread-safe.
      *
-     * @param connection The handle that triggered this error
-     * @param state the SQLState error code.
-     * @param t Exception that caused this failure.
+     * @param objectHandle The handle that triggered this error
+     * @param state        the SQLState error code.
+     * @param t            Exception that caused this failure.
      * @return Returning true means: when you eventually close off this
      * connection, test to see if the connection is still alive and discard it
      * if not (this is the normal behaviour). Returning false pretends that the
      * connection is still ok when the connection is closed (your application
      * will still receive the original exception that was thrown).
      */
-    boolean onConnectionException(ObjectHandle connection, String state, Throwable t);
+    boolean onConnectionException(ObjectHandle objectHandle, String state, Throwable t);
 
     /**
      * Called to give you a chance to override the logic on whether a connection
      * can be considered broken or not.
-     *
+     * <p/>
      * Note: You may use pool.isConnectionHandleAlive(connection) to verify if
      * the connection is in a usable state again. Note 2: As in all interceptor
      * hooks, this method may be called concurrently so any implementation must
      * be thread-safe.
      *
-     * @param connection The handle that triggered this error
-     * @param state the SQLState error code.
-     * @param e Exception that caused us to call this hook.
+     * @param objectHandle The handle that triggered this error
+     * @param state        the SQLState error code.
+     * @param e            Exception that caused us to call this hook.
      * @return ConnectionState enum to signal back to the pool what action you
      * intend to take.
      */
-    ConnectionState onMarkPossiblyBroken(ObjectHandle connection, String state, PoolException e);
+    ObjectState onMarkPossiblyBroken(ObjectHandle objectHandle, String state, PoolException e);
 }

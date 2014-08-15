@@ -48,7 +48,7 @@ public class BoundedLinkedTransferQueue<E> extends LinkedTransferQueue<E> {
     /**
      * Constructor.
      *
-     * @param maxQueueSize
+     * @param maxQueueSize capacity
      */
     public BoundedLinkedTransferQueue(int maxQueueSize) {
         this.maxQueueSize = maxQueueSize;

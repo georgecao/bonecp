@@ -24,8 +24,8 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.sql.Connection;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.*;
@@ -128,7 +128,7 @@ public class TestBoneCPConfig {
         Properties props = new Properties();
         props.setProperty("minObjectsPerPartition", "123");
         props.setProperty("boneop.maxObjectsPerPartition", "456");
-        props.setProperty("idleConnectionTestPeriodInSeconds", "999");
+        props.setProperty("idleObjectTestPeriodInSeconds", "999");
         props.setProperty("username", "test");
         props.setProperty("partitionCount", "an int which is invalid");
         props.setProperty("idleMaxAgeInSeconds", "a long which is invalid");
@@ -136,7 +136,7 @@ public class TestBoneCPConfig {
         assertEquals(123, config.getMinObjectsPerPartition());
         assertEquals(456, config.getMaxObjectsPerPartition());
         assertEquals(1, config.getPartitionCount());
-        assertEquals(999, config.getIdleConnectionTestPeriod(TimeUnit.SECONDS));
+        assertEquals(999, config.getIdleObjectTestPeriod(TimeUnit.SECONDS));
         assertEquals(3600, config.getIdleMaxAge(TimeUnit.SECONDS));
     }
 
@@ -147,49 +147,42 @@ public class TestBoneCPConfig {
     @Test
     public void testGettersSetters() {
         Properties driverProperties = new Properties();
-        config.setIdleConnectionTestPeriod(60);
-        config.setIdleMaxAge(60);
+        config.setIdleObjectTestPeriodInSeconds(60);
+        config.setIdleMaxAgeInSeconds(60);
         config.setReleaseHelperThreads(3);
         config.setMaxObjectsPerPartition(5);
         config.setMinObjectsPerPartition(5);
         config.setPartitionCount(1);
-        config.setConnectionTestStatement("test");
         config.setAcquireIncrement(6);
-        config.setDefaultTransactionIsolation("foo");
-        config.setDefaultTransactionIsolationValue(123);
         config.setAcquireRetryDelay(60, TimeUnit.SECONDS);
         config.setWaitTime(60, TimeUnit.SECONDS);
         config.setIdleMaxAge(60, TimeUnit.SECONDS);
         config.setIdleMaxAgeInSeconds(60);
-        config.setIdleConnectionTestPeriod(60, TimeUnit.SECONDS);
-        config.setMaxConnectionAge(60, TimeUnit.SECONDS);
-        config.setDefaultReadOnly(true);
+        config.setIdleObjectTestPeriod(60, TimeUnit.SECONDS);
+        config.setMaxObjectAge(60, TimeUnit.SECONDS);
         config.setDefaultCatalog("foo");
-        config.setDefaultAutoCommit(true);
         config.setStatisticsEnabled(true);
-        config.setDeregisterDriverOnClose(true);
         config.setNullOnObjectTimeout(true);
         config.setResetObjectOnClose(true);
-
+        config.setAcquireRetryAttempts(2);
+        config.setCloseObjectWatch(true);
         assertTrue(config.isNullOnObjectTimeout());
         assertTrue(config.isResetObjectOnClose());
         assertEquals("foo", config.getDefaultCatalog());
-        assertTrue(config.isDeregisterDriverOnClose());
-        assertTrue(config.getDefaultAutoCommit());
         assertTrue(config.isStatisticsEnabled());
-        assertTrue(config.getDefaultReadOnly());
-
-        config.setMaxConnectionAge(60);
-        assertEquals(60, config.getMaxConnectionAge());
-        assertEquals(1, config.getIdleConnectionTestPeriod());
-        assertEquals(1, config.getIdleMaxAge());
-        assertEquals(60000, config.getWaitTime());
+        assertEquals(2, config.getAcquireRetryAttempts());
+        config.setMaxObjectAgeInSeconds(60);
+        assertEquals(60, config.getMaxObjectAgeInSeconds());
+        assertEquals(1, config.getIdleObjectTestPeriodInMinutes());
+        assertEquals(1, config.getIdleMaxAgeInMinutes());
+        assertEquals(60000, config.getWaitTimeInMillis());
         assertEquals(60, config.getWaitTime(TimeUnit.SECONDS));
 
-        assertEquals(60000, config.getAcquireRetryDelay());
-        assertEquals("foo", config.getDefaultTransactionIsolation());
-        assertEquals(123, config.getDefaultTransactionIsolationValue());
-
+        assertEquals(60000, config.getAcquireRetryDelayInMillis());
+        assertEquals(60, config.getMaxObjectAgeInSeconds());
+        assertEquals(60, config.getMaxObjectAge(TimeUnit.SECONDS));
+        assertEquals(1, config.getMaxObjectAge(TimeUnit.MINUTES));
+        assertTrue(config.isCloseObjectWatch());
         ObjectListener hook = new AbstractObjectListener() {
             // do nothing
         };
@@ -197,39 +190,38 @@ public class TestBoneCPConfig {
 
         config.setPoolName("foo");
         config.setDisableJMX(false);
-        config.setQueryExecuteTimeLimit(123);
-        config.setQueryExecuteTimeLimitInMs(123);
+        config.setObjectOccupyTimeLimitInMillis(123);
+        config.setObjectOccupyTimeLimitInMillis(123);
         config.setDisableObjectTracking(true);
-        config.setWaitTime(9999);
-        config.setDriverProperties(driverProperties);
-        config.setCloseObjectWatchTimeout(Long.MAX_VALUE);
+        config.setWaitTimeInMillis(9999);
+        config.setCloseObjectWatchTimeoutInMillis(Long.MAX_VALUE);
         String lifo = "LIFO";
         config.setServiceOrder(lifo);
         config.setConfigFile("abc");
-        config.setIdleConnectionTestPeriodInMinutes(1);
-        config.setWaitTimeInMs(1000);
-        config.setCloseObjectWatchTimeoutInMs(1000);
+        config.setIdleObjectTestPeriodInMinutes(1);
+        config.setWaitTimeInMillis(1000);
+        config.setCloseObjectWatchTimeoutInMillis(1000);
+        config.setIdleMaxAgeInMinutes(2);
 
         assertEquals(hook, config.getObjectListener());
-        assertEquals(1000, config.getWaitTimeInMs());
-        assertEquals(123, config.getQueryExecuteTimeLimit(TimeUnit.MILLISECONDS));
+        assertEquals(1000, config.getWaitTimeInMillis());
+        assertEquals(123, config.getObjectOccupyTimeLimit(TimeUnit.MILLISECONDS));
         assertEquals(1000, config.getCloseConnectionWatchTimeout(TimeUnit.MILLISECONDS));
-
-        assertEquals(1000, config.getCloseObjectWatchTimeoutInMs());
-        assertEquals(1, config.getIdleConnectionTestPeriodInMinutes());
+        assertEquals(120, config.getIdleMaxAge(TimeUnit.SECONDS));
+        assertEquals(1000, config.getCloseObjectWatchTimeoutInMillis());
+        assertEquals(1, config.getIdleObjectTestPeriodInMinutes());
         assertEquals(lifo, config.getServiceOrder());
         assertEquals("abc", config.getConfigFile());
-        assertEquals(1000, config.getCloseObjectWatchTimeout());
+        assertEquals(1000, config.getCloseObjectWatchTimeoutInMillis());
         assertEquals("foo", config.getPoolName());
         assertEquals(3, config.getReleaseHelperThreads());
         assertEquals(5, config.getMaxObjectsPerPartition());
         assertEquals(5, config.getMinObjectsPerPartition());
         assertEquals(6, config.getAcquireIncrement());
-        assertEquals(1000, config.getWaitTime());
+        assertEquals(1000, config.getWaitTimeInMillis());
         assertEquals(true, config.isDisableObjectTracking());
-        assertEquals(123, config.getQueryExecuteTimeLimit());
+        assertEquals(123, config.getObjectOccupyTimeLimitInMillis());
         assertEquals(1, config.getPartitionCount());
-        assertEquals("test", config.getConnectionTestStatement());
     }
 
     /**
@@ -241,64 +233,48 @@ public class TestBoneCPConfig {
         config.setMinObjectsPerPartition(-1);
         config.setPartitionCount(-1);
 
-        config.setConnectionTestStatement("");
-
         config.setAcquireIncrement(0);
 
         config.setPoolAvailabilityThreshold(-50);
-        config.setWaitTimeInMs(0);
+        config.setWaitTimeInMillis(0);
         config.setServiceOrder("something non-sensical");
-        config.setAcquireRetryDelayInMs(-1);
+        config.setAcquireRetryDelayInMillis(-1);
 
         config.setReleaseHelperThreads(-1);
+        config.setLazyInit(false);
         config.sanitize();
 
         assertEquals(1000, config.getAcquireRetryDelay(TimeUnit.MILLISECONDS));
-        assertEquals(1000, config.getAcquireRetryDelayInMs());
+        assertEquals(1000, config.getAcquireRetryDelayInMillis());
         assertEquals("FIFO", config.getServiceOrder());
-        assertEquals(0, config.getWaitTimeInMs());
+        assertEquals(Long.MAX_VALUE, config.getWaitTimeInMillis());
         assertNotNull(config.toString());
         assertFalse(config.getAcquireIncrement() == 0);
         assertFalse(config.getReleaseHelperThreads() == -1);
         assertFalse(config.getMaxObjectsPerPartition() == -1);
         assertFalse(config.getMinObjectsPerPartition() == -1);
         assertFalse(config.getPartitionCount() == -1);
-
+        assertFalse(config.isLazyInit());
+        config.setLazyInit(true);
         config.setMinObjectsPerPartition(config.getMaxObjectsPerPartition() + 1);
         config.setServiceOrder(null);
+        config.setPoolStrategy("CACHED");
         config.sanitize();
         assertEquals("FIFO", config.getServiceOrder());
+        assertEquals("CACHED", config.getPoolStrategy());
         assertEquals(config.getMinObjectsPerPartition(), config.getMaxObjectsPerPartition());
         assertEquals(20, config.getPoolAvailabilityThreshold());
+        assertTrue(config.isLazyInit());
 
-        config.setDefaultTransactionIsolation("NONE");
         config.sanitize();
-        assertEquals(Connection.TRANSACTION_NONE, config.getDefaultTransactionIsolationValue());
-
-        config.setDefaultTransactionIsolation("READ_COMMITTED");
+        config.setPoolStrategy("DEFAULT");
         config.sanitize();
-        assertEquals(Connection.TRANSACTION_READ_COMMITTED, config.getDefaultTransactionIsolationValue());
-
-        config.setDefaultTransactionIsolation("READ_UNCOMMITTED");
-        config.sanitize();
-        assertEquals(Connection.TRANSACTION_READ_UNCOMMITTED, config.getDefaultTransactionIsolationValue());
-
-        config.setDefaultTransactionIsolation("SERIALIZABLE");
-        config.sanitize();
-        assertEquals(Connection.TRANSACTION_SERIALIZABLE, config.getDefaultTransactionIsolationValue());
-
-        config.setDefaultTransactionIsolation("REPEATABLE_READ");
-        config.sanitize();
-        assertEquals(Connection.TRANSACTION_REPEATABLE_READ, config.getDefaultTransactionIsolationValue());
-
-        config.setDefaultTransactionIsolation("BAD_VALUE");
-        config.sanitize();
-        assertEquals(-1, config.getDefaultTransactionIsolationValue());
-
+        assertEquals("DEFAULT", config.getPoolStrategy());
         // coverage
         BoneOPConfig config = new BoneOPConfig();
-        config.setDriverProperties(null);
+        config.setPoolStrategy(UUID.randomUUID().toString());
         config.sanitize();
+        assertEquals("DEFAULT", config.getPoolStrategy());
     }
 
 
@@ -361,5 +337,29 @@ public class TestBoneCPConfig {
         assertTrue(config.hasSameConfiguration(clone));
     }
 
+    @Test
+    public void testSetObjectListenerClassName() throws Exception {
+        BoneOPConfig config = new BoneOPConfig();
+        String className = "java/lang/String.class";
+        config.setObjectListenerClassName(className);
+        assertEquals(className, config.getObjectListenerClassName());
+        assertTrue(null == config.getObjectListener());
+    }
 
+    @Test
+    public void testSetClassLoader() throws Exception {
+        BoneOPConfig config = new BoneOPConfig();
+        config.setClassLoader(getClass().getClassLoader());
+        assertEquals(getClass().getClassLoader(), config.getClassLoader());
+    }
+
+    @Test
+    public void testLoadClass() throws Exception {
+        BoneOPConfig conf = new BoneOPConfig();
+        Class<?> clazz = conf.loadClass(String.class.getName());
+        assertNotNull(clazz);
+        conf.setClassLoader(getClass().getClassLoader());
+        clazz = conf.loadClass(String.class.getName());
+        assertNotNull(clazz);
+    }
 }

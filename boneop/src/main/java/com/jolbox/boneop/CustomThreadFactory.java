@@ -80,7 +80,7 @@ public class CustomThreadFactory
      *
      * @see java.util.concurrent.ThreadFactory#newThread(java.lang.Runnable)
      */
-    //@Override
+    @Override
     public Thread newThread(Runnable r) {
         Thread t = new Thread(r, this.threadName);
         t.setDaemon(this.daemon);
@@ -94,7 +94,7 @@ public class CustomThreadFactory
      * @see java.lang.Thread.UncaughtExceptionHandler#uncaughtException(java.lang.Thread, java.lang.Throwable)
      */
     public void uncaughtException(Thread thread, Throwable throwable) {
-        LOG.error("Uncaught Exception in thread " + thread.getName(), throwable);
+        LOG.error("Uncaught Exception in thread {}", thread.getName(), throwable);
     }
 
 }

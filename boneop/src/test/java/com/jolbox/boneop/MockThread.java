@@ -38,23 +38,24 @@ package com.jolbox.boneop;
 
 /**
  * @author Wallace
- *
  */
 public class MockThread implements Runnable {
 
-	/** {@inheritDoc}
-	 * @see java.lang.Runnable#run()
-	 */
+    /**
+     * {@inheritDoc}
+     *
+     * @see java.lang.Runnable#run()
+     */
 //	@Override
-	public void run() {
-		while(!TestCustomThreadFactory.signalled){
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-				// never reached.
-			}
-		}
-		throw new RuntimeException("fake exception");
-	}
+    public void run() {
+        while (!TestCustomThreadFactory.signalled) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                // never reached.
+            }
+        }
+        throw new RuntimeException("fake exception");
+    }
 
 }

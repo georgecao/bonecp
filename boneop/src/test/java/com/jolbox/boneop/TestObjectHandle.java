@@ -14,7 +14,7 @@ package com.jolbox.boneop;
 
 import com.google.common.base.FinalizableReferenceQueue;
 import com.jolbox.boneop.listener.AcquireFailConfig;
-import com.jolbox.boneop.listener.CoverageHook;
+import com.jolbox.boneop.listener.CoverageListener;
 import com.jolbox.boneop.listener.CustomHook;
 import com.jolbox.boneop.listener.ObjectListener;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ import static org.testng.Assert.*;
  *
  * @author wwadge
  */
-public class TestConnectionHandle {
+public class TestObjectHandle {
 
     /**
      * Test class handle.
@@ -79,14 +79,13 @@ public class TestConnectionHandle {
     @BeforeMethod
     public void before() throws Exception {
         this.config = CommonTestUtils.getConfigClone();
-        this.mockPool.connectionStrategy = new DefaultObjectStrategy(this.mockPool);
+        this.mockPool.objectStrategy = new DefaultObjectStrategy(this.mockPool);
         expect(this.mockPool.getConfig()).andReturn(this.config).anyTimes();
 
         expect(this.mockConnection.getPool()).andReturn(this.mockPool).anyTimes();
         replay(this.mockConnection, this.mockPool);
 
         this.config.setReleaseHelperThreads(0);
-        this.config.setTransactionRecoveryEnabled(false);
         this.config.setStatisticsEnabled(true);
 
         this.testClass = ObjectHandle.createTestObjectHandle(this.mockConnection.getInternalObject(), this.mockPool);
@@ -123,7 +122,7 @@ public class TestConnectionHandle {
     public void testObtainInternalConnection() throws Exception {
         expect(this.mockPool.getConfig()).andReturn(this.config).anyTimes();
 
-        this.config.setAcquireRetryDelayInMs(1);
+        this.config.setAcquireRetryDelayInMillis(1);
         CustomHook testHook = new CustomHook();
         this.config.setObjectListener(testHook);
         // make it fail the first time and succeed the second time
@@ -160,7 +159,7 @@ public class TestConnectionHandle {
         //	Test 4: Get signalled to interrupt fail delay
         count = 99;
         this.config.setAcquireRetryAttempts(2);
-        this.config.setAcquireRetryDelayInMs(7000);
+        this.config.setAcquireRetryDelayInMillis(7000);
         final Thread currentThread = Thread.currentThread();
 
         try {
@@ -183,7 +182,7 @@ public class TestConnectionHandle {
         } catch (Exception e) {
             // expected behaviour
         }
-        this.config.setAcquireRetryDelayInMs(10);
+        this.config.setAcquireRetryDelayInMillis(10);
 
     }
 
@@ -248,7 +247,7 @@ public class TestConnectionHandle {
 
         // Test that a db fatal error will lead to the pool being instructed to terminate all connections (+ log)
         expect(this.mockPool.getDown()).andReturn(new AtomicBoolean()).anyTimes();
-        this.mockPool.connectionStrategy.destroyAllObjects();
+        this.mockPool.objectStrategy.destroy();
         this.mockLogger.error((String) anyObject(), anyObject());
         replay(this.mockPool);
         this.testClass.markPossiblyBroken(new PoolException("test", "08001"));
@@ -297,14 +296,14 @@ public class TestConnectionHandle {
             //			@Override
             public void run() {
                 try {
-                    TestConnectionHandle.this.started = true;
+                    TestObjectHandle.this.started = true;
                     while (true) {
                         Thread.sleep(20);
                     }
 //				} catch (InterruptedException e) {
 //					TestConnectionHandle.this.interrupted = true;
                 } catch (Exception e) {
-                    TestConnectionHandle.this.interrupted = true;
+                    TestObjectHandle.this.interrupted = true;
 
                 }
             }
@@ -500,13 +499,13 @@ public class TestConnectionHandle {
         this.testClass.setOriginatingPartition(mockPartition);
         assertEquals(mockPartition, this.testClass.getOriginatingPartition());
 
-        this.testClass.setObjectLastResetInMs(123);
-        assertEquals(this.testClass.getObjectLastResetInMs(), 123);
-        assertEquals(this.testClass.getObjectLastReset(), 123);
+        this.testClass.setObjectLastResetInMillis(123);
+        assertEquals(this.testClass.getObjectLastResetInMillis(), 123);
+        assertEquals(this.testClass.getObjectLastResetInMillis(), 123);
 
-        this.testClass.setObjectLastUsedInMs(456);
-        assertEquals(this.testClass.getObjectLastUsedInMs(), 456);
-        assertEquals(this.testClass.getObjectLastUsed(), 456);
+        this.testClass.setObjectLastUsedInMillis(456);
+        assertEquals(this.testClass.getObjectLastUsedInMillis(), 456);
+        assertEquals(this.testClass.getObjectLastUsedInMillis(), 456);
 
         Field field = this.testClass.getClass().getDeclaredField("possiblyBroken");
         field.setAccessible(true);
@@ -516,7 +515,7 @@ public class TestConnectionHandle {
         field = this.testClass.getClass().getDeclaredField("connectionCreationTimeInMs");
         field.setAccessible(true);
         field.setLong(this.testClass, 1234L);
-        assertEquals(1234L, this.testClass.getObjectCreationTimeInMs());
+        assertEquals(1234L, this.testClass.getObjectCreationTimeInMillis());
 
         Object debugHandle = new Object();
         this.testClass.setDebugHandle(debugHandle);
@@ -524,7 +523,7 @@ public class TestConnectionHandle {
 
         this.testClass.setInternalObject(this.mockObject);
         assertEquals(this.mockConnection, this.testClass.getInternalObject());
-        assertEquals(this.mockConnection, this.testClass.getRawObject());
+        assertEquals(this.mockConnection, this.testClass.getInternalObject());
 
         field = this.testClass.getClass().getDeclaredField("logicallyClosed");
         field.setAccessible(true);
@@ -533,8 +532,8 @@ public class TestConnectionHandle {
 
         assertEquals(this.testClass.getPool(), this.mockPool);
 
-        this.testClass.threadUsingConnection = Thread.currentThread();
-        assertEquals(Thread.currentThread(), this.testClass.getThreadUsingConnection());
+        this.testClass.threadUsingObject = Thread.currentThread();
+        assertEquals(Thread.currentThread(), this.testClass.getThreadUsingObject());
 
         this.testClass.setThreadWatch(Thread.currentThread());
         assertEquals(Thread.currentThread(), this.testClass.getThreadWatch());
@@ -579,7 +578,7 @@ public class TestConnectionHandle {
 
     public void testConstructorFail() throws SQLException {
         BoneOPConfig mockConfig = createNiceMock(BoneOPConfig.class);
-        ObjectListener mockConnectionHook = createNiceMock(CoverageHook.class);
+        ObjectListener mockConnectionHook = createNiceMock(CoverageListener.class);
         expect(this.mockPool.getConfig()).andReturn(mockConfig).anyTimes();
 //		expect(mockConfig.getReleaseHelperThreads()).andReturn(1).once();
         expect(mockConfig.getObjectListener()).andReturn(mockConnectionHook).once();
@@ -593,17 +592,4 @@ public class TestConnectionHandle {
         }
         verify(this.mockPool, mockConfig, this.mockPool);
     }
-
-    /**
-     *
-     */
-    @Test
-    public void testStackTraceAndTxResolve() {
-        this.testClass.setAutoCommitStackTrace("foo");
-        this.testClass.getAutoCommitStackTrace();
-        assertEquals("foo", this.testClass.getAutoCommitStackTrace());
-        this.testClass.txResolved = true;
-        assertTrue(this.testClass.isTxResolved());
-    }
-
 }

@@ -28,17 +28,18 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
     }
 
     @Override
-    public ObjectHandle<T> pollObject() {
+    public ObjectHandle<T> poll() {
         int pid = selectPartition();
         ObjectPartition<T> partition = getPartition(pid);
         ObjectHandle<T> result = partition.getFreeObjects().poll();
         if (result == null) {
             // we ran out of space on this partition, pick another free one
-            for (int i = 0; i < this.pool.partitionCount; i++) {
-                if (i == pid) {
-                    continue; // we already determined it's not here
-                }
-                partition = getPartition(i);
+            int count = 1;
+            // We already try one partition but with no luck.
+            // So now we start with the next partition and traverse all partition util we find an available object.
+            while (count++ < this.pool.partitionCount) {
+                pid = nextPartition(pid);
+                partition = getPartition(pid);
                 result = partition.getFreeObjects().poll(); // try our luck with this partition
                 if (result != null) {
                     break;  // we found a connection
@@ -53,18 +54,18 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
 
     @Override
     protected ObjectHandle<T> getObjectInternal() throws PoolException {
-        ObjectHandle<T> result = pollObject();
+        ObjectHandle<T> result = poll();
         ObjectPartition<T> partition = currentPartition();
         // we still didn't find an empty one, wait forever (or as per config) until our partition is free
         if (result == null) {
             try {
-                result = partition.getFreeObjects().poll(this.pool.waitTimeInMs, TimeUnit.MILLISECONDS);
+                result = partition.getFreeObjects().poll(this.pool.waitTimeInMillis, TimeUnit.MILLISECONDS);
                 if (result == null) {
                     if (this.pool.nullOnObjectTimeout) {
                         return null;
                     }
                     // 08001 = The application requester is unable to establish the connection.
-                    throw new PoolException("Timed out waiting for a free available connection.", "08001");
+                    throw new PoolException("Timed out waiting for a free available object.", String.valueOf(this.pool.waitTimeInMillis));
                 }
             } catch (InterruptedException e) {
                 if (this.pool.nullOnObjectTimeout) {
@@ -75,11 +76,11 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
         }
 
         if (result.isPoison()) {
-            if (this.pool.getDown().get() && partition.getFreeObjects().hasWaitingConsumer()) {
+            if (this.pool.getDown().get() && partition.hasWaitingConsumer()) {
                 // poison other waiting threads.
                 partition.getFreeObjects().offer(result);
             }
-            throw new PoolException("Pool connections have been terminated. Aborting getConnection() request.", "08001");
+            throw new PoolException("Pool objects have been terminated. Aborting take() request.", "08001");
         }
         return result;
     }
@@ -88,21 +89,19 @@ public class DefaultObjectStrategy<T> extends AbstractObjectStrategy<T> {
      * Closes off all connections in all partitions.
      */
     @Override
-    public void destroyAllObjects() {
+    public void destroy() {
         this.terminationLock.lock();
         try {
             ObjectHandle<T> objectHandle;
-            // close off all connections.
+            // close off all objects.
             for (ObjectPartition<T> partition : this.pool.partitions) {
                 partition.setUnableToCreateMoreObjects(false); // we can create new ones now, this is an optimization
                 while ((objectHandle = partition.getFreeObjects().poll()) != null) {
                     this.pool.destroyObject(objectHandle);
                 }
-
             }
         } finally {
             this.terminationLock.unlock();
         }
     }
-
 }

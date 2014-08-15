@@ -15,7 +15,7 @@
  */
 package com.jolbox.boneop;
 
-import com.jolbox.boneop.listener.CoverageHook;
+import com.jolbox.boneop.listener.CoverageListener;
 import org.easymock.IAnswer;
 import org.slf4j.Logger;
 import org.testng.Assert;
@@ -78,12 +78,10 @@ public class TestPoolWatchThread {
     public static void setup() throws IllegalArgumentException, IllegalAccessException, SecurityException, NoSuchFieldException, ClassNotFoundException, SQLException {
         mockPartition = createNiceMock(ObjectPartition.class);
         mockConfig = createNiceMock(BoneOPConfig.class);
-        expect(mockConfig.getAcquireRetryDelayInMs()).andReturn(1000L).anyTimes();
+        expect(mockConfig.getAcquireRetryDelayInMillis()).andReturn(1000L).anyTimes();
         expect(mockConfig.getAcquireRetryAttempts()).andReturn(0).anyTimes();
-        expect(mockConfig.getDefaultTransactionIsolationValue()).andReturn(-1).anyTimes();
-        expect(mockConfig.getDefaultAutoCommit()).andReturn(false).anyTimes();
 
-        expect(mockConfig.getObjectListener()).andReturn(new CoverageHook()).anyTimes();
+        expect(mockConfig.getObjectListener()).andReturn(new CoverageListener()).anyTimes();
         expect(mockConfig.isLazyInit()).andReturn(false).anyTimes();
 
         mockPool = createNiceMock(BoneOP.class);
