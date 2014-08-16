@@ -11,7 +11,7 @@ import com.jolbox.boneop.PoolableObjectFactory;
 public class BenchmarkObjectFactory implements PoolableObjectFactory<BenchmarkObject> {
     @Override
     public BenchmarkObject makeObject() throws Exception {
-        return null;
+        return new BenchmarkObject();
     }
 
     @Override
@@ -21,12 +21,12 @@ public class BenchmarkObjectFactory implements PoolableObjectFactory<BenchmarkOb
 
     @Override
     public boolean validateObject(BenchmarkObject obj) {
-        return false;
+        return true;
     }
 
     @Override
     public void activateObject(BenchmarkObject obj) throws Exception {
-
+            
     }
 
     @Override
