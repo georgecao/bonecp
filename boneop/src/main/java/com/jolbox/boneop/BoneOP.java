@@ -1,14 +1,17 @@
 /**
  * Copyright 2010 Wallace Wadge
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.jolbox.boneop;
 
@@ -75,21 +78,23 @@ public class BoneOP<T> implements Serializable, Closeable {
      */
     private static final Logger LOG = LoggerFactory.getLogger(BoneOP.class);
     /**
-     * Create more connections when we hit x% of our possible number of connections.
+     * Create more connections when we hit x% of our possible number of
+     * connections.
      */
     protected final int poolAvailabilityThreshold;
     /**
-     * Handle to factory that creates 1 thread per partition that periodically wakes up and performs some activity on
-     * the connection.
+     * Handle to factory that creates 1 thread per partition that periodically
+     * wakes up and performs some activity on the connection.
      */
     private final ScheduledExecutorService keepAliveScheduler;
     /**
-     * Handle to factory that creates 1 thread per partition that periodically wakes up and performs some activity on
-     * the connection.
+     * Handle to factory that creates 1 thread per partition that periodically
+     * wakes up and performs some activity on the connection.
      */
     private final ScheduledExecutorService maxAliveScheduler;
     /**
-     * Executor for threads watching each partition to dynamically create new threads/kill off excess ones.
+     * Executor for threads watching each partition to dynamically create new
+     * threads/kill off excess ones.
      */
     private final ExecutorService objectScheduler;
     /**
@@ -125,8 +130,8 @@ public class BoneOP<T> implements Serializable, Closeable {
      */
     protected List<ObjectPartition<T>> partitions;
     /**
-     * If set to true, create a new thread that monitors a connection and displays warnings if application failed to
-     * close the connection.
+     * If set to true, create a new thread that monitors a connection and
+     * displays warnings if application failed to close the connection.
      */
     protected boolean closeObjectWatch = false;
     /**
@@ -138,7 +143,8 @@ public class BoneOP<T> implements Serializable, Closeable {
      */
     protected String shutdownStackTrace;
     /**
-     * Time to wait before timing out the object. Default in config is Long.MAX_VALUE milliseconds.
+     * Time to wait before timing out the object. Default in config is
+     * Long.MAX_VALUE milliseconds.
      */
     protected final long waitTimeInMillis;
     /**
@@ -189,14 +195,15 @@ public class BoneOP<T> implements Serializable, Closeable {
      */
     private ExecutorService closeConnectionExecutor;
     /**
-     * Watch for connections that should have been safely closed but the application forgot.
+     * Watch for connections that should have been safely closed but the
+     * application forgot.
      */
     private FinalizableReferenceQueue finalizableRefQueue;
 
     /**
      * Constructor.
      *
-     * @param config  Configuration for pool
+     * @param config Configuration for pool
      * @param factory to create, validate and destroy the underlying object.
      * @throws PoolException on error
      */
@@ -219,7 +226,7 @@ public class BoneOP<T> implements Serializable, Closeable {
         if (!config.isLazyInit()) {
             try {
                 T sanityObject = obtainRawInternalObject();
-                LOG.info("Factory work normally. {}", sanityObject);
+                //LOG.info("Factory work normally. {}", sanityObject);
             } catch (PoolException e) {
                 if (config.getObjectListener() != null) {
                     config.getObjectListener().onAcquireFail(e, acquireConfig);
@@ -299,7 +306,7 @@ public class BoneOP<T> implements Serializable, Closeable {
             if (config.getMaxObjectAgeInSeconds() > 0) {
                 final ObjectMaxAgeThread<T> connectionMaxAgeTester
                         = new ObjectMaxAgeThread<>(partition, this.maxAliveScheduler,
-                        this, config.getMaxObjectAge(TimeUnit.MILLISECONDS), queueLIFO);
+                                this, config.getMaxObjectAge(TimeUnit.MILLISECONDS), queueLIFO);
                 this.maxAliveScheduler.schedule(connectionMaxAgeTester, config.getMaxObjectAgeInSeconds(), TimeUnit.SECONDS);
             }
             // watch this partition for low NO. of threads
@@ -415,7 +422,7 @@ public class BoneOP<T> implements Serializable, Closeable {
      * @return brand-new object just created. Must not return null ever.
      * @throws PoolException on error.
      */
-    protected T obtainRawInternalObject() throws PoolException {
+    protected final T obtainRawInternalObject() throws PoolException {
         try {
             return factory.makeObject();
         } catch (Exception ex) {
@@ -465,12 +472,15 @@ public class BoneOP<T> implements Serializable, Closeable {
     /**
      * Returns a free connection.
      *
-     * @return Connection handle.
+     * @return Object handle.
      * @throws PoolException
      */
     public T getObject() throws PoolException {
         ObjectHandle<T> handle = this.objectStrategy.take();
-        return handle.getInternalObject();
+        if (null != handle) {
+            return handle.getInternalObject();
+        }
+        return  null;
     }
 
     /**
@@ -484,7 +494,8 @@ public class BoneOP<T> implements Serializable, Closeable {
     }
 
     /**
-     * Throw an exception to capture it so as to be able to print it out later on
+     * Throw an exception to capture it so as to be able to print it out later
+     * on
      *
      * @param message message to display
      * @return Stack trace message
@@ -502,7 +513,8 @@ public class BoneOP<T> implements Serializable, Closeable {
     }
 
     /**
-     * Obtain a connection asynchronously by queueing a request to obtain a connection in a separate thread.
+     * Obtain a connection asynchronously by queueing a request to obtain a
+     * connection in a separate thread.
      * <p/>
      * Use as follows:
      * <p/>
@@ -526,7 +538,8 @@ public class BoneOP<T> implements Serializable, Closeable {
     }
 
     /**
-     * Tests if this partition has hit a threshold and signal to the pool watch thread to create new connections
+     * Tests if this partition has hit a threshold and signal to the pool watch
+     * thread to create new connections
      *
      * @param partition to test for.
      */
@@ -537,19 +550,23 @@ public class BoneOP<T> implements Serializable, Closeable {
         }
     }
 
-    protected void releaseObject(T object) throws PoolException {
+    public void releaseObject(T object) throws PoolException {
         releaseObject(getObjectHandle(object));
     }
 
     /**
-     * Releases the given connection back to the pool. This method is not intended to be called by applications (hence
-     * set to protected). Call connection.close() instead which will return the connection back to the pool.
+     * Releases the given connection back to the pool. This method is not
+     * intended to be called by applications (hence set to protected). Call
+     * connection.close() instead which will return the connection back to the
+     * pool.
      *
      * @param handle connection to release
      * @throws PoolException
      */
-    protected void releaseObject(ObjectHandle<T> handle) throws PoolException {
-
+    public void releaseObject(ObjectHandle<T> handle) throws PoolException {
+        if (null == handle) {
+            return;
+        }
         // hook calls
         if (handle.getObjectListener() != null) {
             handle.getObjectListener().onCheckIn(handle);
@@ -599,7 +616,7 @@ public class BoneOP<T> implements Serializable, Closeable {
     }
 
     /**
-     * Places a connection back in the originating partition.
+     * Places a object back in the originating partition.
      *
      * @param objectHandle to place back
      * @throws PoolException on error
@@ -622,7 +639,7 @@ public class BoneOP<T> implements Serializable, Closeable {
     }
 
     /**
-     * Sends a dummy statement to the server to keep the connection alive
+     * Sends a dummy test to the server to keep the object alive
      *
      * @param handle Connection handle to perform activity on
      * @return true if test query worked, false otherwise
@@ -659,8 +676,8 @@ public class BoneOP<T> implements Serializable, Closeable {
     }
 
     /**
-     * Return the number of free connections available to an application right away (excluding connections that can be
-     * created dynamically)
+     * Return the number of free connections available to an application right
+     * away (excluding connections that can be created dynamically)
      *
      * @return number of free connections
      */
@@ -718,7 +735,8 @@ public class BoneOP<T> implements Serializable, Closeable {
     }
 
     /**
-     * Watch for connections that should have been safely closed but the application forgot.
+     * Watch for connections that should have been safely closed but the
+     * application forgot.
      *
      * @return the finalizableRefQueue
      */

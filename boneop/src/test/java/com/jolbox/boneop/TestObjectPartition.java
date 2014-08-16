@@ -1,14 +1,17 @@
 /**
  * Copyright 2010 Wallace Wadge
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package com.jolbox.boneop;
 
@@ -19,8 +22,6 @@ import org.testng.annotations.Test;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,7 +42,7 @@ public class TestObjectPartition {
     /**
      * mock handle.
      */
-    private BoneOP mockPool = createNiceMock(BoneOP.class);
+    private BoneOP<TestObject> mockPool = createNiceMock(BoneOP.class);
     /**
      * mock handle.
      */
@@ -56,7 +57,8 @@ public class TestObjectPartition {
     private static ObjectPartition testClass;
 
     /**
-     * Tests the constructor. Makes sure release helper threads are launched (+ setup other config items).
+     * Tests the constructor. Makes sure release helper threads are launched (+
+     * setup other config items).
      *
      * @throws NoSuchFieldException
      * @throws SecurityException
@@ -72,7 +74,7 @@ public class TestObjectPartition {
         expect(mockConfig.getReleaseHelperThreads()).andReturn(3).anyTimes();
         expect(mockConfig.getPoolName()).andReturn("Junit test").anyTimes();
         expect(mockConfig.isDisableObjectTracking()).andReturn(false).anyTimes();
-        Map<Object, Reference<ObjectHandle>> refs = new ConcurrentHashMap<>();
+        Map<TestObject, Reference<ObjectHandle<TestObject>>> refs = new ConcurrentHashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
         expect(this.mockPool.getConfig()).andReturn(mockConfig).anyTimes();
         ExecutorService mockReleaseHelper = createNiceMock(ExecutorService.class);
@@ -155,12 +157,12 @@ public class TestObjectPartition {
         testClass.setFreeObjects(freeConnections);
         assertEquals(freeConnections, testClass.getFreeObjects());
         reset(this.mockPool);
-        Map<Connection, Reference<ObjectHandle>> refs = new HashMap<Connection, Reference<ObjectHandle>>();
+        Map<TestObject, Reference<ObjectHandle<TestObject>>> refs = new HashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
         FinalizableReferenceQueue finalizableRefQueue = new FinalizableReferenceQueue();
         expect(this.mockPool.getFinalizableRefQueue()).andReturn(finalizableRefQueue).anyTimes();
 
-        ObjectHandle mockConnectionHandle = createNiceMock(ObjectHandle.class);
+        ObjectHandle<TestObject> mockConnectionHandle = createNiceMock(ObjectHandle.class);
         expect(mockConnectionHandle.getPool()).andReturn(this.mockPool).anyTimes();
         expect(freeConnections.offer(mockConnectionHandle)).andReturn(true).anyTimes();
         replay(mockConnectionHandle, freeConnections, this.mockPool);
@@ -187,7 +189,7 @@ public class TestObjectPartition {
         testClass.setFreeObjects(freeConnections);
         assertEquals(freeConnections, testClass.getFreeObjects());
         reset(this.mockPool);
-        Map<Connection, Reference<ObjectHandle>> refs = new HashMap<Connection, Reference<ObjectHandle>>();
+        Map<TestObject, Reference<ObjectHandle<TestObject>>> refs = new HashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
 
         FinalizableReferenceQueue finalizableRefQueue = new FinalizableReferenceQueue();
@@ -200,7 +202,7 @@ public class TestObjectPartition {
         expectLastCall().once();
 
         expect(freeConnections.remainingCapacity()).andReturn(1).anyTimes();
-        Connection mockRealConnection = createNiceMock(Connection.class);
+        TestObject mockRealConnection = createNiceMock(TestObject.class);
         expect(mockConnectionHandle.getInternalObject()).andReturn(mockRealConnection).anyTimes();
         testClass.pool = this.mockPool;
         replay(mockConnectionHandle, mockRealConnection, freeConnections, this.mockPool);
@@ -263,18 +265,15 @@ public class TestObjectPartition {
 
     /**
      * Test finalizer.
-     *
-     * @throws SQLException
-     * @throws InterruptedException
      */
     @Test
-    public void testFinalizer() throws SQLException, InterruptedException {
+    public void testFinalizer() throws Exception {
         ObjectHandle objectHandle = createNiceMock(ObjectHandle.class);
         TestObject niceMock = createNiceMock(TestObject.class);
         expect(objectHandle.getInternalObject()).andReturn(niceMock).anyTimes();
         //expectLastCall().once();
         reset(this.mockPool);
-        Map<TestObject, Reference<ObjectHandle>> refs = new HashMap<>();
+        Map<TestObject, Reference<ObjectHandle<TestObject>>> refs = new HashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
         FinalizableReferenceQueue finalizableRefQueue = new FinalizableReferenceQueue();
         expect(this.mockPool.getFinalizableRefQueue()).andReturn(finalizableRefQueue).anyTimes();
@@ -308,18 +307,16 @@ public class TestObjectPartition {
     /**
      * Test finalizer with error.
      *
-     * @throws SQLException
-     * @throws InterruptedException
      */
     @Test
-    public void testFinalizerCoverageException() throws SQLException, InterruptedException {
+    public void testFinalizerCoverageException() throws Exception {
         ObjectHandle mockConnectionHandle = createNiceMock(ObjectHandle.class);
-        Connection mockConnection = createNiceMock(Connection.class);
+        TestObject mockConnection = createNiceMock(TestObject.class);
         expect(mockConnectionHandle.getInternalObject()).andReturn(mockConnection).anyTimes();
-        mockConnection.close();
-        expectLastCall().andThrow(new SQLException("fake reason")).once();
+        mockPool.releaseObject(mockConnection);
+        expectLastCall().andThrow(new PoolException("fake reason")).once();
         reset(this.mockPool);
-        Map<Connection, Reference<ObjectHandle>> refs = new HashMap<Connection, Reference<ObjectHandle>>();
+        Map<TestObject, Reference<ObjectHandle<TestObject>>> refs = new HashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
         FinalizableReferenceQueue finalizableRefQueue = new FinalizableReferenceQueue();
         expect(this.mockPool.getFinalizableRefQueue()).andReturn(finalizableRefQueue).anyTimes();
@@ -359,16 +356,16 @@ public class TestObjectPartition {
      * @throws IllegalArgumentException
      */
     @Test
-    public void testFinalizerException2() throws SQLException, InterruptedException, SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+    public void testFinalizerException2() throws Exception {
         ObjectHandle mockConnectionHandle = createNiceMock(ObjectHandle.class);
-        Connection mockConnection = createNiceMock(Connection.class);
+        TestObject mockConnection = createNiceMock(TestObject.class);
         expect(mockConnectionHandle.getInternalObject()).andReturn(mockConnection).anyTimes();
         makeThreadSafe(mockConnectionHandle, true);
         makeThreadSafe(mockConnection, true);
         reset(mockLogger);
         makeThreadSafe(mockLogger, true);
         reset(this.mockPool);
-        Map<Connection, Reference<ObjectHandle>> refs = new HashMap<Connection, Reference<ObjectHandle>>();
+        Map<TestObject, Reference<ObjectHandle<TestObject>>> refs = new HashMap<>();
         expect(this.mockPool.getFinalizableRefs()).andReturn(refs).anyTimes();
         FinalizableReferenceQueue finalizableRefQueue = new FinalizableReferenceQueue();
         expect(this.mockPool.getFinalizableRefQueue()).andReturn(finalizableRefQueue).anyTimes();
